@@ -49,8 +49,8 @@ Lessons learned from using the dev-tour-guide skill for session orientation and 
 ## Key Reminders from dev-tour-guide
 
 1. **Observability stack:** localhost:3000 (Grafana), 9090 (Prometheus), 3100 (Loki)
-2. **Lessons Learned:** `/Users/neilyashinsky/Documents/craft/Lessons_Learned/`
-3. **Prompt Framework:** `/Users/neilyashinsky/Documents/craft/Prompt_Engineering/`
+2. **Lessons Learned:** `$HOME/Documents/craft/Lessons_Learned/`
+3. **Prompt Framework:** `$HOME/Documents/craft/Prompt_Engineering/`
 4. **Skills Directory:** `~/.claude/skills/`
 
 ---

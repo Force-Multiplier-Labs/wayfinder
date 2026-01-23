@@ -12,7 +12,7 @@ capability_id: workflows
 # STARTD8 WORKFLOW SYSTEM
 # -----------------------------------------------------------------------------
 startd8:
-  location: /Users/neilyashinsky/Documents/dev/startd8-sdk/.startd8/workflows/
+  location: $HOME/Documents/dev/startd8-sdk/.startd8/workflows/
   discovery_protocol: |
     1. Read _index.yaml (~30 tokens)
     2. Select workflow by capability match

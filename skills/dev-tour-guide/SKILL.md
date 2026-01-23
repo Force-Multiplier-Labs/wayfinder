@@ -174,11 +174,11 @@ export PYROSCOPE_URL=http://localhost:4040
 
 Skills can be stored as OTel spans in Tempo for token-efficient agent discovery via TraceQL.
 
-**SDK Location:** `/Users/neilyashinsky/Documents/dev/ContextCore/src/contextcore/skill/`
+**SDK Location:** `$HOME/Documents/dev/ContextCore/src/contextcore/skill/`
 
 **CLI Commands:**
 ```bash
-cd /Users/neilyashinsky/Documents/dev/ContextCore
+cd $HOME/Documents/dev/ContextCore
 source .venv/bin/activate
 
 # Emit skill to Tempo
@@ -212,7 +212,7 @@ contextcore skill routing --skill-id llm-formatter
 
 ## 011yBubo: Dashboard Agent & Alert Automation
 
-**Location:** `/Users/neilyashinsky/Documents/dev/011yBubo/`
+**Location:** `$HOME/Documents/dev/011yBubo/`
 
 011yBubo enables AI agent interaction from Grafana dashboards and automated alert responses.
 
@@ -229,7 +229,7 @@ contextcore skill routing --skill-id llm-formatter
 
 ```bash
 # Start webhook server
-cd /Users/neilyashinsky/Documents/dev/011yBubo
+cd $HOME/Documents/dev/011yBubo
 ANTHROPIC_API_KEY=$("$HOME/.claude/scripts/secrets.sh" get ANTHROPIC_API_KEY) python3 webhook_server.py
 
 # Test Hermes alert endpoint
@@ -377,7 +377,7 @@ Body:
 
 ## StartD8 SDK for Async Agent Development
 
-**Location:** `/Users/neilyashinsky/Documents/dev/startd8-sdk/`
+**Location:** `$HOME/Documents/dev/startd8-sdk/`
 **Documentation:** See `docs/` directory for detailed guides
 
 The StartD8 SDK provides a unified interface for multi-LLM agent workflows with async support.
@@ -663,7 +663,7 @@ curl -X POST "http://localhost:3000/api/dashboards/db" \
 - `docs/TUI_USER_GUIDE_v1.md` - TUI usage guide
 - `docs/developer-portal.html` - Interactive developer portal
 - `dashboards/startd8-metrics.json` - Grafana dashboard
-- Lessons Learned: `/Users/neilyashinsky/Documents/craft/Lessons_Learned/sdk/SDK_developer_LESSONS_LEARNED.md`
+- Lessons Learned: `$HOME/Documents/craft/Lessons_Learned/sdk/SDK_developer_LESSONS_LEARNED.md`
 
 ### StartD8 TUI (Interactive Terminal UI)
 
@@ -763,7 +763,7 @@ src/startd8/
 
 ## StartD8 Workflow System (Agent-Accessible)
 
-**Location:** `/Users/neilyashinsky/Documents/dev/startd8-sdk/.startd8/workflows/`
+**Location:** `$HOME/Documents/dev/startd8-sdk/.startd8/workflows/`
 
 The StartD8 SDK provides a unified workflow system that external AI agents can discover and execute. This follows Anthropic's "progressive disclosure" pattern for token-efficient agent interaction.
 
@@ -777,7 +777,7 @@ Traditional MCP tool schemas load all definitions upfront (~600+ tokens). The fi
 ### Workflow Files Location
 
 ```
-/Users/neilyashinsky/Documents/dev/startd8-sdk/.startd8/workflows/
+$HOME/Documents/dev/startd8-sdk/.startd8/workflows/
 ├── _index.yaml          # Lightweight index (read first!)
 ├── pipeline.yaml        # Sequential multi-agent pipeline
 ├── doc-enhancement.yaml # Document enhancement chain
@@ -790,7 +790,7 @@ Traditional MCP tool schemas load all definitions upfront (~600+ tokens). The fi
 
 **Step 1: Read the index (minimal tokens)**
 ```bash
-cat /Users/neilyashinsky/Documents/dev/startd8-sdk/.startd8/workflows/_index.yaml
+cat $HOME/Documents/dev/startd8-sdk/.startd8/workflows/_index.yaml
 ```
 
 Returns lightweight listing:
@@ -811,7 +811,7 @@ workflows:
 
 **Step 2: Load full schema only when needed**
 ```bash
-cat /Users/neilyashinsky/Documents/dev/startd8-sdk/.startd8/workflows/pipeline.yaml
+cat $HOME/Documents/dev/startd8-sdk/.startd8/workflows/pipeline.yaml
 ```
 
 Returns complete schema with:
@@ -874,7 +874,7 @@ Actions:
 
 When workflows change, re-export:
 ```bash
-cd /Users/neilyashinsky/Documents/dev/startd8-sdk
+cd $HOME/Documents/dev/startd8-sdk
 startd8 workflow export
 ```
 
@@ -898,7 +898,7 @@ startd8 workflow export
 
 ## Lessons Learned Library
 
-**Location:** `/Users/neilyashinsky/Documents/craft/Lessons_Learned/`
+**Location:** `$HOME/Documents/craft/Lessons_Learned/`
 
 Domain-specific knowledge captured from development sessions:
 
@@ -922,7 +922,7 @@ Domain-specific knowledge captured from development sessions:
 
 ## Prompt Engineering Framework
 
-**Location:** `/Users/neilyashinsky/Documents/craft/Prompt_Engineering/`
+**Location:** `$HOME/Documents/craft/Prompt_Engineering/`
 
 ### Key Components
 
@@ -945,7 +945,7 @@ Encapsulates the end-of-session workflow:
 1. Identifies development domain from project path
 2. Captures session learnings (patterns, problems solved, anti-patterns)
 3. Updates lessons learned file for the domain
-4. Updates project index at `/Users/neilyashinsky/Documents/pers/persOS/index/`
+4. Updates project index at `$HOME/Documents/pers/persOS/index/`
 5. Optionally exports prompts to archive
 
 **Always run `/end-session` before closing to preserve knowledge.**
@@ -1196,14 +1196,14 @@ Harbor Manifest:   ~/.claude/harbor-manifest.yaml (CHECK FIRST!)
 Secrets Manager:   ~/.claude/scripts/secrets.sh
 Secrets Audit:     ~/.claude/secrets.audit.log
 Observability:     http://localhost:3000 (Grafana)
-Lessons Learned:   /Users/neilyashinsky/Documents/craft/Lessons_Learned/
-Prompt Framework:  /Users/neilyashinsky/Documents/craft/Prompt_Engineering/
+Lessons Learned:   $HOME/Documents/craft/Lessons_Learned/
+Prompt Framework:  $HOME/Documents/craft/Prompt_Engineering/
 Skills Directory:  ~/.claude/skills/
-Project Index:     /Users/neilyashinsky/Documents/pers/persOS/index/
+Project Index:     $HOME/Documents/pers/persOS/index/
 Hooks Directory:   ~/.claude/hooks/
 Scripts Directory: ~/.claude/scripts/
-StartD8 SDK:       /Users/neilyashinsky/Documents/dev/startd8-sdk/
-StartD8 Workflows: /Users/neilyashinsky/Documents/dev/startd8-sdk/.startd8/workflows/
+StartD8 SDK:       $HOME/Documents/dev/startd8-sdk/
+StartD8 Workflows: $HOME/Documents/dev/startd8-sdk/.startd8/workflows/
 StartD8 TUI:       startd8 tui (interactive terminal UI)
 StartD8 Portal:    docs/developer-portal.html (open in browser)
 ```

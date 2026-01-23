@@ -20,7 +20,7 @@ tools:
     name: Lessons Learned Directory
     type: directory
     description: Central repository for captured insights and learnings
-    location: /Users/neilyashinsky/Documents/craft/Lessons_Learned/
+    location: $HOME/Documents/craft/Lessons_Learned/
     usage: |
       Store domain-specific LESSONS_LEARNED.md files
       Run /end-session to update automatically
@@ -34,7 +34,7 @@ tools:
     name: Prompt Engineering Framework
     type: directory
     description: Prompt templates and engineering patterns
-    location: /Users/neilyashinsky/Documents/craft/Prompt_Engineering/
+    location: $HOME/Documents/craft/Prompt_Engineering/
     usage: |
       Reference for prompt design patterns
       Templates for common tasks

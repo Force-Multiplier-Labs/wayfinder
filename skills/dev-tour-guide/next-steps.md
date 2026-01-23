@@ -121,7 +121,7 @@ The protocols (discovery, invocation, handoff) should be consistent across skill
 
 ### Q3: Portability vs Personalization
 
-Current skill has paths like `/Users/neilyashinsky/Documents/craft/...`. For public distribution:
+Current skill has paths like `$HOME/Documents/craft/...`. For public distribution:
 
 | Option | Pros | Cons |
 |--------|------|------|
