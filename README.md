@@ -1,12 +1,26 @@
-# ContextCore Skills Expansion Pack
+# ContextCore Squirrel (Ajidamoo)
 
-Skills and capabilities for use with the [ContextCore](https://github.com/your-org/contextcore) project observability framework.
+### Squirrel (Ajidamoo) — *"Red squirrel"*
 
-## Overview
+**Skills library for token-efficient agent discovery.**
 
-This expansion pack provides ready-to-use skills that can be loaded into ContextCore's Tempo backend for token-efficient agent discovery. While ContextCore provides the infrastructure for storing and querying skills as OTel spans, this pack provides the **content**—real-world skills with capabilities, protocols, and workflows.
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![ContextCore](https://img.shields.io/badge/ContextCore-expansion%20pack-blueviolet)](https://github.com/contextcore/contextcore)
 
-### What's Included
+## What is Squirrel?
+
+**Squirrel** is a skills library for [ContextCore](https://github.com/contextcore/contextcore). Like a squirrel gathering and storing nuts for later retrieval, this expansion pack provides ready-to-use skills that can be loaded into ContextCore's Tempo backend for token-efficient agent discovery.
+
+While ContextCore provides the infrastructure for storing and querying skills as OTel spans, Squirrel provides the **content**—real-world skills with capabilities, protocols, and workflows.
+
+## Why "Squirrel"?
+
+The squirrel is known for gathering, storing, and retrieving nuts with remarkable memory and efficiency. This expansion pack gathers capabilities, protocols, and workflows that agents can retrieve as needed without loading entire context files.
+
+**Ajidamoo** (ah-JID-ah-moo) is the Anishinaabe (Ojibwe) word for "red squirrel", honoring the indigenous peoples of Michigan and the Great Lakes region. See the [ContextCore naming convention](https://github.com/contextcore/contextcore/blob/main/docs/NAMING_CONVENTION.md) for more context.
+
+## What's Included
 
 | Skill | Purpose | Use When |
 |-------|---------|----------|
@@ -15,36 +29,42 @@ This expansion pack provides ready-to-use skills that can be loaded into Context
 
 ## Prerequisites
 
-- [ContextCore](https://github.com/your-org/contextcore) installed and configured
+- [ContextCore](https://github.com/contextcore/contextcore) installed and configured
 - Tempo running (for skill storage)
 - Python 3.9+
 
 ## Installation
 
-### 1. Clone the Expansion Pack
+### Option 1: pip (Recommended)
 
 ```bash
-git clone https://github.com/your-org/contextcore-skills.git
-cd contextcore-skills
+pip install contextcore-squirrel
 ```
 
-### 2. Emit Skills to Tempo
-
-Use ContextCore's skill emitter to load skills into your observability backend:
+### Option 2: From Source
 
 ```bash
-# Activate ContextCore environment
-cd /path/to/ContextCore
-source .venv/bin/activate
+git clone https://github.com/contextcore/contextcore-squirrel.git
+cd contextcore-squirrel
+pip install -e .
+```
 
+## Quick Start
+
+### Emit Skills to Tempo
+
+```bash
 # Emit dev-tour-guide skill
-contextcore skill emit --path /path/to/contextcore-skills/skills/dev-tour-guide
+contextcore skill emit --path /path/to/contextcore-squirrel/skills/dev-tour-guide
 
 # Emit capability-value-promoter skill
-contextcore skill emit --path /path/to/contextcore-skills/skills/capability-value-promoter
+contextcore skill emit --path /path/to/contextcore-squirrel/skills/capability-value-promoter
+
+# Or emit all skills
+squirrel emit --all
 ```
 
-### 3. Verify in Grafana
+### Verify in Grafana
 
 Query your skills in Tempo:
 
@@ -119,6 +139,27 @@ python scripts/extract_capabilities.py --project /path/to/project
 # Output includes persona-mapped value propositions
 ```
 
+## Token-Efficient Discovery
+
+Squirrel skills use progressive disclosure to minimize token usage:
+
+| Level | What | Tokens | When |
+|-------|------|--------|------|
+| **0** | MANIFEST.yaml | ~100 | Quick routing decisions |
+| **1** | _index.yaml | ~200 | Capability discovery |
+| **2** | Full capability | ~300-500 | Detailed execution |
+
+```yaml
+# Agent reads manifest first (minimal tokens)
+cat skills/dev-tour-guide/MANIFEST.yaml
+
+# Then loads index for routing
+cat skills/dev-tour-guide/agent/_index.yaml
+
+# Finally loads full capability only when needed
+cat skills/dev-tour-guide/agent/capabilities/observability.yaml
+```
+
 ## Customization
 
 These skills contain some environment-specific paths. See [docs/customization.md](docs/customization.md) for how to adapt them to your environment.
@@ -135,7 +176,7 @@ These skills contain some environment-specific paths. See [docs/customization.md
 
 ### Value Capabilities Dashboard
 
-ContextCore includes a Value Capabilities Dashboard that queries skills loaded from this pack:
+ContextCore includes a Value Capabilities Dashboard that queries skills loaded from Squirrel:
 
 - **Filter by persona**: developer, operator, architect, etc.
 - **Filter by value type**: direct, indirect, ripple
@@ -174,11 +215,26 @@ Access at: `http://localhost:3000/d/contextcore-value-capabilities`
 - Use ContextCore semantic conventions for attributes
 - Test emission to Tempo before submitting
 
+## ContextCore Ecosystem
+
+Squirrel is part of the ContextCore expansion pack ecosystem:
+
+| Package | Animal | Anishinaabe | Purpose |
+|---------|--------|-------------|---------|
+| [contextcore](https://github.com/contextcore/contextcore) | Spider | Asabikeshiinh | Core framework |
+| [contextcore-rabbit](https://github.com/contextcore/contextcore-rabbit) | Rabbit | Waabooz | Alert automation |
+| [contextcore-fox](https://github.com/contextcore/contextcore-fox) | Fox | Waagosh | Context enrichment |
+| [contextcore-coyote](https://github.com/contextcore/contextcore-coyote) | Coyote | Wiisagi-ma'iingan | Multi-agent pipeline |
+| [contextcore-beaver](https://github.com/contextcore/contextcore-beaver) | Beaver | Amik | LLM abstraction |
+| **contextcore-squirrel** | Squirrel | Ajidamoo | Skills library |
+
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
 
 ## Related
 
-- [ContextCore](https://github.com/your-org/contextcore) - Project observability framework
-- [Skill Semantic Conventions](https://github.com/your-org/contextcore/blob/main/docs/skill-semantic-conventions.md) - Attribute reference
+- [ContextCore](https://github.com/contextcore/contextcore) - Project observability framework
+- [Skill Semantic Conventions](https://github.com/contextcore/contextcore/blob/main/docs/skill-semantic-conventions.md) - Attribute reference
+- [Expansion Packs](https://github.com/contextcore/contextcore/blob/main/docs/EXPANSION_PACKS.md) - All ContextCore expansion packs
+- [Naming Convention](https://github.com/contextcore/contextcore/blob/main/docs/NAMING_CONVENTION.md) - Why we use animal names

@@ -1,6 +1,6 @@
 # Customization Guide
 
-This guide explains how to adapt the skills in this expansion pack to your environment.
+This guide explains how to adapt the skills in ContextCore Squirrel (Ajidamoo) to your environment.
 
 ## Environment-Specific Paths
 

@@ -1,9 +1,26 @@
 # Changelog
 
-All notable changes to the ContextCore Skills Expansion Pack will be documented in this file.
+All notable changes to ContextCore Squirrel will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.0] - 2026-01-23
+
+### Changed
+
+- **Rebranded to ContextCore Squirrel (Ajidamoo)**
+  - Package renamed from `contextcore-skills` to `contextcore-squirrel`
+  - Follows ContextCore animal naming convention with Anishinaabe names
+  - Squirrel metaphor: gathering, storing, and retrieving skills efficiently
+  - Ajidamoo (ah-JID-ah-moo) means "red squirrel" in Anishinaabe (Ojibwe)
+
+### Added
+
+- ContextCore ecosystem documentation
+- Token-efficient discovery section with levels table
+- Badges for Python version, license, and ContextCore ecosystem
+- Links to naming convention and expansion packs documentation
 
 ## [1.0.0] - 2026-01-23
 

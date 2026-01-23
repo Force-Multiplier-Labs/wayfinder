@@ -1,6 +1,6 @@
 # Loading Skills into ContextCore
 
-This guide explains how to load skills from this expansion pack into ContextCore's Tempo backend for querying via TraceQL.
+This guide explains how to load skills from ContextCore Squirrel (Ajidamoo) into ContextCore's Tempo backend for querying via TraceQL.
 
 ## Prerequisites
 
@@ -33,10 +33,10 @@ cd /path/to/ContextCore
 source .venv/bin/activate
 
 # Emit a single skill
-contextcore skill emit --path /path/to/contextcore-skills/skills/dev-tour-guide
+contextcore skill emit --path /path/to/contextcore-squirrel/skills/dev-tour-guide
 
 # Emit all skills in the pack
-for skill in /path/to/contextcore-skills/skills/*/; do
+for skill in /path/to/contextcore-squirrel/skills/*/; do
   contextcore skill emit --path "$skill"
 done
 ```
@@ -54,11 +54,11 @@ emitter = SkillEmitter(
 )
 
 # Load and emit a skill
-skill_path = Path("/path/to/contextcore-skills/skills/dev-tour-guide")
+skill_path = Path("/path/to/contextcore-squirrel/skills/dev-tour-guide")
 emitter.emit_skill(skill_path)
 
 # Emit multiple skills
-skills_dir = Path("/path/to/contextcore-skills/skills")
+skills_dir = Path("/path/to/contextcore-squirrel/skills")
 for skill_path in skills_dir.iterdir():
     if skill_path.is_dir():
         emitter.emit_skill(skill_path)
