@@ -1,0 +1,234 @@
+# Capability-Value Schema
+# Defines the structure for mapping technical capabilities to user value propositions
+
+# =============================================================================
+# CAPABILITY DEFINITION
+# =============================================================================
+capability:
+  # Required fields
+  id: string                      # Unique identifier (kebab-case)
+  name: string                    # User-facing name
+  category: string                # Grouping (observability, automation, etc.)
+
+  # Technical details (developer-facing)
+  technical:
+    description: string           # What it does technically
+    source_files:                 # Where it's implemented
+      - path: string
+        type: skill|workflow|api|config|script
+    dependencies:                 # Other capabilities required
+      - capability_id: string
+        relationship: requires|enhances|replaces
+    complexity: low|medium|high   # Implementation complexity
+    maturity: experimental|stable|deprecated
+
+  # Value proposition (user-facing)
+  value:
+    tagline: string               # <10 words, punchy
+    one_liner: string             # Single sentence benefit
+    benefit_statement: string     # 2-3 sentence value prop
+    pain_points_solved:           # Problems it addresses
+      - string
+    outcomes:                     # Measurable results
+      - metric: string
+        improvement: string       # "50% faster", "eliminates manual work"
+
+  # Target personas
+  personas:
+    - id: string                  # Persona identifier
+      relevance: high|medium|low
+      pain_point: string          # Their specific problem
+      benefit: string             # How this helps them
+      messaging_angle: string     # Framing for this persona
+
+  # Adoption characteristics
+  adoption:
+    time_to_value: string         # "5 minutes", "1 day"
+    learning_curve: low|medium|high
+    prerequisites:                # What user needs first
+      - capability_id: string
+      - knowledge: string
+    success_criteria:             # How to know it's working
+      - string
+
+  # Communication assets
+  communication:
+    channels:
+      in_app:
+        tooltip: string           # 10-20 words
+        feature_card: string      # 50-100 words
+      email:
+        subject_line: string
+        preview_text: string
+        body_template: string     # Path to template
+      documentation:
+        overview_url: string
+        tutorial_url: string
+        api_reference_url: string
+      video:
+        demo_url: string
+        tutorial_url: string
+      social:
+        twitter: string           # <280 chars
+        linkedin: string          # Professional framing
+
+    # Contextual triggers
+    triggers:
+      - event: string             # user_action, time_based, usage_pattern
+        condition: string         # When to trigger
+        message: string           # What to say
+        channel: string           # Where to say it
+        priority: low|medium|high
+
+# =============================================================================
+# PERSONA DEFINITION
+# =============================================================================
+persona:
+  id: string                      # Unique identifier
+  name: string                    # "Developer", "Engineering Manager"
+  description: string             # Who they are
+
+  characteristics:
+    role: string
+    experience_level: junior|mid|senior|executive
+    technical_depth: low|medium|high
+    decision_authority: user|influencer|buyer
+
+  goals:                          # What they're trying to achieve
+    - string
+
+  pain_points:                    # What frustrates them
+    - string
+
+  communication_preferences:
+    tone: formal|conversational|technical
+    detail_level: high_level|moderate|detailed
+    preferred_channels:
+      - string
+
+  objections:                     # Common concerns
+    - objection: string
+      response: string
+
+# =============================================================================
+# CHANNEL DEFINITION
+# =============================================================================
+channel:
+  id: string
+  name: string
+  type: owned|earned|paid         # Media type
+
+  constraints:
+    max_length: number            # Characters or words
+    format: text|html|markdown|rich_media
+    tone: formal|conversational|punchy
+    call_to_action: required|optional|none
+
+  best_practices:
+    - string
+
+  templates:
+    - name: string
+      path: string
+
+# =============================================================================
+# EXAMPLE: Complete Capability Entry
+# =============================================================================
+example_capability:
+  id: auto-fix-workflow
+  name: Automated Error Resolution
+  category: automation
+
+  technical:
+    description: |
+      GitHub Actions workflow triggered by Grafana alerts that uses
+      Claude Code to investigate production errors and automatically
+      create pull requests with proposed fixes.
+    source_files:
+      - path: .github/workflows/auto-fix.yml
+        type: workflow
+      - path: grafana-alert-rules.yaml
+        type: config
+    dependencies:
+      - capability_id: observability-stack
+        relationship: requires
+    complexity: medium
+    maturity: stable
+
+  value:
+    tagline: "Fix errors before you know they exist"
+    one_liner: "AI automatically investigates and fixes production errors"
+    benefit_statement: |
+      When production errors occur, the system detects them immediately,
+      investigates root causes using AI, and proposes fixes—often before
+      your team even notices the problem.
+    pain_points_solved:
+      - "3am production alerts disrupting sleep"
+      - "Hours spent investigating error root causes"
+      - "Slow mean time to resolution (MTTR)"
+      - "Engineering time wasted on repetitive fixes"
+    outcomes:
+      - metric: MTTR
+        improvement: "Reduced from hours to minutes"
+      - metric: After-hours pages
+        improvement: "80% reduction"
+      - metric: Engineering capacity
+        improvement: "20% reclaimed from firefighting"
+
+  personas:
+    - id: developer
+      relevance: high
+      pain_point: "Woken up at 3am for production errors"
+      benefit: "Errors investigated and fixed while you sleep"
+      messaging_angle: "Your AI on-call partner"
+
+    - id: ops-manager
+      relevance: high
+      pain_point: "MTTR metrics are too high"
+      benefit: "Dramatically reduce resolution time"
+      messaging_angle: "Transform your incident response"
+
+    - id: cto
+      relevance: medium
+      pain_point: "Too much engineering time on reactive work"
+      benefit: "Reclaim capacity for strategic initiatives"
+      messaging_angle: "Multiply your engineering investment"
+
+  adoption:
+    time_to_value: "30 minutes"
+    learning_curve: low
+    prerequisites:
+      - capability_id: observability-stack
+      - knowledge: "Basic GitHub Actions understanding"
+    success_criteria:
+      - "First auto-generated fix PR created"
+      - "Reduction in manual error investigation time"
+
+  communication:
+    channels:
+      in_app:
+        tooltip: "Errors are auto-investigated. Click to see AI findings."
+        feature_card: |
+          Production errors don't have to mean 3am pages. Our AI
+          automatically detects issues, investigates root causes,
+          and proposes fixes—often before you even notice.
+      email:
+        subject_line: "Your errors are fixing themselves now"
+        preview_text: "See how AI is handling your production issues"
+      social:
+        twitter: |
+          Just shipped: AI that investigates production errors and
+          proposes fixes automatically. No more 3am debugging sessions. 🛠️
+
+    triggers:
+      - event: error_detected
+        condition: "User has not enabled auto-fix"
+        message: "This error could have been auto-investigated. Enable auto-fix?"
+        channel: in_app
+        priority: high
+
+      - event: user_investigates_manually
+        condition: "Error type matches auto-fix patterns"
+        message: "Auto-fix can handle errors like this. Want to try it?"
+        channel: in_app
+        priority: medium

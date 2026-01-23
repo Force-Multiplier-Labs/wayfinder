@@ -1,0 +1,346 @@
+# Grafana Alert Rules for Auto-Fix Workflow
+#
+# Import via Grafana UI: Alerting > Alert rules > Import
+# Or provision via: /etc/grafana/provisioning/alerting/
+#
+# These rules detect errors in Loki logs and trigger the auto-fix workflow
+# via webhook to GitHub Actions.
+
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: auto-fix-triggers
+    folder: Auto-Fix
+    interval: 1m
+    rules:
+      # ============================================
+      # Application Error Detection
+      # ============================================
+      - uid: app-error-detection
+        title: Application Error Detected
+        condition: error_count
+        data:
+          - refId: error_count
+            relativeTimeRange:
+              from: 300  # 5 minutes
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: |
+                sum(count_over_time(
+                  {app=~".+"}
+                  |= "error"
+                  | json
+                  | level="error"
+                  [5m]
+                )) by (app)
+              instant: true
+              refId: error_count
+          - refId: threshold
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: error_count
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: "Error detected in {{ $labels.app }}"
+          description: "{{ $values.error_count }} errors in the last 5 minutes"
+          log_query: '{app="{{ $labels.app }}"} |= "error" | json | level="error"'
+          runbook_url: "https://github.com/OWNER/REPO/actions/workflows/auto-fix.yml"
+        labels:
+          severity: warning
+          auto_fix: "true"
+
+      # ============================================
+      # Exception/Panic Detection
+      # ============================================
+      - uid: exception-detection
+        title: Exception or Panic Detected
+        condition: exception_count
+        data:
+          - refId: exception_count
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: |
+                sum(count_over_time(
+                  {app=~".+"}
+                  |~ "(?i)(exception|panic|fatal|unhandled)"
+                  [5m]
+                )) by (app)
+              instant: true
+              refId: exception_count
+          - refId: threshold
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: exception_count
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 0s  # Immediate - exceptions are critical
+        annotations:
+          summary: "Exception/Panic in {{ $labels.app }}"
+          description: "{{ $values.exception_count }} exceptions detected"
+          log_query: '{app="{{ $labels.app }}"} |~ "(?i)(exception|panic|fatal|unhandled)"'
+        labels:
+          severity: critical
+          auto_fix: "true"
+
+      # ============================================
+      # HTTP 5xx Error Spike
+      # ============================================
+      - uid: http-5xx-spike
+        title: HTTP 5xx Error Spike
+        condition: error_rate
+        data:
+          - refId: error_rate
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: |
+                sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+                /
+                sum(rate(http_requests_total[5m])) by (service)
+                * 100
+              instant: true
+              refId: error_rate
+          - refId: threshold
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: error_rate
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]  # >5% error rate
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: "High error rate in {{ $labels.service }}"
+          description: "{{ $values.error_rate | printf \"%.1f\" }}% of requests returning 5xx"
+          log_query: '{service="{{ $labels.service }}"} | json | status >= 500'
+        labels:
+          severity: warning
+          auto_fix: "true"
+
+      # ============================================
+      # Latency Spike (P99)
+      # ============================================
+      - uid: latency-spike
+        title: Latency Spike Detected
+        condition: p99_latency
+        data:
+          - refId: p99_latency
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: |
+                histogram_quantile(0.99,
+                  sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
+                )
+              instant: true
+              refId: p99_latency
+          - refId: threshold
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: p99_latency
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [2]  # >2 seconds
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "High latency in {{ $labels.service }}"
+          description: "P99 latency is {{ $values.p99_latency | printf \"%.2f\" }}s"
+          log_query: '{service="{{ $labels.service }}"} | json | duration > 2s'
+        labels:
+          severity: warning
+          auto_fix: "true"
+
+      # ============================================
+      # OOM / Memory Issues
+      # ============================================
+      - uid: memory-issues
+        title: Memory Issues Detected
+        condition: oom_count
+        data:
+          - refId: oom_count
+            relativeTimeRange:
+              from: 600  # 10 minutes
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: |
+                sum(count_over_time(
+                  {app=~".+"}
+                  |~ "(?i)(out of memory|oom|memory limit|heap exhausted)"
+                  [10m]
+                )) by (app)
+              instant: true
+              refId: oom_count
+          - refId: threshold
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: oom_count
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: "Memory issues in {{ $labels.app }}"
+          description: "OOM or memory limit errors detected"
+          log_query: '{app="{{ $labels.app }}"} |~ "(?i)(out of memory|oom|memory limit)"'
+        labels:
+          severity: critical
+          auto_fix: "true"
+
+      # ============================================
+      # Database Connection Errors
+      # ============================================
+      - uid: db-connection-errors
+        title: Database Connection Errors
+        condition: db_error_count
+        data:
+          - refId: db_error_count
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: |
+                sum(count_over_time(
+                  {app=~".+"}
+                  |~ "(?i)(connection refused|connection reset|connection timeout|database unavailable|pool exhausted)"
+                  [5m]
+                )) by (app)
+              instant: true
+              refId: db_error_count
+          - refId: threshold
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: db_error_count
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: "Database connection errors in {{ $labels.app }}"
+          description: "{{ $values.db_error_count }} connection errors detected"
+          log_query: '{app="{{ $labels.app }}"} |~ "(?i)(connection refused|connection reset|pool exhausted)"'
+        labels:
+          severity: critical
+          auto_fix: "true"
+
+# ============================================
+# Contact Point Configuration
+# ============================================
+# Add this to your Grafana contact points to trigger GitHub Actions
+#
+# Name: GitHub Auto-Fix Webhook
+# Type: Webhook
+# URL: https://api.github.com/repos/OWNER/REPO/dispatches
+# HTTP Method: POST
+# HTTP Headers:
+#   Authorization: Bearer <GITHUB_PAT>
+#   Accept: application/vnd.github.v3+json
+#   Content-Type: application/json
+#
+# Body:
+# {
+#   "event_type": "error-detected",
+#   "client_payload": {
+#     "error_context": "{{ .CommonAnnotations.log_query }}",
+#     "error_summary": "{{ .CommonAnnotations.summary }}",
+#     "app": "{{ .CommonLabels.app }}",
+#     "severity": "{{ .CommonLabels.severity }}",
+#     "description": "{{ .CommonAnnotations.description }}"
+#   }
+# }
+
+# ============================================
+# Notification Policy
+# ============================================
+# Route alerts with label auto_fix="true" to the GitHub webhook contact point
+#
+# policies:
+#   - receiver: github-auto-fix-webhook
+#     matchers:
+#       - auto_fix = "true"
+#     continue: true  # Also send to other receivers (e.g., Slack)

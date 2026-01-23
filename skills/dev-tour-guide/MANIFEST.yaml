@@ -1,0 +1,81 @@
+# =============================================================================
+# DEV-TOUR-GUIDE MANIFEST
+# =============================================================================
+# PRIMARY ENTRY POINT FOR AGENTS
+# Read this file FIRST. Load additional files only as needed.
+# Token budget: ~150 tokens for this file
+# =============================================================================
+
+schema_version: "2.0"
+skill_id: dev-tour-guide
+skill_type: orchestration
+
+# -----------------------------------------------------------------------------
+# QUICK ACTIONS (Most common operations - invoke directly)
+# -----------------------------------------------------------------------------
+quick_actions:
+  debug_error:
+    delegate_to: o11y
+    description: Investigate production error
+
+  create_dashboard:
+    delegate_to: grafana-dashboards
+    description: Create Grafana visualization
+
+  check_infra:
+    action: read_file
+    path: ~/.claude/harbor-manifest.yaml
+    description: Check existing infrastructure before adding new
+
+  find_skill:
+    action: read_file
+    path: agent/_index.yaml
+    description: Find capability by task type
+
+# -----------------------------------------------------------------------------
+# CAPABILITIES SUMMARY (IDs only - load full schema on demand)
+# -----------------------------------------------------------------------------
+capabilities:
+  - id: observability
+    file: agent/capabilities/observability.yaml
+  - id: skills
+    file: agent/capabilities/skills.yaml
+  - id: workflows
+    file: agent/capabilities/workflows.yaml
+  - id: infrastructure
+    file: agent/capabilities/infrastructure.yaml
+  - id: knowledge
+    file: agent/capabilities/knowledge.yaml
+
+# -----------------------------------------------------------------------------
+# PROTOCOLS SUPPORTED
+# -----------------------------------------------------------------------------
+protocols:
+  discovery: agent/protocols/discovery.yaml
+  invocation: agent/protocols/invocation.yaml
+  handoff: agent/protocols/handoff.yaml
+
+# -----------------------------------------------------------------------------
+# CRITICAL CONSTRAINTS
+# -----------------------------------------------------------------------------
+constraints:
+  - id: no_duplicate_infra
+    check: ~/.claude/harbor-manifest.yaml
+    before: [docker run, brew install, npm install -g]
+
+  - id: use_existing_skills
+    check: agent/_index.yaml
+    before: [building new capability]
+
+  - id: use_o11y_not_grep
+    prohibited: [grep logs, tail -f, cat *.log]
+    use_instead: o11y skill
+
+# -----------------------------------------------------------------------------
+# DEFAULT BEHAVIORS (Inject into agent context)
+# -----------------------------------------------------------------------------
+defaults:
+  on_error: delegate to o11y skill
+  on_new_capability_needed: check agent/_index.yaml first
+  on_infrastructure_needed: check harbor-manifest.yaml first
+  on_session_end: run /end-session to capture learnings

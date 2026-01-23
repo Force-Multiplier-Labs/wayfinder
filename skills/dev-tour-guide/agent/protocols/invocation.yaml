@@ -1,0 +1,155 @@
+# =============================================================================
+# INVOCATION PROTOCOL
+# =============================================================================
+# Standard patterns for invoking capabilities
+# Token budget: ~200 tokens
+# =============================================================================
+
+schema_version: "2.0"
+protocol_id: invocation
+
+# -----------------------------------------------------------------------------
+# INVOCATION TYPES
+# -----------------------------------------------------------------------------
+types:
+
+  # Delegate to another Claude skill
+  skill_delegation:
+    description: Request another skill handle a task
+    format: |
+      Use the {{skill_name}} skill to {{task_description}}.
+
+      Context:
+      {{context}}
+
+      Inputs:
+      {{inputs_formatted}}
+
+      Expected output:
+      {{expected_output}}
+
+    example: |
+      Use the o11y skill to investigate this production error.
+
+      Context:
+      Application throwing NullPointerException in checkout flow.
+
+      Inputs:
+      - error_context: "NullPointerException at CheckoutService.java:142"
+      - time_range: "1h"
+      - app_name: "checkout-service"
+
+      Expected output:
+      Root cause analysis with evidence and recommended fix.
+
+  # Execute a bash command
+  bash_execution:
+    description: Run a shell command
+    format: |
+      Execute: {{command}}
+      Purpose: {{purpose}}
+      Expected output: {{expected_output}}
+
+    example: |
+      Execute: docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+      Purpose: Check running infrastructure containers
+      Expected output: Table of container names, status, and port mappings
+
+  # Read a file for information
+  file_read:
+    description: Read a file to extract information
+    format: |
+      Read: {{file_path}}
+      Extract: {{what_to_extract}}
+
+    example: |
+      Read: ~/.claude/harbor-manifest.yaml
+      Extract: List of protected services and their ports
+
+  # Call an API endpoint
+  api_call:
+    description: Make an HTTP request
+    format: |
+      Request: {{method}} {{url}}
+      Headers: {{headers}}
+      Body: {{body}}
+      Expected response: {{expected_response}}
+
+    example: |
+      Request: POST http://localhost:3100/loki/api/v1/query
+      Headers: { "Content-Type": "application/json" }
+      Body: { "query": "{app=\"checkout\"} |= \"error\"" }
+      Expected response: Log entries matching query
+
+  # Use MCP tool
+  mcp_tool:
+    description: Invoke an MCP server tool
+    format:
+      json: |
+        {
+          "tool": "{{tool_name}}",
+          "input": {{input_object}}
+        }
+
+    example: |
+      {
+        "tool": "startd8_workflow",
+        "input": {
+          "action": "run",
+          "workflow_id": "pipeline",
+          "config": { "prompt": "Review this code", "agents": ["claude", "gpt4"] }
+        }
+      }
+
+# -----------------------------------------------------------------------------
+# INPUT FORMATTING
+# -----------------------------------------------------------------------------
+input_formatting:
+  # How to format inputs in invocation messages
+  rules:
+    - required_inputs: Always include with values
+    - optional_inputs: Include only if non-default value
+    - complex_objects: Format as YAML or JSON
+
+  template: |
+    Inputs:
+    {{#each inputs}}
+    - {{name}}: {{value}}{{#if description}} ({{description}}){{/if}}
+    {{/each}}
+
+# -----------------------------------------------------------------------------
+# OUTPUT EXPECTATIONS
+# -----------------------------------------------------------------------------
+output_expectations:
+  # Help receiving agent understand what to return
+  format: |
+    Expected output:
+    - Type: {{output_type}}
+    - Fields: {{output_fields}}
+    - Format: {{output_format}}
+
+  example: |
+    Expected output:
+    - Type: object
+    - Fields: root_cause (string), evidence (array), recommended_fix (string)
+    - Format: Structured analysis with supporting data
+
+# -----------------------------------------------------------------------------
+# ERROR HANDLING
+# -----------------------------------------------------------------------------
+error_handling:
+  on_capability_not_found: |
+    1. Check agent/_index.yaml for similar capabilities
+    2. Suggest closest match
+    3. If no match, recommend skill-creator for new capability
+
+  on_invocation_failure: |
+    1. Log error context
+    2. Check prerequisites (endpoints, secrets)
+    3. Retry with adjusted parameters if applicable
+    4. Escalate to user if repeated failure
+
+  on_timeout: |
+    1. Default timeout: 120000ms (2 minutes)
+    2. For long operations: specify explicit timeout
+    3. On timeout: return partial results if available

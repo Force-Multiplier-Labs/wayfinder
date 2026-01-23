@@ -1,0 +1,103 @@
+# =============================================================================
+# DISCOVERY PROTOCOL
+# =============================================================================
+# How agents discover capabilities in this system
+# Token budget: ~150 tokens
+# =============================================================================
+
+schema_version: "2.0"
+protocol_id: discovery
+
+# -----------------------------------------------------------------------------
+# PROGRESSIVE DISCLOSURE PATTERN
+# -----------------------------------------------------------------------------
+# Minimize token consumption by loading information on demand
+#
+# Level 0: MANIFEST.yaml       (~100 tokens) - Entry point
+# Level 1: agent/_index.yaml   (~200 tokens) - Capability routing
+# Level 2: capabilities/*.yaml (~300-500 tokens each) - Full schemas
+#
+# Total if all loaded: ~2000 tokens
+# Typical usage: ~300 tokens (Level 0 + selective Level 1)
+
+discovery_algorithm:
+  steps:
+    - step: 1
+      action: read MANIFEST.yaml
+      purpose: Get quick_actions and capabilities summary
+      token_cost: 100
+
+    - step: 2
+      condition: task matches quick_action
+      action: execute quick_action directly
+      token_cost: 0
+
+    - step: 3
+      condition: need capability lookup
+      action: read agent/_index.yaml
+      purpose: Route task to capability
+      token_cost: 200
+
+    - step: 4
+      condition: need full schema
+      action: read agent/capabilities/{{capability_id}}.yaml
+      purpose: Get typed inputs/outputs for invocation
+      token_cost: 300-500
+
+# -----------------------------------------------------------------------------
+# CAPABILITY MATCHING
+# -----------------------------------------------------------------------------
+matching:
+  input: task_description (string)
+  output: capability_id, skill_name, invocation_pattern
+
+  algorithm: |
+    1. Extract keywords from task
+    2. Check MANIFEST.quick_actions for direct match
+    3. If no match, load agent/_index.yaml
+    4. Match keywords against routing table triggers
+    5. Return matched skill with invocation pattern
+
+  examples:
+    - input: "debug production error"
+      match: routing.production_error → o11y
+
+    - input: "create dashboard for metrics"
+      match: routing.dashboard_create → grafana-dashboards
+
+    - input: "review code for security issues"
+      match: routing.security_review → application-security-skill
+
+# -----------------------------------------------------------------------------
+# DISCOVERY MESSAGES (Agent-to-Agent)
+# -----------------------------------------------------------------------------
+message_formats:
+  discovery_request:
+    type: object
+    properties:
+      action: { const: "discover" }
+      task: { type: string, description: "What the agent wants to do" }
+      constraints: { type: array, items: { type: string } }
+
+  discovery_response:
+    type: object
+    properties:
+      capability_id: { type: string }
+      skill_name: { type: string }
+      invocation_pattern: { type: string }
+      inputs_required: { type: array }
+      token_cost: { type: integer }
+
+# -----------------------------------------------------------------------------
+# CACHE STRATEGY
+# -----------------------------------------------------------------------------
+caching:
+  manifest: cache for session duration
+  index: cache for session duration
+  capabilities: load on demand, cache after first load
+
+  invalidation: |
+    Clear cache if:
+    - Session exceeds 2 hours
+    - User explicitly requests refresh
+    - Error indicates stale data

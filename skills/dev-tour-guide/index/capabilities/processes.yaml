@@ -1,0 +1,36 @@
+# Processes: Standards, conventions, patterns, checklists
+# Tier: public
+
+processes:
+  - id: no_manual_log_grep
+    name: No Manual Log Grepping
+    type: convention
+    description: Never grep logs manually - always use the o11y skill
+    rules:
+      - Use o11y skill for all log analysis
+      - o11y correlates metrics, logs, traces, and profiles
+      - o11y has source code access for context
+    tags: [observability, anti-pattern, debugging]
+    tier_origin: public
+
+  - id: check_existing_skills
+    name: Check Existing Skills First
+    type: convention
+    description: Before building new capabilities, check if a skill already exists
+    rules:
+      - Review skill catalog before implementation
+      - Check dev-tour-guide index for existing tools
+      - Avoid reinventing wheels
+    tags: [development, efficiency, skills]
+    tier_origin: public
+
+  - id: lessons_learned_capture
+    name: Lessons Learned Capture
+    type: methodology
+    description: Capture insights and learnings for future sessions
+    rules:
+      - Run /end-session before closing
+      - Document discoveries in appropriate LESSONS_LEARNED file
+      - Include context, pattern, and anti-pattern
+    tags: [knowledge-capture, documentation]
+    tier_origin: public

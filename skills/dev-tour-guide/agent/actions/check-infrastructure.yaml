@@ -1,0 +1,85 @@
+# =============================================================================
+# ACTION: CHECK INFRASTRUCTURE
+# =============================================================================
+# Pre-packaged action for checking existing infrastructure before adding new
+# Token budget: ~80 tokens
+# =============================================================================
+
+action_id: check-infrastructure
+description: Check what infrastructure exists before attempting to create new
+
+# -----------------------------------------------------------------------------
+# INPUTS
+# -----------------------------------------------------------------------------
+inputs:
+  service_needed:
+    type: string
+    required: true
+    description: Service type needed (e.g., "grafana", "database", "cache")
+
+# -----------------------------------------------------------------------------
+# ACTION SEQUENCE
+# -----------------------------------------------------------------------------
+steps:
+
+  - step: 1
+    name: read_harbor_manifest
+    action: read_file
+    path: ~/.claude/harbor-manifest.yaml
+    extract: services, service_equivalents
+
+  - step: 2
+    name: check_docker
+    action: bash
+    command: "docker ps --format '{{.Names}}\\t{{.Status}}\\t{{.Ports}}'"
+    extract: running_containers
+
+  - step: 3
+    name: match_service
+    action: evaluate
+    logic: |
+      if service_needed in harbor_manifest.services:
+        return { exists: true, use: harbor_manifest.services[service_needed] }
+      elif service_needed in harbor_manifest.service_equivalents:
+        return { exists: true, use: harbor_manifest.service_equivalents[service_needed] }
+      else:
+        return { exists: false, can_create: true }
+
+# -----------------------------------------------------------------------------
+# OUTPUT
+# -----------------------------------------------------------------------------
+outputs:
+  exists:
+    type: boolean
+    description: Whether service or equivalent already exists
+
+  use:
+    type: object
+    description: If exists, the service to use
+    properties:
+      name: string
+      url: string
+      port: integer
+
+  can_create:
+    type: boolean
+    description: If not exists, whether it's safe to create
+
+# -----------------------------------------------------------------------------
+# EXAMPLE
+# -----------------------------------------------------------------------------
+example:
+  request: |
+    Execute action: check-infrastructure
+    Inputs:
+      service_needed: "prometheus"
+
+  response: |
+    {
+      "exists": true,
+      "use": {
+        "name": "prometheus",
+        "url": "http://localhost:9090",
+        "port": 9090
+      }
+    }

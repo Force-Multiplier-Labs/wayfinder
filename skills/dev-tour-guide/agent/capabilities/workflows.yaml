@@ -1,0 +1,118 @@
+# =============================================================================
+# WORKFLOW CAPABILITIES
+# =============================================================================
+# Multi-step orchestrated processes
+# Token budget: ~300 tokens
+# =============================================================================
+
+schema_version: "2.0"
+capability_id: workflows
+
+# -----------------------------------------------------------------------------
+# STARTD8 WORKFLOW SYSTEM
+# -----------------------------------------------------------------------------
+startd8:
+  location: /Users/neilyashinsky/Documents/dev/startd8-sdk/.startd8/workflows/
+  discovery_protocol: |
+    1. Read _index.yaml (~30 tokens)
+    2. Select workflow by capability match
+    3. Load full schema only when executing
+
+  workflows:
+    pipeline:
+      id: pipeline
+      description: Sequential multi-agent processing
+      agents_required: 1+
+      inputs: { prompt: string, agents: array }
+      outputs: { results: array }
+
+    doc-enhancement:
+      id: doc-enhancement
+      description: Document refinement chain
+      agents_required: 2+
+      inputs: { document: string, agents: array, instructions: string }
+      outputs: { enhanced_document: string }
+
+    iterative-dev:
+      id: iterative-dev
+      description: Dev → Review → Fix cycles
+      agents_required: 2
+      inputs: { task: string, dev_agent: string, reviewer_agent: string }
+      outputs: { final_code: string, review_history: array }
+
+    design-polish:
+      id: design-polish
+      description: 3-stage document refinement
+      agents_required: 3
+      inputs: { document: string, agents: array }
+      outputs: { polished_document: string }
+
+    critical-review:
+      id: critical-review
+      description: Multi-agent document review
+      agents_required: 1+
+      inputs: { document: string, agents: array }
+      outputs: { analysis_reports: array }
+
+  invocation:
+    cli: "startd8 workflow run {{workflow_id}} --config config.json"
+    mcp: |
+      {
+        "tool": "startd8_workflow",
+        "input": { "action": "run", "workflow_id": "{{workflow_id}}", "config": {{config}} }
+      }
+
+# -----------------------------------------------------------------------------
+# AUTO-FIX WORKFLOW (Error → PR Pipeline)
+# -----------------------------------------------------------------------------
+auto_fix:
+  id: auto-fix
+  description: Automated error detection and fix workflow
+  architecture: "Loki → Grafana Alert → Webhook → GitHub Actions → Claude → PR"
+
+  setup:
+    script: ~/.claude/skills/dev-tour-guide/scripts/setup-auto-fix.sh
+    options:
+      --project-dir: Target project directory
+      --dry-run: Preview without changes
+      --skip-grafana: Skip Grafana deployment
+      --skip-github: Skip GitHub workflow
+
+  triggers:
+    - recurring errors with known fix patterns
+    - infrastructure issues
+    - configuration drift
+    - dependency updates
+
+  excluded:
+    - security vulnerabilities (require human review)
+    - business logic changes
+    - database migrations
+    - breaking changes
+
+  inputs:
+    error_context: { type: string, required: true }
+    app_name: { type: string, required: false }
+    severity: { type: enum, values: [critical, warning, info] }
+
+  outputs:
+    pr_url: { type: string, description: URL of created PR }
+    issue_url: { type: string, description: URL of created issue if no PR }
+    investigation_report: { type: string }
+
+# -----------------------------------------------------------------------------
+# SESSION WORKFLOW
+# -----------------------------------------------------------------------------
+session:
+  start:
+    action: invoke dev-tour-guide
+    purpose: Orient to capabilities, establish defaults
+
+  end:
+    action: run /end-session
+    purpose: Capture learnings, update indexes
+    steps:
+      - Identify development domain
+      - Capture patterns discovered
+      - Update lessons learned file
+      - Update project index

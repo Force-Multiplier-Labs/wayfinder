@@ -1,0 +1,89 @@
+# =============================================================================
+# ACTION: CREATE DASHBOARD
+# =============================================================================
+# Pre-packaged action for creating Grafana dashboards
+# Token budget: ~80 tokens
+# =============================================================================
+
+action_id: create-dashboard
+description: Create a Grafana dashboard for metrics visualization
+
+# -----------------------------------------------------------------------------
+# INPUTS
+# -----------------------------------------------------------------------------
+inputs:
+  dashboard_name:
+    type: string
+    required: true
+    description: Name for the dashboard
+
+  metrics:
+    type: array
+    items: { type: string }
+    required: true
+    description: Metrics to visualize
+
+  datasource:
+    type: string
+    required: false
+    default: "prometheus"
+    enum: [prometheus, loki, mimir]
+
+# -----------------------------------------------------------------------------
+# ACTION SEQUENCE
+# -----------------------------------------------------------------------------
+steps:
+
+  - step: 1
+    name: verify_grafana
+    action: check_endpoint
+    url: http://localhost:3000
+    on_failure: "Grafana not running. Start with: docker-compose up -d grafana"
+
+  - step: 2
+    name: delegate_to_grafana_dashboards
+    action: skill_delegation
+    skill: grafana-dashboards
+    inputs:
+      action: create
+      dashboard_name: "{{inputs.dashboard_name}}"
+      panels:
+        - title: "{{metric}}"
+          query: "{{metric}}"
+          type: "timeseries"
+      datasource: "{{inputs.datasource}}"
+    outputs:
+      dashboard_url: string
+      dashboard_uid: string
+
+# -----------------------------------------------------------------------------
+# OUTPUT
+# -----------------------------------------------------------------------------
+outputs:
+  dashboard_url:
+    type: string
+    description: URL to access the created dashboard
+
+  dashboard_uid:
+    type: string
+    description: Unique identifier for the dashboard
+
+# -----------------------------------------------------------------------------
+# EXAMPLE
+# -----------------------------------------------------------------------------
+example:
+  request: |
+    Execute action: create-dashboard
+    Inputs:
+      dashboard_name: "API Metrics"
+      metrics:
+        - http_request_duration_seconds
+        - http_requests_total
+        - http_request_errors_total
+      datasource: prometheus
+
+  response: |
+    {
+      "dashboard_url": "http://localhost:3000/d/api-metrics",
+      "dashboard_uid": "api-metrics-001"
+    }
