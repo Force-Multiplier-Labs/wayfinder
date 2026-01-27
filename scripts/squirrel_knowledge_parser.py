@@ -249,11 +249,35 @@ def _parse_capability_yaml(
             if not data:
                 logging.info(f"Empty YAML file: {file_path}")
                 return items
-                
-            if not isinstance(data, list):
+
+            # Handle both formats:
+            # 1. Direct list: [item1, item2, ...]
+            # 2. Keyed list: endpoints: [item1, item2, ...] or skills: [...]
+            if isinstance(data, dict):
+                # Try to find a list under a key matching the category (plural)
+                possible_keys = [f"{category}s", category, file_path.stem]
+                items_list = None
+                for key in possible_keys:
+                    if key in data and isinstance(data[key], list):
+                        items_list = data[key]
+                        break
+
+                if items_list is None:
+                    # Try first key that has a list value
+                    for key, value in data.items():
+                        if isinstance(value, list):
+                            items_list = value
+                            break
+
+                if items_list is None:
+                    logging.warning(f"YAML file {file_path} does not contain a list of items. Skipping.")
+                    return items
+
+                data = items_list
+            elif not isinstance(data, list):
                 logging.warning(f"YAML file {file_path} does not contain a list of items. Skipping.")
                 return items
-                
+
             for item_index, item_data in enumerate(data):
                 if not isinstance(item_data, dict):
                     logging.warning(f"Skipping non-dictionary item #{item_index} in {file_path}")
@@ -403,6 +427,12 @@ def parse_capability_index(index_path: Path) -> SquirrelIndex:
 
     index_data = SquirrelIndex(tier=tier, source_path=str(index_path.resolve()))
 
+    # Check for capabilities subdirectory (common structure)
+    capabilities_dir = index_path / "capabilities"
+    if capabilities_dir.exists() and capabilities_dir.is_dir():
+        logging.info(f"Found capabilities subdirectory, using: {capabilities_dir}")
+        index_path = capabilities_dir
+
     # Define the mapping from filenames to parsing functions
     file_parsers = {
         "endpoints.yaml": (parse_endpoints_yaml, "endpoints"),
@@ -490,7 +520,7 @@ Examples:
         sys.exit(1)
 
     try:
-        index_data = parse_capability_index(index_path, tier=args.tier)
+        index_data = parse_capability_index(index_path)
     except Exception as e:
         logging.error(f"Failed to parse index: {e}")
         sys.exit(1)
