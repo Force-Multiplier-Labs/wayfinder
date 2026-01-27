@@ -32,6 +32,14 @@ quick_actions:
     path: agent/_index.yaml
     description: Find capability by task type
 
+  query_knowledge:
+    action: tempo_query
+    description: Query knowledge items in Tempo via TraceQL
+    examples:
+      - "{ name =~ 'skill:.*' && span.skill.category = 'observability' }"
+      - "{ name =~ 'endpoint:.*' && span.endpoint.port = 3000 }"
+      - "{ name =~ 'process:.*' && span.process.is_anti_pattern = true }"
+
 # -----------------------------------------------------------------------------
 # CAPABILITIES SUMMARY (IDs only - load full schema on demand)
 # -----------------------------------------------------------------------------
@@ -46,6 +54,9 @@ capabilities:
     file: agent/capabilities/infrastructure.yaml
   - id: knowledge
     file: agent/capabilities/knowledge.yaml
+  - id: squirrel
+    file: agent/capabilities/squirrel.yaml
+    description: Queryable knowledge via Tempo TraceQL (ContextCore Squirrel)
 
 # -----------------------------------------------------------------------------
 # PROTOCOLS SUPPORTED
@@ -79,3 +90,24 @@ defaults:
   on_new_capability_needed: check agent/_index.yaml first
   on_infrastructure_needed: check harbor-manifest.yaml first
   on_session_end: run /end-session to capture learnings
+
+# -----------------------------------------------------------------------------
+# SQUIRREL: TRACEQL QUERY PATTERNS
+# -----------------------------------------------------------------------------
+# Query knowledge items emitted to Tempo. Use span. prefix for dotted attributes.
+#
+# Find skills by category:
+#   { name =~ "skill:.*" && span.skill.category = "observability" }
+#
+# Find endpoints by port:
+#   { name =~ "endpoint:.*" && span.endpoint.port = 3000 }
+#
+# Find anti-patterns:
+#   { name =~ "process:.*" && span.process.is_anti_pattern = true }
+#
+# Find all items with specific tag:
+#   { span.item.tags =~ ".*debugging.*" }
+#
+# Emit knowledge to Tempo:
+#   python scripts/squirrel_knowledge_emitter.py ./skills/dev-tour-guide/index/
+# -----------------------------------------------------------------------------

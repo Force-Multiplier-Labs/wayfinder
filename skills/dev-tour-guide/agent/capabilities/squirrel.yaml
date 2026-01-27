@@ -1,0 +1,177 @@
+# =============================================================================
+# SQUIRREL CAPABILITIES (ContextCore Squirrel)
+# =============================================================================
+# Queryable knowledge repository via Tempo TraceQL
+# Token budget: ~350 tokens
+# =============================================================================
+
+schema_version: "2.0"
+capability_id: squirrel
+
+# -----------------------------------------------------------------------------
+# OVERVIEW
+# -----------------------------------------------------------------------------
+description: |
+  ContextCore Squirrel transforms the dev-tour-guide knowledge layer into a
+  queryable Tempo repository. All capability indexes (endpoints, skills, tools,
+  workflows, processes, projects) are emitted as OTel spans and queryable via
+  TraceQL.
+
+service_name: contextcore-squirrel
+
+# -----------------------------------------------------------------------------
+# KNOWLEDGE TYPES
+# -----------------------------------------------------------------------------
+knowledge_types:
+  endpoint:
+    span_pattern: "endpoint:*"
+    attributes:
+      - endpoint.url
+      - endpoint.port
+      - endpoint.protocol
+      - endpoint.authentication
+    example_query: "{ name =~ 'endpoint:.*' && span.endpoint.port = 3000 }"
+
+  skill:
+    span_pattern: "skill:*"
+    attributes:
+      - skill.location
+      - skill.category
+      - skill.use_when
+      - skill.triggers
+    example_query: "{ name =~ 'skill:.*' && span.skill.category = 'observability' }"
+
+  tool:
+    span_pattern: "tool:*"
+    attributes:
+      - tool.type
+      - tool.location
+      - tool.usage
+    example_query: "{ name =~ 'tool:.*' && span.tool.type = 'script' }"
+
+  workflow:
+    span_pattern: "workflow:*"
+    attributes:
+      - workflow.type
+      - workflow.step_count
+      - workflow.steps_summary
+    example_query: "{ name =~ 'workflow:.*' && span.workflow.type = 'automation' }"
+
+  process:
+    span_pattern: "process:*"
+    attributes:
+      - process.type
+      - process.rules_summary
+      - process.is_anti_pattern
+    example_query: "{ name =~ 'process:.*' && span.process.is_anti_pattern = true }"
+
+  project:
+    span_pattern: "project:*"
+    attributes:
+      - project.path
+      - project.status
+      - project.key_docs
+    example_query: "{ name =~ 'project:.*' && span.project.status = 'active' }"
+
+# -----------------------------------------------------------------------------
+# COMMON ATTRIBUTES (All span types)
+# -----------------------------------------------------------------------------
+common_attributes:
+  - item.id          # Unique identifier
+  - item.name        # Human-readable name
+  - item.category    # Type: endpoint|skill|tool|workflow|process|project
+  - item.tier        # Visibility tier
+  - item.tags        # Comma-separated tags
+  - item.description # Brief summary (~150 chars)
+  - item.source_file # For progressive disclosure
+  - item.token_budget # Full content cost
+
+# -----------------------------------------------------------------------------
+# TRACEQL QUERY PATTERNS
+# -----------------------------------------------------------------------------
+# CRITICAL: Use span. prefix for all dotted attributes in TraceQL
+query_patterns:
+  find_by_category:
+    description: Find all items of a specific type
+    pattern: "{ name =~ '{type}:.*' }"
+    example: "{ name =~ 'skill:.*' }"
+
+  find_by_attribute:
+    description: Filter by specific attribute value
+    pattern: "{ name =~ '{type}:.*' && span.{type}.{attr} = '{value}' }"
+    example: "{ name =~ 'endpoint:.*' && span.endpoint.port = 3000 }"
+
+  find_by_tag:
+    description: Find items with specific tag
+    pattern: "{ span.item.tags =~ '.*{tag}.*' }"
+    example: "{ span.item.tags =~ '.*debugging.*' }"
+
+  find_anti_patterns:
+    description: Find documented anti-patterns
+    pattern: "{ name =~ 'process:.*' && span.process.is_anti_pattern = true }"
+
+# -----------------------------------------------------------------------------
+# SCRIPTS
+# -----------------------------------------------------------------------------
+scripts:
+  parser:
+    path: scripts/squirrel_knowledge_parser.py
+    description: Parse capability YAML files into dataclasses
+    usage: |
+      python scripts/squirrel_knowledge_parser.py ./skills/dev-tour-guide/index/ --output /tmp/squirrel.json
+
+  emitter:
+    path: scripts/squirrel_knowledge_emitter.py
+    description: Emit parsed knowledge to Tempo as OTel spans
+    usage: |
+      python scripts/squirrel_knowledge_emitter.py ./skills/dev-tour-guide/index/ --endpoint localhost:4317
+
+  unified:
+    path: scripts/squirrel_emit_all.py
+    description: Emit both lessons learned and knowledge items
+    usage: |
+      python scripts/squirrel_emit_all.py \
+        --lessons ~/Documents/craft/Lessons_Learned/ \
+        --knowledge ./skills/dev-tour-guide/index/
+
+# -----------------------------------------------------------------------------
+# SCHEMA & DOCUMENTATION
+# -----------------------------------------------------------------------------
+schema:
+  file: schemas/squirrel-knowledge-schema.yaml
+  description: OTel span types for all 6 knowledge categories
+
+documentation:
+  file: docs/squirrel-knowledge-emission.md
+  description: Architecture, quick start, verification steps
+
+# -----------------------------------------------------------------------------
+# PREREQUISITES
+# -----------------------------------------------------------------------------
+prerequisites:
+  - endpoint: http://localhost:3200
+    name: Tempo
+    purpose: Trace storage and TraceQL queries
+
+  - endpoint: http://localhost:4317
+    name: OTLP Collector
+    purpose: Span ingestion via gRPC
+
+  - endpoint: http://localhost:3000
+    name: Grafana
+    purpose: TraceQL query UI (Explore -> Tempo)
+
+# -----------------------------------------------------------------------------
+# INVOCATION
+# -----------------------------------------------------------------------------
+invocation:
+  type: script
+  quick_start: |
+    # 1. Parse and inspect
+    python scripts/squirrel_knowledge_parser.py ./skills/dev-tour-guide/index/ --output /tmp/squirrel.json
+
+    # 2. Emit to Tempo
+    python scripts/squirrel_knowledge_emitter.py ./skills/dev-tour-guide/index/ --endpoint localhost:4317
+
+    # 3. Query in Grafana (localhost:3000 -> Explore -> Tempo)
+    { name =~ "skill:.*" }
