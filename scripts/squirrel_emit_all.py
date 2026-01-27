@@ -75,120 +75,142 @@ def validate_paths(lessons_path_str: Optional[str], knowledge_path_str: Optional
 def emit_lessons(lessons_path: Path, endpoint: str, dry_run: bool) -> Dict:
     """
     Emit lessons learned and return statistics.
-    
+
     Args:
         lessons_path: Path to lessons directory
         endpoint: OTEL endpoint for emission
         dry_run: Whether to perform dry run
-        
+
     Returns:
         Dictionary with emission statistics
     """
     print(f"\n--- Processing Lessons Learned from: {lessons_path} ---")
     stats = {"emitted": 0, "failed": 0, "errors": []}
-    
+
     try:
-        lessons_data = parse_all_domains(lessons_path)
-        
-        if not lessons_data:
-            print(f"Info: No lessons found in '{lessons_path}'.")
+        # parse_all_domains returns list of LessonDomain objects
+        domains = parse_all_domains(lessons_path)
+
+        if not domains:
+            print(f"Info: No lesson domains found in '{lessons_path}'.")
             return stats
-        
-        print(f"Found {len(lessons_data)} lessons to process.")
+
+        # Extract all lessons from domains -> legs -> lessons
+        all_lessons = []
+        for domain in domains:
+            for leg in getattr(domain, 'legs', []):
+                for lesson in getattr(leg, 'lessons', []):
+                    all_lessons.append(lesson)
+
+        total_lessons = len(all_lessons)
+        print(f"Found {len(domains)} domains with {total_lessons} total lessons.")
+
+        if total_lessons == 0:
+            print(f"Info: No individual lessons found.")
+            return stats
 
         if dry_run:
             print("Dry run: Would emit the following lessons:")
-            for i, lesson in enumerate(lessons_data):
-                print(f"  {i+1}. {lesson.get('title', 'Untitled Lesson')}")
-            stats["emitted"] = len(lessons_data)
+            for i, lesson in enumerate(all_lessons[:10]):  # Show first 10
+                title = getattr(lesson, 'title', 'Untitled')
+                domain = getattr(lesson, 'domain', 'unknown')
+                print(f"  {i+1}. [{domain}] {title}")
+            if total_lessons > 10:
+                print(f"  ... and {total_lessons - 10} more")
+            stats["emitted"] = total_lessons
             return stats
 
         lessons_emitter = LessonsEmitter(endpoint)
-        
-        for i, lesson in enumerate(lessons_data):
+
+        for i, lesson in enumerate(all_lessons):
             try:
                 lesson_dict = to_dict(lesson) if not isinstance(lesson, dict) else lesson
-                
+
                 success = lessons_emitter.emit_lesson(lesson_dict)
                 if success:
                     stats["emitted"] += 1
-                    print(f"  ✓ Lesson {i+1}/{len(lessons_data)}: '{lesson_dict.get('title', 'Untitled')}'")
                 else:
                     stats["failed"] += 1
-                    error_msg = f"Failed to emit lesson {i+1}: '{lesson_dict.get('title', 'Untitled')}'"
+                    title = lesson_dict.get('title', 'Untitled')
+                    error_msg = f"Failed to emit lesson {i+1}: '{title}'"
                     stats["errors"].append(error_msg)
-                    print(f"  ✗ {error_msg}", file=sys.stderr)
             except Exception as e:
                 stats["failed"] += 1
                 error_msg = f"Error processing lesson {i+1}: {e}"
                 stats["errors"].append(error_msg)
-                print(f"  ✗ {error_msg}", file=sys.stderr)
+
+        print(f"  ✓ Emitted {stats['emitted']} lessons")
+        if stats["failed"] > 0:
+            print(f"  ✗ Failed: {stats['failed']}")
 
     except Exception as e:
         error_msg = f"Error processing lessons directory: {e}"
         stats["failed"] += 1
         stats["errors"].append(error_msg)
         print(f"Error: {error_msg}", file=sys.stderr)
-    
+
     return stats
 
 
 def emit_knowledge(knowledge_path: Path, endpoint: str, dry_run: bool) -> Dict:
     """
     Emit knowledge items and return statistics.
-    
+
     Args:
         knowledge_path: Path to knowledge directory
         endpoint: OTEL endpoint for emission
         dry_run: Whether to perform dry run
-        
+
     Returns:
         Dictionary with emission statistics
     """
     print(f"\n--- Processing Knowledge Items from: {knowledge_path} ---")
     stats = {"emitted": 0, "failed": 0, "errors": []}
-    
+
     try:
-        knowledge_items = parse_capability_index(knowledge_path)
-        
-        if not knowledge_items:
+        # parse_capability_index returns a SquirrelIndex object
+        index = parse_capability_index(knowledge_path)
+        total_items = index.total_items()
+
+        if total_items == 0:
             print(f"Info: No knowledge items found in '{knowledge_path}'.")
             return stats
-        
-        print(f"Found {len(knowledge_items)} knowledge items to process.")
+
+        print(f"Found {total_items} knowledge items to process.")
+        print(f"  Endpoints: {len(index.endpoints)}")
+        print(f"  Skills: {len(index.skills)}")
+        print(f"  Tools: {len(index.tools)}")
+        print(f"  Workflows: {len(index.workflows)}")
+        print(f"  Processes: {len(index.processes)}")
+        print(f"  Projects: {len(index.projects)}")
 
         if dry_run:
-            print("Dry run: Would emit the following knowledge items:")
-            for i, item in enumerate(knowledge_items):
-                print(f"  {i+1}. {item.get('name', 'Unnamed Item')}")
-            stats["emitted"] = len(knowledge_items)
+            print("\nDry run: Would emit the above knowledge items.")
+            stats["emitted"] = total_items
             return stats
 
-        knowledge_emitter = SquirrelEmitter(endpoint)
-        
-        for i, item in enumerate(knowledge_items):
-            try:
-                success = knowledge_emitter.emit_knowledge_item(item)
-                if success:
-                    stats["emitted"] += 1
-                    print(f"  ✓ Knowledge {i+1}/{len(knowledge_items)}: '{item.get('name', 'Unnamed')}'")
-                else:
-                    stats["failed"] += 1
-                    error_msg = f"Failed to emit knowledge item {i+1}: '{item.get('name', 'Unnamed')}'"
-                    stats["errors"].append(error_msg)
-                    print(f"  ✗ {error_msg}", file=sys.stderr)
-            except Exception as e:
-                stats["failed"] += 1
-                error_msg = f"Error processing knowledge item {i+1}: {e}"
-                stats["errors"].append(error_msg)
-                print(f"  ✗ {error_msg}", file=sys.stderr)
+        # Use SquirrelEmitter to emit the entire index
+        knowledge_emitter = SquirrelEmitter(endpoint=endpoint, dry_run=False)
+
+        try:
+            knowledge_emitter.emit_index(index)
+            emitter_stats = knowledge_emitter.get_stats()
+            stats["emitted"] = emitter_stats["total_spans"]
+            print(f"  ✓ Emitted {stats['emitted']} spans")
+        except Exception as e:
+            stats["failed"] += 1
+            error_msg = f"Error emitting knowledge index: {e}"
+            stats["errors"].append(error_msg)
+            print(f"  ✗ {error_msg}", file=sys.stderr)
+        finally:
+            knowledge_emitter.shutdown()
 
     except Exception as e:
         error_msg = f"Error processing knowledge directory: {e}"
         stats["failed"] += 1
         stats["errors"].append(error_msg)
         print(f"Error: {error_msg}", file=sys.stderr)
-    
+
     return stats
 
 
