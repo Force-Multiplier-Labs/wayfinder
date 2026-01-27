@@ -1,6 +1,3 @@
-Looking at this implementation, it's very well structured and comprehensive. I'll make some minor polish adjustments to ensure it's production-ready:
-
-```python
 #!/usr/bin/env python3
 """
 Squirrel Knowledge Emitter - OpenTelemetry Integration
@@ -335,4 +332,3 @@ class SquirrelEmitter:
 
     def emit_workflow(self, workflow: Workflow, parent_context: Optional[Context] = None) -> None:
         """Emit workflow knowledge item as OTel span."""
-        span_name = f"workflow

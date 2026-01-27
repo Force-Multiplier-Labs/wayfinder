@@ -1,6 +1,3 @@
-## Final Production-Ready Implementation
-
-```python
 #!/usr/bin/env python3
 """
 Squirrel Knowledge Parser
@@ -19,7 +16,7 @@ import dataclasses
 import json
 import logging
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Dict, List, Type, Union
 
@@ -442,4 +439,85 @@ def parse_capability_index(index_path: Path) -> SquirrelIndex:
 
 
 def main() -> None:
-    """Main CLI entry point
+    """CLI entry point for parsing Squirrel knowledge indexes."""
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(
+        description="Parse Squirrel knowledge index YAML files into structured data.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s ./skills/dev-tour-guide/index/
+  %(prog)s ./skills/dev-tour-guide/index/ --output /tmp/squirrel.json
+  %(prog)s ./skills/dev-tour-guide/index/ --tier public
+        """
+    )
+    parser.add_argument(
+        "index_path",
+        type=str,
+        help="Path to the index directory containing capability YAML files"
+    )
+    parser.add_argument(
+        "--output", "-o",
+        type=str,
+        help="Output file for JSON dump (prints to stdout if not specified)"
+    )
+    parser.add_argument(
+        "--tier",
+        type=str,
+        default="public",
+        help="Tier name for the index (default: public)"
+    )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose logging"
+    )
+
+    args = parser.parse_args()
+
+    # Configure logging
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
+    else:
+        logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+
+    # Parse the index
+    index_path = Path(args.index_path)
+    if not index_path.exists():
+        logging.error(f"Index path does not exist: {index_path}")
+        sys.exit(1)
+
+    try:
+        index_data = parse_capability_index(index_path, tier=args.tier)
+    except Exception as e:
+        logging.error(f"Failed to parse index: {e}")
+        sys.exit(1)
+
+    # Convert to dict for JSON serialization
+    output_dict = {
+        "tier": index_data.tier,
+        "endpoints": [asdict(e) for e in index_data.endpoints],
+        "skills": [asdict(s) for s in index_data.skills],
+        "tools": [asdict(t) for t in index_data.tools],
+        "workflows": [asdict(w) for w in index_data.workflows],
+        "processes": [asdict(p) for p in index_data.processes],
+        "projects": [asdict(p) for p in index_data.projects],
+        "total_items": index_data.total_items(),
+    }
+
+    # Output
+    json_str = json.dumps(output_dict, indent=2, default=str)
+
+    if args.output:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json_str)
+        logging.info(f"Wrote {index_data.total_items()} items to {output_path}")
+    else:
+        print(json_str)
+
+
+if __name__ == "__main__":
+    main()
