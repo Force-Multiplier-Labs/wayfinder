@@ -29,14 +29,14 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
-from opentelemetry.trace.propagation.tracecontext import TraceContextPropagator
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.context import Context
 
-# Import squirrel_index_parser with fallback to mock for testing
+# Import squirrel_knowledge_parser with fallback to mock for testing
 try:
-    from squirrel_index_parser import (
+    from squirrel_knowledge_parser import (
         SquirrelIndex, Endpoint, Skill, Tool, Workflow, Process, Project,
-        parse_squirrel_indexes
+        parse_capability_index
     )
 except ImportError:
     print("Warning: 'squirrel_index_parser' not found. Using mock classes for demonstration.", file=sys.stderr)
@@ -239,7 +239,7 @@ class SquirrelEmitter:
 
             # Set global tracer provider and get tracer
             trace.set_tracer_provider(self.tracer_provider)
-            self.tracer = trace.get_tracer(__name__, version="1.0.0")
+            self.tracer = trace.get_tracer(__name__)
             
             logger.info("OpenTelemetry SDK initialized successfully")
 
@@ -332,3 +332,169 @@ class SquirrelEmitter:
 
     def emit_workflow(self, workflow: Workflow, parent_context: Optional[Context] = None) -> None:
         """Emit workflow knowledge item as OTel span."""
+        span_name = f"workflow:{workflow.id}"
+
+        with self.tracer.start_as_current_span(span_name, context=parent_context) as span:
+            self._set_common_attributes(span, "workflow", workflow)
+
+            self.stats["workflows_emitted"] += 1
+            self.stats["total_spans"] += 1
+
+    def emit_process(self, process: Process, parent_context: Optional[Context] = None) -> None:
+        """Emit process knowledge item as OTel span."""
+        span_name = f"process:{process.id}"
+
+        with self.tracer.start_as_current_span(span_name, context=parent_context) as span:
+            self._set_common_attributes(span, "process", process)
+
+            # Process-specific attributes
+            is_anti = getattr(process, 'is_anti_pattern', False)
+            span.set_attribute("process.is_anti_pattern", bool(is_anti))
+
+            self.stats["processes_emitted"] += 1
+            self.stats["total_spans"] += 1
+
+    def emit_project(self, project: Project, parent_context: Optional[Context] = None) -> None:
+        """Emit project knowledge item as OTel span."""
+        span_name = f"project:{project.id}"
+
+        with self.tracer.start_as_current_span(span_name, context=parent_context) as span:
+            self._set_common_attributes(span, "project", project)
+
+            self.stats["projects_emitted"] += 1
+            self.stats["total_spans"] += 1
+
+    def emit_index(self, index: SquirrelIndex) -> None:
+        """Emit all items from a SquirrelIndex as child spans under a parent."""
+        span_name = f"squirrel_index:{index.tier}"
+
+        with self.tracer.start_as_current_span(span_name) as parent_span:
+            parent_span.set_attribute("index.tier", index.tier)
+            parent_span.set_attribute("index.source_path", getattr(index, 'source_path', ''))
+            parent_span.set_attribute("index.total_items", index.total_items())
+
+            # Get parent context for child spans
+            parent_context = trace.set_span_in_context(parent_span)
+
+            # Emit all items as children
+            for endpoint in index.endpoints:
+                self.emit_endpoint(endpoint, parent_context)
+
+            for skill in index.skills:
+                self.emit_skill(skill, parent_context)
+
+            for tool in index.tools:
+                self.emit_tool(tool, parent_context)
+
+            for workflow in index.workflows:
+                self.emit_workflow(workflow, parent_context)
+
+            for process in index.processes:
+                self.emit_process(process, parent_context)
+
+            for project in index.projects:
+                self.emit_project(project, parent_context)
+
+            self.stats["total_spans"] += 1  # Count the parent span
+
+    def shutdown(self) -> None:
+        """Shutdown the tracer provider and flush all spans."""
+        if self.shutdown_called:
+            return
+
+        self.shutdown_called = True
+
+        if self.tracer_provider:
+            try:
+                self.tracer_provider.shutdown()
+                logger.info("Tracer provider shut down successfully")
+            except Exception as e:
+                logger.error(f"Error shutting down tracer provider: {e}")
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return emission statistics."""
+        return dict(self.stats)
+
+
+# --- CLI Interface ---
+
+
+def main() -> None:
+    """CLI entry point for emitting Squirrel knowledge to Tempo."""
+    parser = argparse.ArgumentParser(
+        description="Emit Squirrel knowledge items to Tempo as OTel spans.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s ./skills/dev-tour-guide/index/ --dry-run
+  %(prog)s ./skills/dev-tour-guide/index/ --endpoint localhost:4317
+        """
+    )
+    parser.add_argument(
+        "index_path",
+        type=str,
+        help="Path to the index directory containing capability YAML files"
+    )
+    parser.add_argument(
+        "--endpoint",
+        type=str,
+        default=DEFAULT_OTLP_ENDPOINT,
+        help=f"OTLP gRPC endpoint (default: {DEFAULT_OTLP_ENDPOINT})"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print spans to console instead of sending to Tempo"
+    )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose logging"
+    )
+
+    args = parser.parse_args()
+
+    # Configure logging
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
+    else:
+        logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+
+    # Parse the index
+    index_path = Path(args.index_path)
+    if not index_path.exists():
+        logger.error(f"Index path does not exist: {index_path}")
+        sys.exit(1)
+
+    try:
+        index_data = parse_capability_index(index_path)
+    except Exception as e:
+        logger.error(f"Failed to parse index: {e}")
+        sys.exit(1)
+
+    if index_data.total_items() == 0:
+        logger.warning("No items found in index. Nothing to emit.")
+        sys.exit(0)
+
+    # Create emitter and emit
+    emitter = SquirrelEmitter(endpoint=args.endpoint, dry_run=args.dry_run)
+
+    try:
+        logger.info(f"Emitting {index_data.total_items()} items to {args.endpoint}")
+        emitter.emit_index(index_data)
+
+        stats = emitter.get_stats()
+        logger.info(f"Emission complete: {stats['total_spans']} spans emitted")
+        logger.info(f"  Endpoints: {stats['endpoints_emitted']}")
+        logger.info(f"  Skills: {stats['skills_emitted']}")
+        logger.info(f"  Tools: {stats['tools_emitted']}")
+        logger.info(f"  Workflows: {stats['workflows_emitted']}")
+        logger.info(f"  Processes: {stats['processes_emitted']}")
+        logger.info(f"  Projects: {stats['projects_emitted']}")
+
+    finally:
+        emitter.shutdown()
+
+
+if __name__ == "__main__":
+    main()
