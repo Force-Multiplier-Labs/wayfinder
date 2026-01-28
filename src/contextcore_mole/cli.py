@@ -1,6 +1,7 @@
 """CLI entry point for contextcore-mole."""
 
 from pathlib import Path
+from typing import Any, Optional
 
 import click
 from rich.console import Console
@@ -8,16 +9,52 @@ from rich.table import Table
 
 from . import __version__
 from .models import TaskFile
-from .parser import parse_task_file, scan_directory
+from .parser import parse_task_file, scan_directory, TimeParser, TimeFilter
+from .traceql import tempo_cli, add_tempo_commands
 
 console = Console()
 
+
+# =============================================================================
+# Time Parameter Type for Click
+# =============================================================================
+
+class TimeParamType(click.ParamType):
+    """Click parameter type for parsing time strings."""
+    name = "time"
+
+    def convert(
+        self,
+        value: Any,
+        param: Optional[click.Parameter],
+        ctx: Optional[click.Context]
+    ) -> Optional[int]:
+        """Convert time string to Unix nanoseconds."""
+        if value is None:
+            return None
+
+        try:
+            return TimeParser.parse_time_string(str(value))
+        except ValueError as e:
+            self.fail(str(e), param, ctx)
+
+
+TIME = TimeParamType()
+
+
+# =============================================================================
+# CLI Commands
+# =============================================================================
 
 @click.group()
 @click.version_option(version=__version__, prog_name="mole")
 def main() -> None:
     """Mole: Recover tasks from ContextCore task files and Tempo trace exports."""
     pass
+
+
+# Add tempo subcommands
+main.add_command(tempo_cli, name="tempo")
 
 
 @main.command()
@@ -62,16 +99,31 @@ def scan(path: Path, pattern: str) -> None:
 @click.option("--project", "-p", help="Filter by project ID")
 @click.option("--tag", "-t", help="Filter by tag")
 @click.option("--type", "task_type", help="Filter by task type (epic, story, task, etc.)")
+@click.option(
+    "--since",
+    type=TIME,
+    help='Filter tasks since this time (ISO 8601 or relative like "7d", "1w")'
+)
+@click.option(
+    "--until",
+    type=TIME,
+    help='Filter tasks until this time (ISO 8601 or relative like "7d", "1w")'
+)
 def list_tasks(
     path: Path,
     status: str | None,
     project: str | None,
     tag: str | None,
     task_type: str | None,
+    since: int | None,
+    until: int | None,
 ) -> None:
     """List tasks from task files.
 
     PATH can be a single JSON file or a directory.
+
+    Time filters accept ISO 8601 dates (e.g., 2024-01-15) or relative
+    formats like 7d (7 days ago), 2w (2 weeks ago), 1y (1 year ago).
     """
     try:
         task_file = parse_task_file(path)
@@ -88,6 +140,17 @@ def list_tasks(
         tasks = [t for t in tasks if tag in t.tags]
     if task_type:
         tasks = [t for t in tasks if t.type == task_type]
+
+    # Apply time filter (for simple task files, we don't have timestamps yet)
+    # This will be used when processing OTel trace data
+    if since is not None or until is not None:
+        time_filter = TimeFilter(since_nanos=since, until_nanos=until)
+        # Note: Simple task files don't have timestamps, so time filtering
+        # only applies when we have OTel trace data with created_at
+        console.print(
+            "[dim]Note: Time filtering requires timestamp data "
+            "(e.g., from Tempo trace exports)[/dim]\n"
+        )
 
     if not tasks:
         console.print("[yellow]No tasks match the filters[/yellow]")
@@ -183,16 +246,31 @@ def show(path: Path, task_id: str) -> None:
 @click.option("--status", "-s", help="Export tasks with this status")
 @click.option("--out", "-o", type=click.Path(path_type=Path), help="Output file (default: stdout)")
 @click.option("--format", "fmt", type=click.Choice(["json", "jsonl"]), default="json", help="Output format")
+@click.option(
+    "--since",
+    type=TIME,
+    help='Filter tasks since this time (ISO 8601 or relative like "7d", "1w")'
+)
+@click.option(
+    "--until",
+    type=TIME,
+    help='Filter tasks until this time (ISO 8601 or relative like "7d", "1w")'
+)
 def export(
     path: Path,
     task_id: str | None,
     status: str | None,
     out: Path | None,
     fmt: str,
+    since: int | None,
+    until: int | None,
 ) -> None:
     """Export tasks for re-import to ContextCore.
 
     PATH is the task JSON file.
+
+    Time filters accept ISO 8601 dates (e.g., 2024-01-15) or relative
+    formats like 7d (7 days ago), 2w (2 weeks ago), 1y (1 year ago).
     """
     import json
 
@@ -209,6 +287,14 @@ def export(
         tasks = [t for t in tasks if t.id == task_id]
     if status:
         tasks = [t for t in tasks if t.status == status]
+
+    # Apply time filter note
+    if since is not None or until is not None:
+        console.print(
+            "[dim]Note: Time filtering requires timestamp data "
+            "(e.g., from Tempo trace exports)[/dim]",
+            err=True
+        )
 
     if not tasks:
         console.print("[yellow]No tasks match the filters[/yellow]")

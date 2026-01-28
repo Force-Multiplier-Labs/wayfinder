@@ -214,7 +214,11 @@ Tempo (traces) --> Export JSON --> mole scan --> Identify recoverable tasks
 **Completed:**
 - Project scaffolding (pyproject.toml, package structure)
 - `models.py` — Pydantic models for task JSON (Project, Task, TaskFile)
-- `parser.py` — Parse task JSON files, scan directories
+- `parser.py` — Parse task JSON files AND Tempo trace exports
+  - Original: `parse_task_file()`, `scan_directory()`, `find_task_files()`
+  - **NEW: `OTelTraceParser`** — Parse Tempo OTel trace exports
+  - **NEW: `TaskData`** — Extracted task data from spans
+  - **NEW: `parse_tempo_export()`** — Convenience function
 - `cli.py` — Full CLI with Rich tables
   - `mole scan` — Find and summarize task files
   - `mole list` — List tasks with filtering (--status, --tag, --type)
@@ -222,8 +226,12 @@ Tempo (traces) --> Export JSON --> mole scan --> Identify recoverable tasks
   - `mole export` — Export filtered tasks (JSON/JSONL)
 - Test suite (7 tests passing)
 
+**In Progress (via ContextCore Prime Contractor):**
+- Time Range Filtering — Add `--since` / `--until` CLI options
+- TraceQL Query Builder — For live Tempo queries
+
 **Next Steps:**
-1. Add Tempo trace JSON parsing (OTel span format from session log)
-2. Add `--since` / `--until` time range filtering
-3. Add TraceQL query builder for live Tempo queries
+1. ~~Add Tempo trace JSON parsing (OTel span format from session log)~~ ✅ DONE
+2. Add `--since` / `--until` time range filtering (PENDING)
+3. Add TraceQL query builder for live Tempo queries (PENDING)
 4. Add recovery workflow (restore cancelled tasks)
