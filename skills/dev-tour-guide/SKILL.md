@@ -377,7 +377,7 @@ Body:
 
 ## StartD8 SDK for Async Agent Development
 
-**Location:** `$HOME/Documents/dev/startd8-sdk/`
+**Location:** `$STARTD8_SDK_ROOT` (set via `source ~/Documents/dev/contextcore-beaver/env.sh`)
 **Documentation:** See `docs/` directory for detailed guides
 
 The StartD8 SDK provides a unified interface for multi-LLM agent workflows with async support.
@@ -763,7 +763,7 @@ src/startd8/
 
 ## StartD8 Workflow System (Agent-Accessible)
 
-**Location:** `$HOME/Documents/dev/startd8-sdk/.startd8/workflows/`
+**Location:** `$STARTD8_SDK_ROOT/.startd8/workflows/`
 
 The StartD8 SDK provides a unified workflow system that external AI agents can discover and execute. This follows Anthropic's "progressive disclosure" pattern for token-efficient agent interaction.
 
@@ -777,7 +777,7 @@ Traditional MCP tool schemas load all definitions upfront (~600+ tokens). The fi
 ### Workflow Files Location
 
 ```
-$HOME/Documents/dev/startd8-sdk/.startd8/workflows/
+$STARTD8_SDK_ROOT/.startd8/workflows/
 ├── _index.yaml          # Lightweight index (read first!)
 ├── pipeline.yaml        # Sequential multi-agent pipeline
 ├── doc-enhancement.yaml # Document enhancement chain
@@ -790,7 +790,7 @@ $HOME/Documents/dev/startd8-sdk/.startd8/workflows/
 
 **Step 1: Read the index (minimal tokens)**
 ```bash
-cat $HOME/Documents/dev/startd8-sdk/.startd8/workflows/_index.yaml
+cat $STARTD8_SDK_ROOT/.startd8/workflows/_index.yaml
 ```
 
 Returns lightweight listing:
@@ -811,7 +811,7 @@ workflows:
 
 **Step 2: Load full schema only when needed**
 ```bash
-cat $HOME/Documents/dev/startd8-sdk/.startd8/workflows/pipeline.yaml
+cat $STARTD8_SDK_ROOT/.startd8/workflows/pipeline.yaml
 ```
 
 Returns complete schema with:
@@ -1202,8 +1202,8 @@ Skills Directory:  ~/.claude/skills/
 Project Index:     $HOME/Documents/pers/persOS/index/
 Hooks Directory:   ~/.claude/hooks/
 Scripts Directory: ~/.claude/scripts/
-StartD8 SDK:       $HOME/Documents/dev/startd8-sdk/
-StartD8 Workflows: $HOME/Documents/dev/startd8-sdk/.startd8/workflows/
+StartD8 SDK:       $STARTD8_SDK_ROOT/
+StartD8 Workflows: $STARTD8_SDK_ROOT/.startd8/workflows/
 StartD8 TUI:       startd8 tui (interactive terminal UI)
 StartD8 Portal:    docs/developer-portal.html (open in browser)
 ```

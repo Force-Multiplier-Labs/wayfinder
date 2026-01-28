@@ -1,0 +1,821 @@
+# ContextCore Squirrel - Prime Contractor Workflow Tasks
+# Execute with:
+#   cd $STARTD8_SDK_ROOT  # Set via: source ~/Documents/dev/contextcore-beaver/env.sh
+#   python scripts/run_contextcore_workflow.py \
+#       --tasks-file ~/Documents/dev/contextcore-skills/squirrel-tasks.yaml \
+#       --project-id contextcore-squirrel \
+#       --yes
+#
+# Or dry-run first:
+#   python scripts/run_contextcore_workflow.py \
+#       --tasks-file ~/Documents/dev/contextcore-skills/squirrel-tasks.yaml \
+#       --project-id contextcore-squirrel \
+#       --dry-run
+
+project:
+  id: contextcore-squirrel
+  sprint_id: squirrel-v1
+  description: Transform dev-tour-guide's knowledge layer into a queryable Tempo repository
+
+# Default agents (can be overridden per-task)
+defaults:
+  lead_agent: "anthropic:claude-sonnet-4-20250514"
+  drafter_agent: "gemini:gemini-2.5-flash"
+  max_iterations: 6
+  pass_threshold: 80
+
+tasks:
+  # =============================================================================
+  # SQUIRREL-001: Create Knowledge Schema
+  # =============================================================================
+  - task_id: SQUIRREL-001
+    title: Create Knowledge Schema
+    story_points: 3
+    config:
+      task_description: |
+        Create the Squirrel knowledge schema file defining OTel span types for all 6 knowledge categories.
+
+        ## Requirements
+
+        1. Create file: `schemas/squirrel-knowledge-schema.yaml`
+        2. Follow the pattern of the existing lesson-learned-schema.yaml (provided in context)
+        3. Define span hierarchy: `squirrel_index:{tier}` (parent) → `{type}:{id}` (children)
+
+        ## Span Types to Define
+
+        Define these 6 span types with common + type-specific attributes:
+
+        ### Common Attributes (all span types)
+        ```yaml
+        item.id: string         # Unique identifier (snake_case)
+        item.name: string       # Human-readable name
+        item.category: string   # Type: endpoint|skill|tool|workflow|process|project
+        item.tier: string       # Visibility tier: public|widely_shared|narrowly_shared|personal
+        item.tags: string       # Comma-separated tags
+        item.description: string # Brief summary (~150 chars max)
+        item.source_file: string # Path to source YAML for progressive disclosure
+        item.token_budget: int   # Estimated tokens for full content
+        ```
+
+        ### Type-Specific Attributes
+
+        **endpoint:**
+        ```yaml
+        endpoint.url: string
+        endpoint.port: int
+        endpoint.protocol: string       # http|https|grpc
+        endpoint.authentication: string # none|basic|token|oauth
+        endpoint.related_skills: string # Comma-separated skill IDs
+        ```
+
+        **skill:**
+        ```yaml
+        skill.location: string    # Path to skill directory
+        skill.category: string    # development|observability|marketing|etc
+        skill.use_when: string    # When to use this skill (summary)
+        skill.triggers: string    # Comma-separated trigger phrases
+        ```
+
+        **tool:**
+        ```yaml
+        tool.type: string         # script|directory|cli|config
+        tool.location: string     # Path to tool
+        tool.usage: string        # Usage instructions (summary)
+        tool.related_skills: string
+        ```
+
+        **workflow:**
+        ```yaml
+        workflow.type: string     # methodology|investigation|automation
+        workflow.step_count: int
+        workflow.steps_summary: string  # Brief summary of steps
+        workflow.related_skills: string
+        ```
+
+        **process:**
+        ```yaml
+        process.type: string      # convention|methodology|checklist
+        process.rules_summary: string   # Summary of rules
+        process.is_anti_pattern: bool   # True if this describes what NOT to do
+        ```
+
+        **project:**
+        ```yaml
+        project.path: string      # Path to project
+        project.status: string    # active|complete|paused|archived
+        project.key_docs: string  # Comma-separated key doc filenames
+        project.related_skills: string
+        ```
+
+        ## TraceQL Query Patterns
+
+        Document these query patterns using the `span.` prefix:
+        ```traceql
+        # Find endpoints by port
+        { name =~ "endpoint:.*" && span.endpoint.port = 3000 }
+
+        # Find skills by category
+        { name =~ "skill:.*" && span.skill.category = "observability" }
+
+        # Find anti-pattern processes
+        { name =~ "process:.*" && span.process.is_anti_pattern = true }
+
+        # Find tools by type
+        { name =~ "tool:.*" && span.tool.type = "script" }
+        ```
+
+        ## Emission Configuration
+
+        Include emission section with:
+        ```yaml
+        emission:
+          otlp_endpoint: "http://localhost:4317"
+          service_name: "contextcore-squirrel"
+          resource_attributes:
+            service.version: "1.0.0"
+        ```
+
+        ## Acceptance Criteria
+        - [ ] Schema validates against existing lesson-learned-schema.yaml structure
+        - [ ] All 6 span types defined with common + type-specific attributes
+        - [ ] TraceQL examples use correct span. prefix
+        - [ ] Token budget annotated (~400 tokens for full schema)
+        - [ ] File created at schemas/squirrel-knowledge-schema.yaml
+
+      context:
+        language: YAML
+        output_file: schemas/squirrel-knowledge-schema.yaml
+        pattern_file: schemas/lesson-learned-schema.yaml
+        pattern_content: |
+          # Reference: lesson-learned-schema.yaml structure
+          schema_version: "1.0.0"
+          schema_name: "lesson-learned"
+          description: "..."
+
+          span_types:
+            lesson_domain:
+              name_pattern: "lesson_domain:{domain_id}"
+              description: "..."
+              attributes:
+                domain.id:
+                  type: string
+                  required: true
+                  description: "..."
+            # ... more span types
+
+          query_patterns:
+            by_domain: |
+              { name =~ "lesson:.*" && span.lesson.domain = "${domain}" }
+
+          emission:
+            otlp_endpoint: "http://localhost:4317"
+            service_name: "contextcore-squirrel-lessons"
+
+  # =============================================================================
+  # SQUIRREL-002: Create Knowledge Parser
+  # =============================================================================
+  - task_id: SQUIRREL-002
+    title: Create Knowledge Parser
+    story_points: 5
+    depends_on:
+      - SQUIRREL-001
+    config:
+      task_description: |
+        Create Python parser to read capability YAML files and convert to dataclasses for emission.
+
+        ## Requirements
+
+        1. Create file: `scripts/squirrel_knowledge_parser.py`
+        2. Follow the pattern of lessons_learned_parser.py (provided in context)
+
+        ## Dataclasses to Define
+
+        ```python
+        @dataclass
+        class CapabilityItem:
+            """Base class for all capability items."""
+            id: str
+            name: str
+            category: str  # endpoint|skill|tool|workflow|process|project
+            description: str
+            tags: str  # Comma-separated
+            tier: str  # public|widely_shared|narrowly_shared|personal
+            source_file: str
+            token_budget: int = 0
+
+        @dataclass
+        class Endpoint(CapabilityItem):
+            url: str = ""
+            port: int = 0
+            protocol: str = "http"
+            authentication: str = "none"
+            related_skills: str = ""
+
+        @dataclass
+        class Skill(CapabilityItem):
+            location: str = ""
+            skill_category: str = ""  # Note: 'category' already used in base
+            use_when: str = ""
+            triggers: str = ""
+
+        @dataclass
+        class Tool(CapabilityItem):
+            tool_type: str = ""  # script|directory|cli|config
+            location: str = ""
+            usage: str = ""
+            related_skills: str = ""
+
+        @dataclass
+        class Workflow(CapabilityItem):
+            workflow_type: str = ""  # methodology|investigation|automation
+            step_count: int = 0
+            steps_summary: str = ""
+            related_skills: str = ""
+
+        @dataclass
+        class Process(CapabilityItem):
+            process_type: str = ""  # convention|methodology|checklist
+            rules_summary: str = ""
+            is_anti_pattern: bool = False
+
+        @dataclass
+        class Project(CapabilityItem):
+            path: str = ""
+            status: str = "active"
+            key_docs: str = ""
+            related_skills: str = ""
+
+        @dataclass
+        class SquirrelIndex:
+            tier: str
+            source_path: str
+            endpoints: List[Endpoint]
+            skills: List[Skill]
+            tools: List[Tool]
+            workflows: List[Workflow]
+            processes: List[Process]
+            projects: List[Project]
+        ```
+
+        ## Parse Functions to Implement
+
+        ```python
+        def parse_endpoints_yaml(path: Path, tier: str) -> List[Endpoint]:
+            """Parse endpoints.yaml file."""
+
+        def parse_skills_yaml(path: Path, tier: str) -> List[Skill]:
+            """Parse skills.yaml file."""
+
+        def parse_tools_yaml(path: Path, tier: str) -> List[Tool]:
+            """Parse tools.yaml file."""
+
+        def parse_workflows_yaml(path: Path, tier: str) -> List[Workflow]:
+            """Parse workflows.yaml file."""
+
+        def parse_processes_yaml(path: Path, tier: str) -> List[Process]:
+            """Parse processes.yaml file."""
+
+        def parse_projects_yaml(path: Path, tier: str) -> List[Project]:
+            """Parse projects.yaml file."""
+
+        def parse_capability_index(index_path: Path) -> SquirrelIndex:
+            """Parse entire capability index directory."""
+        ```
+
+        ## CLI Interface
+
+        ```bash
+        python squirrel_knowledge_parser.py ./skills/dev-tour-guide/index/ --output /tmp/squirrel.json
+        python squirrel_knowledge_parser.py ./skills/dev-tour-guide/index/ --stats
+        ```
+
+        ## Error Handling
+
+        - Handle missing YAML files gracefully (log warning, continue)
+        - Handle malformed YAML (log warning with filename, continue)
+        - Never crash on bad input
+
+        ## Acceptance Criteria
+        - [ ] All 6 parse functions implemented
+        - [ ] Dataclasses match schema attributes exactly
+        - [ ] CLI works with --output and --stats options
+        - [ ] Graceful error handling (malformed YAML logs warning, doesn't crash)
+        - [ ] Full type hints (would pass mypy)
+        - [ ] File created at scripts/squirrel_knowledge_parser.py
+
+      context:
+        language: Python 3.9+
+        output_file: scripts/squirrel_knowledge_parser.py
+        pattern_file: scripts/lessons_learned_parser.py
+        source_data_structure: |
+          # Source YAML structure for endpoints.yaml:
+          endpoints:
+            - id: grafana_local
+              name: Grafana Dashboard
+              type: service
+              url: http://localhost:3000
+              protocol: http
+              authentication:
+                type: none
+              description: Local observability dashboards
+              related_skills: [o11y, grafana-dashboards]
+              tags: [observability, monitoring, dashboards]
+              tier_origin: public
+
+          # Source YAML structure for skills.yaml:
+          skills:
+            - id: o11y
+              name: Observability Analyst
+              category: observability
+              description: AI-powered root cause analysis
+              location: ~/.claude/skills/o11y/
+              use_when:
+                - Investigating production issues
+                - Analyzing error spikes
+              tags: [debugging, observability]
+              tier_origin: public
+
+          # Source YAML structure for workflows.yaml:
+          workflows:
+            - id: session_start
+              name: Session Initialization
+              description: Standard workflow when starting
+              type: methodology
+              steps:
+                - order: 1
+                  name: Invoke dev-tour-guide
+                  description: Orient to infrastructure
+              related_skills: [dev-tour-guide]
+              tags: [onboarding, session]
+
+          # Source YAML structure for processes.yaml:
+          processes:
+            - id: no_manual_log_grep
+              name: No Manual Log Grepping
+              type: convention
+              description: Never grep logs manually
+              rules:
+                - Use o11y skill for all log analysis
+              tags: [observability, anti-pattern]
+
+  # =============================================================================
+  # SQUIRREL-003: Create Knowledge Emitter
+  # =============================================================================
+  - task_id: SQUIRREL-003
+    title: Create Knowledge Emitter
+    story_points: 5
+    depends_on:
+      - SQUIRREL-002
+    config:
+      task_description: |
+        Create Python emitter to send parsed knowledge items to Tempo as OTel spans via OTLP.
+
+        ## Requirements
+
+        1. Create file: `scripts/squirrel_knowledge_emitter.py`
+        2. Follow the pattern of lessons_learned_emitter.py (provided in context)
+
+        ## CRITICAL: OTel SDK Requirements
+
+        From Observability Lessons Learned:
+
+        ```python
+        # 1. Set OTEL_EXPORTER_OTLP_ENDPOINT BEFORE importing OTel SDK
+        import os
+        os.environ.setdefault("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+
+        # 2. Import AFTER setting env var
+        from opentelemetry import trace
+        from opentelemetry.sdk.trace import TracerProvider
+        # ...
+
+        # 3. ALWAYS call shutdown() to flush spans
+        try:
+            # emit spans
+        finally:
+            provider.shutdown()
+        ```
+
+        ## SquirrelEmitter Class
+
+        ```python
+        class SquirrelEmitter:
+            def __init__(self, endpoint: str = "http://localhost:4317", dry_run: bool = False):
+                """Initialize emitter with resource.service.name = 'contextcore-squirrel'"""
+
+            def emit_endpoint(self, endpoint: Endpoint, parent_context=None) -> None:
+                """Emit endpoint:* span with all attributes."""
+
+            def emit_skill(self, skill: Skill, parent_context=None) -> None:
+                """Emit skill:* span with all attributes."""
+
+            def emit_tool(self, tool: Tool, parent_context=None) -> None:
+                """Emit tool:* span with all attributes."""
+
+            def emit_workflow(self, workflow: Workflow, parent_context=None) -> None:
+                """Emit workflow:* span with all attributes."""
+
+            def emit_process(self, process: Process, parent_context=None) -> None:
+                """Emit process:* span with all attributes."""
+
+            def emit_project(self, project: Project, parent_context=None) -> None:
+                """Emit project:* span with all attributes."""
+
+            def emit_tier(self, index: SquirrelIndex) -> None:
+                """Emit squirrel_index:* parent span with all children."""
+
+            def emit_all(self, indexes: List[SquirrelIndex]) -> dict:
+                """Emit all tiers. Returns stats dict."""
+
+            def shutdown(self) -> None:
+                """Flush and close. REQUIRED for OTel SDK."""
+        ```
+
+        ## Span Naming Convention
+
+        - Parent span: `squirrel_index:{tier}` (e.g., `squirrel_index:public`)
+        - Child spans: `{type}:{id}` (e.g., `endpoint:grafana_local`, `skill:o11y`)
+
+        ## Attribute Setting Pattern
+
+        ```python
+        # Common attributes
+        span.set_attribute("item.id", item.id)
+        span.set_attribute("item.name", item.name)
+        span.set_attribute("item.category", item.category)
+        span.set_attribute("item.tier", item.tier)
+        span.set_attribute("item.tags", item.tags)
+        span.set_attribute("item.description", item.description)
+        span.set_attribute("item.source_file", item.source_file)
+        span.set_attribute("item.token_budget", item.token_budget)
+
+        # Type-specific (for endpoint)
+        span.set_attribute("endpoint.url", endpoint.url)
+        span.set_attribute("endpoint.port", endpoint.port)
+        # etc.
+        ```
+
+        ## CLI Interface
+
+        ```bash
+        # Emit to Tempo
+        python squirrel_knowledge_emitter.py ./skills/dev-tour-guide/index/ --endpoint localhost:4317
+
+        # Dry run
+        python squirrel_knowledge_emitter.py ./skills/dev-tour-guide/index/ --dry-run
+
+        # Emit specific tier
+        python squirrel_knowledge_emitter.py ./skills/dev-tour-guide/index/ --tier public
+        ```
+
+        ## Stats Tracking
+
+        Track and return:
+        - endpoints_emitted, skills_emitted, tools_emitted, etc.
+        - total_spans
+        - total_tokens
+
+        ## Acceptance Criteria
+        - [ ] All 6 emit functions implemented following OTel patterns
+        - [ ] shutdown() called in all code paths (including errors)
+        - [ ] dry_run mode prints spans without sending
+        - [ ] CLI works with --endpoint, --dry-run, --tier options
+        - [ ] Stats reported at end
+        - [ ] File created at scripts/squirrel_knowledge_emitter.py
+
+      context:
+        language: Python 3.9+
+        output_file: scripts/squirrel_knowledge_emitter.py
+        pattern_file: scripts/lessons_learned_emitter.py
+        otel_requirements: |
+          # CRITICAL OTel patterns from Lessons Learned:
+
+          # 1. Set env BEFORE import
+          import os
+          os.environ.setdefault("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+
+          # 2. Resource with service name
+          from opentelemetry.sdk.resources import Resource
+          resource = Resource.create({
+              "service.name": "contextcore-squirrel",
+              "service.version": "1.0.0",
+          })
+
+          # 3. Always shutdown
+          try:
+              emitter = SquirrelEmitter()
+              emitter.emit_all(indexes)
+          finally:
+              emitter.shutdown()
+
+          # 4. TraceQL uses span. prefix for dotted attributes
+          # { span.endpoint.port = 3000 }  # CORRECT
+          # { endpoint.port = 3000 }       # WRONG
+
+  # =============================================================================
+  # SQUIRREL-004: Create Unified Emitter
+  # =============================================================================
+  - task_id: SQUIRREL-004
+    title: Create Unified Emitter
+    story_points: 2
+    depends_on:
+      - SQUIRREL-003
+    config:
+      task_description: |
+        Create convenience script to emit both lessons learned AND knowledge items in one command.
+
+        ## Requirements
+
+        1. Create file: `scripts/squirrel_emit_all.py`
+        2. Import and use existing LessonsEmitter and SquirrelEmitter
+
+        ## Implementation
+
+        ```python
+        #!/usr/bin/env python3
+        """
+        Unified emitter for ContextCore Squirrel.
+        Emits both lessons learned and knowledge items to Tempo.
+
+        Usage:
+            python squirrel_emit_all.py \\
+                --lessons ~/Documents/craft/Lessons_Learned/ \\
+                --knowledge ./skills/dev-tour-guide/index/
+        """
+
+        import argparse
+        import os
+        import sys
+        from pathlib import Path
+
+        # Set OTEL endpoint BEFORE imports
+        os.environ.setdefault("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+
+        from lessons_learned_emitter import LessonsEmitter
+        from lessons_learned_parser import parse_all_domains, to_dict
+        from squirrel_knowledge_emitter import SquirrelEmitter
+        from squirrel_knowledge_parser import parse_capability_index
+
+
+        def main():
+            parser = argparse.ArgumentParser(...)
+            parser.add_argument("--lessons", type=Path, help="Path to Lessons_Learned directory")
+            parser.add_argument("--knowledge", type=Path, help="Path to capability index directory")
+            parser.add_argument("--endpoint", default="http://localhost:4317")
+            parser.add_argument("--dry-run", action="store_true")
+
+            args = parser.parse_args()
+
+            combined_stats = {
+                "lessons": {},
+                "knowledge": {},
+            }
+
+            # Emit lessons if path provided and exists
+            if args.lessons and args.lessons.exists():
+                # ... emit lessons
+
+            # Emit knowledge if path provided and exists
+            if args.knowledge and args.knowledge.exists():
+                # ... emit knowledge
+
+            # Print combined stats
+        ```
+
+        ## CLI Interface
+
+        ```bash
+        # Emit both
+        python squirrel_emit_all.py \
+            --lessons ~/Documents/craft/Lessons_Learned/ \
+            --knowledge ./skills/dev-tour-guide/index/
+
+        # Emit only lessons
+        python squirrel_emit_all.py --lessons ~/Documents/craft/Lessons_Learned/
+
+        # Emit only knowledge
+        python squirrel_emit_all.py --knowledge ./skills/dev-tour-guide/index/
+
+        # Dry run
+        python squirrel_emit_all.py --lessons ... --knowledge ... --dry-run
+        ```
+
+        ## Error Handling
+
+        - Handle case where one path doesn't exist (emit what's available)
+        - Log which paths were processed
+        - Continue even if one emitter fails
+
+        ## Acceptance Criteria
+        - [ ] CLI works with --lessons and --knowledge options
+        - [ ] Both lessons and knowledge emitted to Tempo
+        - [ ] Stats show combined counts
+        - [ ] Handles missing paths gracefully
+        - [ ] File created at scripts/squirrel_emit_all.py
+
+      context:
+        language: Python 3.9+
+        output_file: scripts/squirrel_emit_all.py
+        existing_scripts:
+          - scripts/lessons_learned_emitter.py
+          - scripts/lessons_learned_parser.py
+          - scripts/squirrel_knowledge_emitter.py
+          - scripts/squirrel_knowledge_parser.py
+
+  # =============================================================================
+  # SQUIRREL-005: Create Documentation
+  # =============================================================================
+  - task_id: SQUIRREL-005
+    title: Create Documentation
+    story_points: 2
+    depends_on:
+      - SQUIRREL-001
+      - SQUIRREL-003
+    config:
+      task_description: |
+        Create documentation for the Squirrel knowledge emission system.
+
+        ## Requirements
+
+        1. Create file: `docs/squirrel-knowledge-emission.md`
+        2. Follow the pattern of docs/lessons-learned-emission.md
+
+        ## Document Sections
+
+        ### 1. Overview
+        - What the system does
+        - Benefits (token-efficient discovery, semantic filtering, progressive disclosure)
+
+        ### 2. Architecture
+        - ASCII diagram showing: YAML → Parser → Emitter → Tempo
+        - Similar to lessons-learned-emission.md diagram
+
+        ### 3. Quick Start
+        ```bash
+        # Prerequisites
+        pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp-proto-grpc
+
+        # Emit knowledge items
+        python scripts/squirrel_knowledge_emitter.py \
+          ./skills/dev-tour-guide/index/ \
+          --endpoint http://localhost:4317
+
+        # Emit everything (lessons + knowledge)
+        python scripts/squirrel_emit_all.py \
+          --lessons ~/Documents/craft/Lessons_Learned/ \
+          --knowledge ./skills/dev-tour-guide/index/
+        ```
+
+        ### 4. Span Schema
+        - Hierarchy diagram
+        - Key attributes table for each span type
+
+        ### 5. TraceQL Query Patterns
+        All queries must use `span.` prefix for dotted attributes:
+        ```traceql
+        # Find endpoints by port
+        { name =~ "endpoint:.*" && span.endpoint.port = 3000 }
+
+        # Find skills by category
+        { name =~ "skill:.*" && span.skill.category = "observability" }
+
+        # Find anti-patterns
+        { name =~ "process:.*" && span.process.is_anti_pattern = true }
+
+        # Browse with select()
+        { name =~ "skill:.*" }
+        | select(span.item.id, span.item.name, span.skill.use_when)
+        ```
+
+        ### 6. Verification Steps
+        - curl commands to verify data in Tempo
+        - Grafana Explore instructions
+
+        ### 7. Token Economics
+        - Summary vs full content token comparison
+        - Compression ratio
+
+        ### 8. Files Reference
+        | File | Purpose |
+        |------|---------|
+        | schemas/squirrel-knowledge-schema.yaml | Schema definition |
+        | scripts/squirrel_knowledge_parser.py | YAML parser |
+        | scripts/squirrel_knowledge_emitter.py | Tempo emitter |
+        | scripts/squirrel_emit_all.py | Unified emitter |
+        | docs/squirrel-knowledge-emission.md | This documentation |
+
+        ## Acceptance Criteria
+        - [ ] All sections present and accurate
+        - [ ] TraceQL examples use span. prefix
+        - [ ] Quick start commands are correct
+        - [ ] Diagram matches actual architecture
+        - [ ] File created at docs/squirrel-knowledge-emission.md
+
+      context:
+        format: Markdown
+        output_file: docs/squirrel-knowledge-emission.md
+        pattern_file: docs/lessons-learned-emission.md
+
+  # =============================================================================
+  # SQUIRREL-006: Update MANIFEST
+  # =============================================================================
+  - task_id: SQUIRREL-006
+    title: Update MANIFEST
+    story_points: 1
+    depends_on:
+      - SQUIRREL-003
+    config:
+      task_description: |
+        Update dev-tour-guide MANIFEST.yaml to reflect Squirrel branding and Tempo queryability.
+
+        ## Requirements
+
+        1. Edit file: `skills/dev-tour-guide/MANIFEST.yaml`
+        2. Add Squirrel quick actions and references
+
+        ## Changes to Make
+
+        ### Add Quick Action for Tempo Query
+
+        ```yaml
+        quick_actions:
+          # ... existing actions ...
+
+          query_knowledge:
+            action: tempo_query
+            description: Query knowledge items in Tempo via TraceQL
+            examples:
+              - "{ name =~ 'skill:.*' && span.skill.category = 'observability' }"
+              - "{ name =~ 'endpoint:.*' && span.endpoint.port = 3000 }"
+        ```
+
+        ### Add Capability Reference
+
+        ```yaml
+        capabilities:
+          # ... existing capabilities ...
+
+          - id: squirrel
+            file: agent/capabilities/squirrel.yaml
+            description: Queryable knowledge via Tempo TraceQL
+        ```
+
+        ### Add Comments for TraceQL Patterns
+
+        Add a comment section showing common TraceQL patterns for knowledge discovery.
+
+        ## Acceptance Criteria
+        - [ ] MANIFEST.yaml updated with Squirrel references
+        - [ ] Quick action for Tempo query documented
+        - [ ] Capability reference added
+        - [ ] File updated at skills/dev-tour-guide/MANIFEST.yaml
+
+      context:
+        language: YAML
+        file_to_edit: skills/dev-tour-guide/MANIFEST.yaml
+        output_file: skills/dev-tour-guide/MANIFEST.yaml
+        current_content: |
+          # Current MANIFEST.yaml content (relevant sections):
+          quick_actions:
+            debug_error:
+              delegate_to: o11y
+            create_dashboard:
+              delegate_to: grafana-dashboards
+            check_infra:
+              action: read_file
+              path: ~/.claude/harbor-manifest.yaml
+            find_skill:
+              action: read_file
+              path: agent/_index.yaml
+
+          capabilities:
+            - id: observability
+              file: agent/capabilities/observability.yaml
+            - id: skills
+              file: agent/capabilities/skills.yaml
+            # ... etc
+
+# =============================================================================
+# VERIFICATION
+# =============================================================================
+verification:
+  after_all_tasks:
+    - name: Parse and inspect
+      command: |
+        python scripts/squirrel_knowledge_parser.py ./skills/dev-tour-guide/index/ --output /tmp/squirrel.json
+        jq '.endpoints | length' /tmp/squirrel.json
+        jq '.skills | length' /tmp/squirrel.json
+
+    - name: Emit to Tempo
+      command: |
+        python scripts/squirrel_knowledge_emitter.py ./skills/dev-tour-guide/index/ --endpoint localhost:4317
+
+    - name: Verify in Tempo
+      command: |
+        curl -s "http://localhost:3200/api/search?q={name=~\"endpoint:.*\"}&limit=5"
+
+    - name: Unified emit test
+      command: |
+        python scripts/squirrel_emit_all.py \
+          --lessons ~/Documents/craft/Lessons_Learned/ \
+          --knowledge ./skills/dev-tour-guide/index/
