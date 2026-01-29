@@ -46,3 +46,7 @@ Thumbs.db
 # Project specific
 *.log
 .cache/
+
+# Separate projects
+workflows/
+inbox/
