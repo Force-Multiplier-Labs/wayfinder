@@ -1,0 +1,70 @@
+# Wayfinder Project Context
+# Reference implementation of the ContextCore metadata standard
+# Updated: 2026-02-01
+
+project:
+  id: "wayfinder"
+  name: "Wayfinder"
+  epic: "PROJECT-O11Y"
+  description: |
+    Reference implementation of the ContextCore metadata standard.
+    Project management observability framework modeling tasks as OpenTelemetry spans.
+    Dual-telemetry architecture: spans to Tempo (hierarchy, timing, TraceQL) and
+    structured logs to Loki (events, status changes, metrics derivation via recording rules).
+
+status:
+  phase: "Post-separation from monorepo"
+
+business:
+  criticality: critical
+  owner: "observability-team"
+  value: "Eliminates manual status reporting by deriving project health from artifact metadata"
+  costCenter: "platform-engineering"
+
+requirements:
+  availability: "99.9%"
+  latencyP99: "500ms"
+  latencyP50: "100ms"
+  dataRetention: "30 days"
+  throughput: "1000 spans/second"
+  errorBudget: "0.1%"
+
+ecosystem:
+  namingConvention: "animal-anishinaabe"
+  packages:
+    - name: "contextcore"
+      animal: "Spider"
+      anishinaabe: "Asabikeshiinh"
+      purpose: "Core framework—tasks as spans, agent insights, observability"
+      status: "beta"
+    - name: "contextcore-rabbit"
+      animal: "Rabbit"
+      anishinaabe: "Waabooz"
+      purpose: "Alert-triggered automation"
+      status: "beta"
+    - name: "contextcore-fox"
+      animal: "Fox"
+      anishinaabe: "Waagosh"
+      purpose: "Context enrichment for alert automation"
+      status: "beta"
+    - name: "contextcore-coyote"
+      animal: "Coyote"
+      anishinaabe: "Wiisagi-ma'iingan"
+      purpose: "Multi-agent incident resolution pipeline"
+      status: "beta"
+    - name: "contextcore-beaver"
+      animal: "Beaver"
+      anishinaabe: "Amik"
+      purpose: "LLM provider abstraction with cost tracking"
+      status: "beta"
+    - name: "contextcore-squirrel"
+      animal: "Squirrel"
+      anishinaabe: "Ajidamoo"
+      purpose: "Skills library for token-efficient agent discovery"
+      status: "beta"
+    - name: "contextcore-owl"
+      animal: "Owl"
+      anishinaabe: "Gookooko'oo"
+      purpose: "Grafana plugins (internal)"
+      status: "internal"
+      userFacing: false

@@ -1,0 +1,122 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.nox/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff
+.ruff_cache/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Kubernetes
+*.kubeconfig
+kubeconfig
+
+# Generated artifacts
+generated/
+
+# Environment
+.env
+.env.local
+
+# Operational data (persistent volumes)
+data/
+backups/
+
+# Secrets (never commit)
+**/secret-*.yaml
+**/secret*.yaml
+*.secret.yaml
+
+# Archives and zip files
+*.zip
+
+# Backup files
+*.bak
+*.orig
+
+# Extracted archive directories
+contextcore_cfp_variants/
+contextcore_docs/
+contextcore_governance_docs/
+contextcore_next_steps_docs/
+contextcore_next_steps_docs (1)/
+
+# Working notes and dev logs
+*-todos.md
+*Dev Log.md
+areas-of-improvemet-*.md
+next-steps-*.md
+next_steps_*.md
+practice-*.md
+CC-operator-prompt.md
+
+# Marketing materials (separate repo)
+marketing/
+
+# Scratch/experimental directories
+agent-based-commuication/
+
+# Generated HTML artifacts
+index.html
+
+# Commit planning (temporary)
+COMMIT_PLAN.md
+.prime_contractor_state.json
+
+# Demo output (generated)
+demo_output/
+
+# Grafana plugin build artifacts (handled by contextcore-owl/.gitignore)
+contextcore-owl/node_modules/
+contextcore-owl/plugins-new/*/node_modules/
+contextcore-owl/plugins/*/node_modules/
+*.LICENSE.txt
+
+# Legacy directory remnants
+contextcore-grafana/
