@@ -1,0 +1,62 @@
+# ContextCore Grafana Datasources
+# Auto-provisioned on container start
+#
+# IMPORTANT: UIDs are lowercase to match dashboard variable defaults.
+# Dashboards use ${datasource} with default "mimir" and ${tempo} with default "tempo".
+
+apiVersion: 1
+
+datasources:
+  # Tempo - Distributed Tracing
+  - name: Tempo
+    uid: tempo  # Explicit UID - matches dashboard variables
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    isDefault: false
+    jsonData:
+      httpMethod: GET
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: true
+        filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: mimir
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+      nodeGraph:
+        enabled: true
+      serviceMap:
+        datasourceUid: mimir
+      lokiSearch:
+        datasourceUid: loki
+
+  # Mimir - Metrics (Prometheus-compatible)
+  - name: Mimir
+    uid: mimir  # Explicit UID - matches dashboard variables
+    type: prometheus
+    access: proxy
+    url: http://mimir:9009/prometheus
+    isDefault: true
+    jsonData:
+      httpMethod: POST
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+
+  # Loki - Log Aggregation
+  - name: Loki
+    uid: loki  # Explicit UID - matches dashboard variables
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    jsonData:
+      derivedFields:
+        - name: TraceID
+          matcherRegex: '"trace_id":"([a-f0-9]+)"'
+          url: '$${__value.raw}'
+          datasourceUid: tempo
+

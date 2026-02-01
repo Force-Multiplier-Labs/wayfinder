@@ -1,0 +1,46 @@
+# =============================================================================
+# TERM: FOX (contextcore-fox)
+# =============================================================================
+# Token budget: ~100 tokens
+# =============================================================================
+
+term:
+  id: fox
+  name: Fox
+  type: package
+  package_name: contextcore-fox
+  version: "1.0.0"
+
+  anishinaabe:
+    name: Waagosh
+    meaning: "Clever and adaptive"
+
+  definition: |
+    Enriches alerts with project context from ContextCore. Adds business
+    meaning—criticality, ownership, SLOs—to every alert.
+
+  purpose: Context enrichment for alerts
+
+  capabilities:
+    - Alert enrichment with project context
+    - Intelligent routing based on criticality
+    - Claude integration for analysis
+    - OTel span emission for alert handling
+
+  why_fox: |
+    Foxes are clever and adaptive, making connections others miss.
+    This package cleverly enriches alerts with business context.
+
+  triggers:
+    - fox
+    - enrich
+    - waagosh
+    - context_enrichment
+    - smart_routing
+
+  depends_on:
+    - spider
+    - rabbit
+
+  persistence:
+    tempo_query: '{ term.id = "fox" }'

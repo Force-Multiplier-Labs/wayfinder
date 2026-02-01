@@ -1,0 +1,334 @@
+---
+# Mimir Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mimir
+  namespace: observability
+  labels:
+    app: mimir
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mimir
+  template:
+    metadata:
+      labels:
+        app: mimir
+    spec:
+      containers:
+        - name: mimir
+          image: grafana/mimir:2.14.0
+          args:
+            - -config.file=/etc/mimir/mimir.yaml
+          ports:
+            - containerPort: 9009
+              name: http
+            - containerPort: 9095
+              name: grpc
+          volumeMounts:
+            - name: config
+              mountPath: /etc/mimir
+            - name: data
+              mountPath: /data
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 9009
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 9009
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: mimir-config
+        - name: data
+          emptyDir: {}
+---
+# Tempo Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tempo
+  namespace: observability
+  labels:
+    app: tempo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tempo
+  template:
+    metadata:
+      labels:
+        app: tempo
+    spec:
+      containers:
+        - name: tempo
+          image: grafana/tempo:2.6.0
+          args:
+            - -config.file=/etc/tempo/tempo.yaml
+          ports:
+            - containerPort: 3200
+              name: http
+            - containerPort: 4317
+              name: otlp-grpc
+          volumeMounts:
+            - name: config
+              mountPath: /etc/tempo
+            - name: data
+              mountPath: /var/tempo
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3200
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: tempo-config
+            optional: true
+        - name: data
+          emptyDir: {}
+---
+# Loki Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki
+  namespace: observability
+  labels:
+    app: loki
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      containers:
+        - name: loki
+          image: grafana/loki:3.2.0
+          args:
+            - -config.file=/etc/loki/local-config.yaml
+          ports:
+            - containerPort: 3100
+              name: http
+          volumeMounts:
+            - name: data
+              mountPath: /loki
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3100
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+# Alloy Deployment (OTLP Collector)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alloy
+  namespace: observability
+  labels:
+    app: alloy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alloy
+  template:
+    metadata:
+      labels:
+        app: alloy
+    spec:
+      initContainers:
+        - name: wait-for-loki
+          image: busybox:1.36
+          command: ['sh', '-c', 'until wget -q --spider http://loki.observability.svc.cluster.local:3100/ready; do echo "Waiting for Loki..."; sleep 5; done']
+        - name: wait-for-tempo
+          image: busybox:1.36
+          command: ['sh', '-c', 'until wget -q --spider http://tempo.observability.svc.cluster.local:3200/ready; do echo "Waiting for Tempo..."; sleep 5; done']
+        - name: wait-for-mimir
+          image: busybox:1.36
+          command: ['sh', '-c', 'until wget -q --spider http://mimir.observability.svc.cluster.local:9009/ready; do echo "Waiting for Mimir..."; sleep 5; done']
+      containers:
+        - name: alloy
+          image: grafana/alloy:v1.4.2
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --storage.path=/var/lib/alloy/data
+            - --server.http.listen-addr=0.0.0.0:12345
+          ports:
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+            - containerPort: 12345
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+            - name: data
+              mountPath: /var/lib/alloy/data
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+      volumes:
+        - name: config
+          configMap:
+            name: alloy-config
+        - name: data
+          emptyDir: {}
+---
+# Grafana Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: observability
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      initContainers:
+        - name: wait-for-loki
+          image: busybox:1.36
+          command: ['sh', '-c', 'until wget -q --spider http://loki.observability.svc.cluster.local:3100/ready; do echo "Waiting for Loki..."; sleep 5; done']
+        - name: wait-for-tempo
+          image: busybox:1.36
+          command: ['sh', '-c', 'until wget -q --spider http://tempo.observability.svc.cluster.local:3200/ready; do echo "Waiting for Tempo..."; sleep 5; done']
+        - name: wait-for-mimir
+          image: busybox:1.36
+          command: ['sh', '-c', 'until wget -q --spider http://mimir.observability.svc.cluster.local:9009/ready; do echo "Waiting for Mimir..."; sleep 5; done']
+      containers:
+        - name: grafana
+          image: grafana/grafana:12.3.0
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: admin
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: admin
+            - name: GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS
+              value: "011ybubo-chat-panel,011ybubo-datasource,contextcore-chat-panel,contextcore-workflow-panel,contextcore-datasource"
+          ports:
+            - containerPort: 3000
+              name: http
+          volumeMounts:
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: dashboards-config
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: contextcore-dashboards
+              mountPath: /var/lib/grafana/dashboards/contextcore
+            # O11yBubo plugins (mounted from Kind host)
+            - name: plugin-011ybubo-chat-panel
+              mountPath: /var/lib/grafana/plugins/011ybubo-chat-panel
+            - name: plugin-011ybubo-datasource
+              mountPath: /var/lib/grafana/plugins/011ybubo-datasource
+            # ContextCore plugins (mounted from Kind host)
+            - name: plugin-contextcore-chat-panel
+              mountPath: /var/lib/grafana/plugins/contextcore-chat-panel
+            - name: plugin-contextcore-workflow-panel
+              mountPath: /var/lib/grafana/plugins/contextcore-workflow-panel
+            - name: plugin-contextcore-datasource
+              mountPath: /var/lib/grafana/plugins/contextcore-datasource
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: datasources
+          configMap:
+            name: grafana-datasources
+        - name: dashboards-config
+          configMap:
+            name: grafana-dashboards-config
+        - name: contextcore-dashboards
+          configMap:
+            name: contextcore-dashboards
+            optional: true
+        # O11yBubo plugins (hostPath from Kind extraMounts)
+        - name: plugin-011ybubo-chat-panel
+          hostPath:
+            path: /plugins/011ybubo/011ybubo-chat-panel
+            type: DirectoryOrCreate
+        - name: plugin-011ybubo-datasource
+          hostPath:
+            path: /plugins/011ybubo/011ybubo-datasource
+            type: DirectoryOrCreate
+        # ContextCore plugins (hostPath from Kind extraMounts)
+        - name: plugin-contextcore-chat-panel
+          hostPath:
+            path: /plugins/contextcore/contextcore-chat-panel
+            type: DirectoryOrCreate
+        - name: plugin-contextcore-workflow-panel
+          hostPath:
+            path: /plugins/contextcore/contextcore-workflow-panel
+            type: DirectoryOrCreate
+        - name: plugin-contextcore-datasource
+          hostPath:
+            path: /plugins/contextcore/contextcore-datasource
+            type: DirectoryOrCreate

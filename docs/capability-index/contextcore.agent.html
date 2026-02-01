@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ContextCore Agent Capabilities - Capability Index</title>
+    <style>
+:root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --border-color: #dee2e6;
+    --accent-color: #0d6efd;
+    --success-color: #198754;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #0dcaf0;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-tertiary: #0f3460;
+    --text-primary: #e8e8e8;
+    --text-secondary: #a0a0a0;
+    --border-color: #3a3a5a;
+    --accent-color: #4dabf7;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+header {
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    margin: 0 0 0.5rem 0;
+    color: var(--accent-color);
+}
+
+.metadata {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.metadata span {
+    background: var(--bg-tertiary);
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+}
+
+.description {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-color);
+}
+
+/* Summary Table */
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+}
+
+.summary-table th,
+.summary-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.summary-table th {
+    background: var(--bg-secondary);
+    font-weight: 600;
+}
+
+.summary-table tr:hover {
+    background: var(--bg-secondary);
+}
+
+.summary-table a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+.summary-table a:hover {
+    text-decoration: underline;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.badge-stable { background: var(--success-color); color: white; }
+.badge-beta { background: var(--warning-color); color: #212529; }
+.badge-draft { background: var(--danger-color); color: white; }
+.badge-deprecated { background: var(--text-secondary); color: white; }
+
+.badge-category {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* Capability Cards */
+.capability {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.capability-header {
+    background: var(--bg-tertiary);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.capability-header h3 {
+    margin: 0;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+    font-size: 1.1rem;
+}
+
+.capability-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.capability-body {
+    padding: 1.5rem;
+}
+
+.capability-summary {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+    border-left: 3px solid var(--accent-color);
+}
+
+.capability-section {
+    margin-top: 1.5rem;
+}
+
+.capability-section h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+/* Schema Tables */
+.schema-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.schema-table th,
+.schema-table td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border: 1px solid var(--border-color);
+}
+
+.schema-table th {
+    background: var(--bg-tertiary);
+}
+
+.schema-table code {
+    background: var(--bg-primary);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
+}
+
+/* Code Blocks */
+pre {
+    background: var(--bg-tertiary);
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.9rem;
+}
+
+code {
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+}
+
+/* Lists */
+.evidence-list,
+.antipattern-list {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.evidence-list li,
+.antipattern-list li {
+    margin-bottom: 0.5rem;
+}
+
+.antipattern-list li::marker {
+    content: "⚠️ ";
+}
+
+/* Triggers */
+.triggers {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.trigger {
+    background: var(--bg-tertiary);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+}
+
+/* TOC */
+.toc {
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.toc h2 {
+    margin-top: 0;
+}
+
+.toc-category {
+    margin-bottom: 1rem;
+}
+
+.toc-category h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.toc-list {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.toc-list li {
+    margin-bottom: 0.25rem;
+}
+
+/* Risk Flags */
+.risk-flag {
+    background: var(--bg-secondary);
+    border-left: 4px solid var(--warning-color);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: 0 8px 8px 0;
+}
+
+.risk-flag h4 {
+    margin: 0 0 0.5rem 0;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+}
+
+/* Pivoted Work */
+.pivot {
+    background: var(--bg-secondary);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--info-color);
+}
+
+/* Changelog */
+.changelog-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.changelog-table th,
+.changelog-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Footer */
+footer {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .capability-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .metadata {
+        flex-direction: column;
+    }
+}
+</style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">🌓 Toggle Theme</button>
+
+    <header>
+        <div class="container">
+            <h1>ContextCore Agent Capabilities</h1>
+            <div class="metadata">
+                <span><strong>Version:</strong> 1.0.0</span>
+                <span><strong>Generated:</strong> 2026-01-28 13:55</span>
+                <span><strong>Owner:</strong> neilyashinsky</span>
+                <span><a href="https://github.com/neilyashinsky/ContextCore">Repository</a></span>
+            </div>
+            <div class="description">Agent-focused capabilities for ContextCore SDK.
+Tasks as OTel spans, insights as knowledge, handoffs as coordination.</div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section>
+            <h2>Capability Summary</h2>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Capability</th>
+                        <th>Category</th>
+                        <th>Maturity</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td><a href="#contextcoreinsightemit"><code>contextcore.insight.emit</code></a></td>
+                <td>action</td>
+                <td><span class="badge badge-stable">✅ Stable</span></td>
+                <td>95%</td>
+            </tr>
+        
+            <tr>
+                <td><a href="#contextcoreinsightquery"><code>contextcore.insight.query</code></a></td>
+                <td>query</td>
+                <td><span class="badge badge-stable">✅ Stable</span></td>
+                <td>90%</td>
+            </tr>
+        
+            <tr>
+                <td><a href="#contextcorehandoffinitiate"><code>contextcore.handoff.initiate</code></a></td>
+                <td>action</td>
+                <td><span class="badge badge-beta">🧪 Beta</span></td>
+                <td>85%</td>
+            </tr>
+        
+            <tr>
+                <td><a href="#contextcorehandoffreceive"><code>contextcore.handoff.receive</code></a></td>
+                <td>action</td>
+                <td><span class="badge badge-beta">🧪 Beta</span></td>
+                <td>80%</td>
+            </tr>
+        
+            <tr>
+                <td><a href="#contextcoreguidanceread_constraints"><code>contextcore.guidance.read_constraints</code></a></td>
+                <td>query</td>
+                <td><span class="badge badge-beta">🧪 Beta</span></td>
+                <td>85%</td>
+            </tr>
+        
+            <tr>
+                <td><a href="#contextcoreguidanceanswer_question"><code>contextcore.guidance.answer_question</code></a></td>
+                <td>action</td>
+                <td><span class="badge badge-beta">🧪 Beta</span></td>
+                <td>85%</td>
+            </tr>
+        
+            <tr>
+                <td><a href="#contextcorecode_generationcontract"><code>contextcore.code_generation.contract</code></a></td>
+                <td>action</td>
+                <td><span class="badge badge-beta">🧪 Beta</span></td>
+                <td>80%</td>
+            </tr>
+        
+            <tr>
+                <td><a href="#contextcoresize_estimationestimate"><code>contextcore.size_estimation.estimate</code></a></td>
+                <td>query</td>
+                <td><span class="badge badge-beta">🧪 Beta</span></td>
+                <td>75%</td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </section>
+
+        
+            <div class="toc">
+                <h2>Table of Contents</h2>
+                
+                <div class="toc-category">
+                    <h3>⚡ Action</h3>
+                    <ul class="toc-list"><li><a href="#contextcoreinsightemit"><code>contextcore.insight.emit</code></a> - Emit agent-generated insights as OTel spans for cr...</li><li><a href="#contextcorehandoffinitiate"><code>contextcore.handoff.initiate</code></a> - Start agent-to-agent task delegation with size con...</li><li><a href="#contextcorehandoffreceive"><code>contextcore.handoff.receive</code></a> - Poll for and process incoming handoffs as receivin...</li><li><a href="#contextcoreguidanceanswer_question"><code>contextcore.guidance.answer_question</code></a> - Answer open questions from humans with confidence ...</li><li><a href="#contextcorecode_generationcontract"><code>contextcore.code_generation.contract</code></a> - Define code generation contracts with size limits ...</li></ul>
+                </div>
+            
+                <div class="toc-category">
+                    <h3>🔍 Query</h3>
+                    <ul class="toc-list"><li><a href="#contextcoreinsightquery"><code>contextcore.insight.query</code></a> - Query prior insights from Tempo by project, type, ...</li><li><a href="#contextcoreguidanceread_constraints"><code>contextcore.guidance.read_constraints</code></a> - Read human-defined constraints from ProjectContext...</li><li><a href="#contextcoresize_estimationestimate"><code>contextcore.size_estimation.estimate</code></a> - Estimate code output size before generation using ...</li></ul>
+                </div>
+            
+            </div>
+        
+
+        <section>
+            <h2>Capabilities</h2>
+            
+        <div class="capability" id="contextcoreinsightemit">
+            <div class="capability-header">
+                <h3>⚡ <code>contextcore.insight.emit</code></h3>
+                <div class="capability-meta">
+                    <span class="badge badge-stable">✅ Stable</span>
+                    <span class="badge badge-category">action</span>
+                    <span class="badge badge-category">95% confidence</span>
+                </div>
+            </div>
+            <div class="capability-body">
+                <div class="capability-summary">Emit agent-generated insights as OTel spans for cross-agent collaboration</div>
+                
+            <div class="capability-section">
+                <h4>Description</h4>
+                <p>Persists agent-generated knowledge as OpenTelemetry spans in Tempo. Supports
+multiple insight types (decisions, blockers, lessons, etc.) with confidence
+scoring and evidence linking. Insights are queryable by other agents and
+visible in Grafana dashboards. Supports file-path scoping via `applies_to`
+for context-specific lessons.</p>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Triggers</h4>
+                <div class="triggers"><span class="trigger">emit insight</span><span class="trigger">record decision</span><span class="trigger">log blocker</span><span class="trigger">save lesson</span><span class="trigger">agent knowledge</span></div>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Inputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>insight_type</code></td>
+                <td><code>analysis | recommendation | decision | question | blocker | discovery | risk | progress | lesson</code></td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>summary</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td>Brief description of the insight</td>
+            </tr>
+        
+            <tr>
+                <td><code>confidence</code></td>
+                <td>number</td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>audience</code></td>
+                <td><code>agent | human | both</code></td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>rationale</code></td>
+                <td>string</td>
+                <td></td>
+                <td>Explanation supporting the insight</td>
+            </tr>
+        
+            <tr>
+                <td><code>evidence</code></td>
+                <td>array[object]</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>applies_to</code></td>
+                <td>array[string]</td>
+                <td></td>
+                <td>File paths or patterns this insight applies to</td>
+            </tr>
+        
+            <tr>
+                <td><code>category</code></td>
+                <td>string</td>
+                <td></td>
+                <td>Categorization for lessons (e.g., testing, architecture)</td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Outputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>id</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>trace_id</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>timestamp</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Evidence</h4>
+                <ul class="evidence-list"><li><strong>code:</strong> <code>src/contextcore/agent/insights.py</code> - InsightEmitter class with emit() method (lines 85-200)</li><li><strong>code:</strong> <code>src/contextcore/agent/insights.py</code> - InsightType enum defining all insight categories (lines 33-43)</li><li><strong>test:</strong> <code>tests/agent/test_insights.py</code> - Unit tests for insight emission</li></ul>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Anti-Patterns</h4>
+                <ul class="antipattern-list"><li>Never emit insights without confidence scores—they&#x27;re required for prioritization</li><li>Don&#x27;t use audience=agent for blockers humans need to see</li></ul>
+            </div>
+        
+            <div class="capability-section">
+                <h4>TraceQL Examples</h4>
+                <p><strong>Find high-confidence decisions</strong></p><pre><code>{ span.insight.type = &quot;decision&quot; &amp;&amp; span.insight.confidence &gt; 0.8 }</code></pre><p><strong>Find blockers for a specific project</strong></p><pre><code>{ span.insight.type = &quot;blocker&quot; &amp;&amp; resource.project.id = &quot;myproject&quot; }</code></pre>
+            </div>
+        
+            </div>
+        </div>
+    
+        <div class="capability" id="contextcoreinsightquery">
+            <div class="capability-header">
+                <h3>🔍 <code>contextcore.insight.query</code></h3>
+                <div class="capability-meta">
+                    <span class="badge badge-stable">✅ Stable</span>
+                    <span class="badge badge-category">query</span>
+                    <span class="badge badge-category">90% confidence</span>
+                </div>
+            </div>
+            <div class="capability-body">
+                <div class="capability-summary">Query prior insights from Tempo by project, type, confidence, or file path</div>
+                
+            <div class="capability-section">
+                <h4>Description</h4>
+                <p>Retrieves previously emitted insights from Tempo using TraceQL queries.
+Supports filtering by project, insight type, confidence threshold, time
+range, and file path scope. The `get_blockers()` method specifically
+retrieves unresolved blocker insights for a project.</p>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Triggers</h4>
+                <div class="triggers"><span class="trigger">query insights</span><span class="trigger">get decisions</span><span class="trigger">find blockers</span><span class="trigger">search lessons</span><span class="trigger">prior knowledge</span></div>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Inputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>project_id</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>insight_type</code></td>
+                <td><code>analysis | recommendation | decision | question | blocker | discovery | risk | progress | lesson</code></td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>min_confidence</code></td>
+                <td>number</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>time_range</code></td>
+                <td>string</td>
+                <td></td>
+                <td>Duration string (e.g., &quot;24h&quot;, &quot;7d&quot;)</td>
+            </tr>
+        
+            <tr>
+                <td><code>applies_to</code></td>
+                <td>string</td>
+                <td></td>
+                <td>Filter by file path or pattern</td>
+            </tr>
+        
+            <tr>
+                <td><code>limit</code></td>
+                <td>integer</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Evidence</h4>
+                <ul class="evidence-list"><li><strong>code:</strong> <code>src/contextcore/agent/insights.py</code> - InsightQuerier class with query() method (lines 397-876)</li><li><strong>code:</strong> <code>src/contextcore/agent/insights.py</code> - get_blockers() method for unresolved blockers (lines 878-883)</li><li><strong>test:</strong> <code>tests/agent/test_insights.py</code> - Query tests with various filters</li></ul>
+            </div>
+        
+            <div class="capability-section">
+                <h4>TraceQL Examples</h4>
+                <p><strong>Find lessons about testing</strong></p><pre><code>{ span.insight.type = &quot;lesson&quot; &amp;&amp; span.insight.applies_to =~ &quot;.*test.*&quot; }</code></pre><p><strong>Get summaries of high-confidence insights</strong></p><pre><code>{ span.insight.confidence &gt;= 0.9 } | select(span.insight.summary)</code></pre>
+            </div>
+        
+            </div>
+        </div>
+    
+        <div class="capability" id="contextcorehandoffinitiate">
+            <div class="capability-header">
+                <h3>⚡ <code>contextcore.handoff.initiate</code></h3>
+                <div class="capability-meta">
+                    <span class="badge badge-beta">🧪 Beta</span>
+                    <span class="badge badge-category">action</span>
+                    <span class="badge badge-category">85% confidence</span>
+                </div>
+            </div>
+            <div class="capability-body">
+                <div class="capability-summary">Start agent-to-agent task delegation with size constraints and expected output</div>
+                
+            <div class="capability-section">
+                <h4>Description</h4>
+                <p>Initiates structured task delegation between agents. The requesting agent
+specifies what capability is needed, inputs, and expected output format
+including size constraints (max_lines, max_tokens). Supports priority levels
+and timeout configuration. Uses pluggable storage (K8s CRD or file-based).</p>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Triggers</h4>
+                <div class="triggers"><span class="trigger">handoff to</span><span class="trigger">delegate task</span><span class="trigger">agent coordination</span><span class="trigger">request capability</span></div>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Inputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>to_agent</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td>Target agent identifier</td>
+            </tr>
+        
+            <tr>
+                <td><code>capability_id</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td>Capability being requested (e.g., &quot;investigate_error&quot;)</td>
+            </tr>
+        
+            <tr>
+                <td><code>task</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td>Task description</td>
+            </tr>
+        
+            <tr>
+                <td><code>inputs</code></td>
+                <td>object</td>
+                <td>✓</td>
+                <td>Input data for the task</td>
+            </tr>
+        
+            <tr>
+                <td><code>expected_output</code></td>
+                <td>object</td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>priority</code></td>
+                <td><code>critical | high | normal | low</code></td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>timeout_ms</code></td>
+                <td>integer</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Outputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>handoff_id</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>status</code></td>
+                <td><code>pending | accepted | in_progress | completed | failed | timeout</code></td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>result_trace_id</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>error_message</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Evidence</h4>
+                <ul class="evidence-list"><li><strong>code:</strong> <code>src/contextcore/agent/handoff.py</code> - HandoffManager class with create_and_await() method (lines 119-350)</li><li><strong>code:</strong> <code>src/contextcore/agent/handoff.py</code> - ExpectedOutput dataclass with size constraints (lines 65-89)</li><li><strong>test:</strong> <code>tests/agent/test_handoff.py</code> - Handoff lifecycle tests</li></ul>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Anti-Patterns</h4>
+                <ul class="antipattern-list"><li>Don&#x27;t set max_lines &gt; 150 for LLM-generated code—truncation risk</li><li>Always specify completeness_markers for code generation</li></ul>
+            </div>
+        
+            </div>
+        </div>
+    
+        <div class="capability" id="contextcorehandoffreceive">
+            <div class="capability-header">
+                <h3>⚡ <code>contextcore.handoff.receive</code></h3>
+                <div class="capability-meta">
+                    <span class="badge badge-beta">🧪 Beta</span>
+                    <span class="badge badge-category">action</span>
+                    <span class="badge badge-category">80% confidence</span>
+                </div>
+            </div>
+            <div class="capability-body">
+                <div class="capability-summary">Poll for and process incoming handoffs as receiving agent</div>
+                
+            <div class="capability-section">
+                <h4>Description</h4>
+                <p>Enables agents to receive and process delegated tasks from other agents.
+Uses polling pattern with configurable interval. Receiving agent must
+call complete() or fail() to update handoff status. Supports graceful
+shutdown via context manager or shutdown() method.</p>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Triggers</h4>
+                <div class="triggers"><span class="trigger">receive handoff</span><span class="trigger">poll for tasks</span><span class="trigger">accept delegation</span><span class="trigger">process handoff</span></div>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Inputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>project_id</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>poll_interval_s</code></td>
+                <td>number</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>timeout_s</code></td>
+                <td>number</td>
+                <td></td>
+                <td>Max time to poll before returning</td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Outputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>id</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>from_agent</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>to_agent</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>capability_id</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>task</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>inputs</code></td>
+                <td>object</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>expected_output</code></td>
+                <td>object</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Evidence</h4>
+                <ul class="evidence-list"><li><strong>code:</strong> <code>src/contextcore/agent/handoff.py</code> - HandoffReceiver class with poll_handoffs() method (lines 353-470)</li></ul>
+            </div>
+        
+            </div>
+        </div>
+    
+        <div class="capability" id="contextcoreguidanceread_constraints">
+            <div class="capability-header">
+                <h3>🔍 <code>contextcore.guidance.read_constraints</code></h3>
+                <div class="capability-meta">
+                    <span class="badge badge-beta">🧪 Beta</span>
+                    <span class="badge badge-category">query</span>
+                    <span class="badge badge-category">85% confidence</span>
+                </div>
+            </div>
+            <div class="capability-body">
+                <div class="capability-summary">Read human-defined constraints from ProjectContext CRD</div>
+                
+            <div class="capability-section">
+                <h4>Description</h4>
+                <p>Retrieves human-defined constraints from the ProjectContext Kubernetes CRD.
+Constraints define what agents must NOT do, with severity levels (blocking,
+warning, advisory). The `get_constraints_for_path()` method filters constraints
+relevant to a specific file path or scope pattern.</p>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Triggers</h4>
+                <div class="triggers"><span class="trigger">read constraints</span><span class="trigger">check rules</span><span class="trigger">human guidance</span><span class="trigger">project constraints</span></div>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Inputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>project_id</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>path</code></td>
+                <td>string</td>
+                <td></td>
+                <td>Optional file path to filter constraints</td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Evidence</h4>
+                <ul class="evidence-list"><li><strong>code:</strong> <code>src/contextcore/agent/guidance.py</code> - GuidanceReader class with get_constraints_for_path() (lines 96-280)</li><li><strong>code:</strong> <code>src/contextcore/agent/guidance.py</code> - Constraint dataclass with severity enum (lines 51-57)</li></ul>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Anti-Patterns</h4>
+                <ul class="antipattern-list"><li>Never ignore BLOCKING constraints—they are mandatory</li></ul>
+            </div>
+        
+            </div>
+        </div>
+    
+        <div class="capability" id="contextcoreguidanceanswer_question">
+            <div class="capability-header">
+                <h3>⚡ <code>contextcore.guidance.answer_question</code></h3>
+                <div class="capability-meta">
+                    <span class="badge badge-beta">🧪 Beta</span>
+                    <span class="badge badge-category">action</span>
+                    <span class="badge badge-category">85% confidence</span>
+                </div>
+            </div>
+            <div class="capability-body">
+                <div class="capability-summary">Answer open questions from humans with confidence and evidence</div>
+                
+            <div class="capability-section">
+                <h4>Description</h4>
+                <p>Enables agents to answer questions posed by humans in the ProjectContext CRD.
+Updates the question status to &quot;answered&quot; and emits an insight span containing
+the answer with confidence and evidence. This creates a persistent, queryable
+record of agent answers.</p>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Triggers</h4>
+                <div class="triggers"><span class="trigger">answer question</span><span class="trigger">respond to human</span><span class="trigger">provide answer</span></div>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Inputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>question_id</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>answer</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>confidence</code></td>
+                <td>number</td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>evidence</code></td>
+                <td>array[object]</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Outputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>success</code></td>
+                <td>boolean</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>insight_id</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Evidence</h4>
+                <ul class="evidence-list"><li><strong>code:</strong> <code>src/contextcore/agent/guidance.py</code> - GuidanceResponder.answer_question() method (lines 310-426)</li></ul>
+            </div>
+        
+            </div>
+        </div>
+    
+        <div class="capability" id="contextcorecode_generationcontract">
+            <div class="capability-header">
+                <h3>⚡ <code>contextcore.code_generation.contract</code></h3>
+                <div class="capability-meta">
+                    <span class="badge badge-beta">🧪 Beta</span>
+                    <span class="badge badge-category">action</span>
+                    <span class="badge badge-category">80% confidence</span>
+                </div>
+            </div>
+            <div class="capability-body">
+                <div class="capability-summary">Define code generation contracts with size limits and completeness markers</div>
+                
+            <div class="capability-section">
+                <h4>Description</h4>
+                <p>Specialized handoff for code generation with proactive truncation prevention.
+The requesting agent specifies size constraints (max_lines, max_tokens) and
+required exports. The receiving agent estimates output size BEFORE generation
+and triggers decomposition if limits would be exceeded. All decisions are
+recorded as OTel spans.</p>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Triggers</h4>
+                <div class="triggers"><span class="trigger">generate code</span><span class="trigger">code contract</span><span class="trigger">size-limited generation</span><span class="trigger">truncation prevention</span></div>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Inputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>to_agent</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>spec</code></td>
+                <td>object</td>
+                <td>✓</td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Outputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>result</code></td>
+                <td><code>generated | decomposed | rejected</code></td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>trace_id</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>chunks</code></td>
+                <td>array[string]</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Evidence</h4>
+                <ul class="evidence-list"><li><strong>code:</strong> <code>src/contextcore/agent/code_generation.py</code> - CodeGenerationHandoff class with request_code() (lines 1-100)</li><li><strong>code:</strong> <code>src/contextcore/agent/code_generation.py</code> - CodeGenerationSpec dataclass (lines 77-100)</li></ul>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Anti-Patterns</h4>
+                <ul class="antipattern-list"><li>Never skip size estimation—truncated code is worse than no code</li><li>Always specify required_exports for verification</li></ul>
+            </div>
+        
+            </div>
+        </div>
+    
+        <div class="capability" id="contextcoresize_estimationestimate">
+            <div class="capability-header">
+                <h3>🔍 <code>contextcore.size_estimation.estimate</code></h3>
+                <div class="capability-meta">
+                    <span class="badge badge-beta">🧪 Beta</span>
+                    <span class="badge badge-category">query</span>
+                    <span class="badge badge-category">75% confidence</span>
+                </div>
+            </div>
+            <div class="capability-body">
+                <div class="capability-summary">Estimate code output size before generation using heuristics</div>
+                
+            <div class="capability-section">
+                <h4>Description</h4>
+                <p>Provides heuristics-based estimation of code output size before generation.
+Analyzes task description for complexity keywords and counts expected
+constructs (classes, methods, functions). Returns line/token estimates
+with confidence scoring. Used by code_generation.contract for pre-flight
+validation.</p>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Triggers</h4>
+                <div class="triggers"><span class="trigger">estimate size</span><span class="trigger">predict lines</span><span class="trigger">output size</span><span class="trigger">before generation</span></div>
+            </div>
+        
+            <div class="capability-section">
+                <h4>Inputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>task</code></td>
+                <td>string</td>
+                <td>✓</td>
+                <td>Task description to analyze</td>
+            </tr>
+        
+            <tr>
+                <td><code>inputs</code></td>
+                <td>object</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Outputs</h4>
+                
+        <table class="schema-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><code>lines</code></td>
+                <td>integer</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>tokens</code></td>
+                <td>integer</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>complexity</code></td>
+                <td><code>low | medium | high</code></td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>confidence</code></td>
+                <td>number</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            <tr>
+                <td><code>reasoning</code></td>
+                <td>string</td>
+                <td></td>
+                <td></td>
+            </tr>
+        
+            </tbody>
+        </table>
+    
+            </div>
+        
+            <div class="capability-section">
+                <h4>Evidence</h4>
+                <ul class="evidence-list"><li><strong>code:</strong> <code>src/contextcore/agent/size_estimation.py</code> - SizeEstimator class with estimate() method (lines 50-100)</li><li><strong>code:</strong> <code>src/contextcore/agent/size_estimation.py</code> - Heuristic constants and keyword patterns (lines 61-96)</li></ul>
+            </div>
+        
+            </div>
+        </div>
+    
+        </section>
+
+        
+            <section>
+                <h2>Risk Flags</h2>
+                
+                <div class="risk-flag">
+                    <h4>risk:no-retry-on-export-failure</h4>
+                    <p>OTel span export failures are not retried—telemetry may be silently lost</p>
+                    <p><strong>Affects:</strong> <code>contextcore.insight.emit</code>, <code>contextcore.handoff.initiate</code></p>
+                </div>
+            
+                <div class="risk-flag">
+                    <h4>risk:k8s-restart-loses-in-flight</h4>
+                    <p>Kubernetes pod restarts may lose in-flight handoffs not yet persisted</p>
+                    <p><strong>Affects:</strong> <code>contextcore.handoff.initiate</code>, <code>contextcore.handoff.receive</code></p>
+                </div>
+            
+            </section>
+        
+        
+            <section>
+                <h2>Pivoted Work</h2>
+                <p>Documented pivots to prevent re-attempting failed approaches:</p>
+                
+                <div class="pivot">
+                    <h4>text-merge-to-ast</h4>
+                    <p><strong>Original:</strong> Text-based merge_files_intelligently() using diff/patch</p>
+                    <p><strong>Outcome:</strong> Corrupted Python files when merging class definitions</p>
+                    <p><strong>Lesson:</strong> Text-based merging is insufficient for code; use language-aware tools (AST)</p>
+                </div>
+            
+                <div class="pivot">
+                    <h4>single-emit-to-dual</h4>
+                    <p><strong>Original:</strong> Emit task data to Tempo only (spans are sufficient)</p>
+                    <p><strong>Outcome:</strong> Portfolio dashboard couldn&#x27;t derive metrics from spans alone</p>
+                    <p><strong>Lesson:</strong> Different backends excel at different queries; dual-emit to Tempo AND Loki</p>
+                </div>
+            
+            </section>
+        
+        
+            <section>
+                <h2>Changelog</h2>
+                <table class="changelog-table">
+                    <thead><tr><th>Version</th><th>Date</th><th>Changes</th></tr></thead>
+                    <tbody><tr><td>1.0.0</td><td>2026-01-28</td><td>Initial capability index for agent-focused capabilities; 8 capabilities indexed: insight (2), handoff (2), guidance (2), code_generation (1), size_estimation (1); Evidence verified against source files; OTel-aligned maturity: stable (2), experimental/beta (6); Risk flags and pivoted work documented</td></tr></tbody>
+                </table>
+            </section>
+        
+    </main>
+
+    <footer>
+        <p>Generated by <code>capability-index generate_html.py</code></p>
+    </footer>
+
+    <script>
+function toggleTheme() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+}
+
+// Load saved theme
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+    }
+});
+</script>
+</body>
+</html>

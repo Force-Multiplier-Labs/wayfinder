@@ -1,0 +1,62 @@
+[project]
+name = "contextcore-owl"
+version = "0.1.0"
+description = "Owl (Gookooko'oo) - Unified Grafana Plugin Package for ContextCore"
+readme = "README.md"
+license = {text = "Equitable Use License v1.0"}
+requires-python = ">=3.9"
+authors = [
+    {name = "ContextCore Team"}
+]
+keywords = ["grafana", "plugin", "contextcore", "observability", "workflow"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Monitoring",
+]
+dependencies = []
+
+[project.optional-dependencies]
+scaffold = [
+    "contextcore-beaver>=0.1.0",
+    "click>=8.0",
+    "jinja2>=3.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "mypy>=1.0",
+    "ruff>=0.1",
+]
+
+[project.scripts]
+contextcore-owl-scaffold = "contextcore_owl.scaffold:main"
+
+[project.urls]
+Homepage = "https://github.com/contextcore/contextcore-owl"
+Documentation = "https://github.com/contextcore/contextcore-owl#readme"
+Repository = "https://github.com/contextcore/contextcore-owl"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/contextcore_owl"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true

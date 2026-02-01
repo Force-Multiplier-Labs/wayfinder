@@ -1,0 +1,46 @@
+version: "3.8"
+
+# ContextCore Grafana Plugin Development Environment
+# Usage: docker compose up -d
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: contextcore-owl-dev
+    ports:
+      - "3001:3000"  # Use 3001 to avoid conflict with main ContextCore stack
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=contextcore-chat-panel,contextcore-workflow-panel,contextcore-datasource
+      - GF_LOG_LEVEL=debug
+      - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+    volumes:
+      # Mount built plugins
+      - ../grafana/plugins:/var/lib/grafana/plugins
+      # Mount provisioning for datasources
+      - ./provisioning/datasources:/etc/grafana/provisioning/datasources
+      # Persist Grafana data
+      - grafana-data:/var/lib/grafana
+    networks:
+      - contextcore-owl
+
+  # Mock Rabbit API for testing workflow panel
+  rabbit-mock:
+    image: mockserver/mockserver:latest
+    container_name: contextcore-rabbit-mock
+    ports:
+      - "8080:1080"
+    environment:
+      - MOCKSERVER_INITIALIZATION_JSON_PATH=/config/expectations.json
+    volumes:
+      - ./mock/expectations.json:/config/expectations.json:ro
+    networks:
+      - contextcore-owl
+
+networks:
+  contextcore-owl:
+    name: contextcore-owl
+
+volumes:
+  grafana-data:

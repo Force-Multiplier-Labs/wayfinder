@@ -1,0 +1,843 @@
+# ContextCore Capability Roadmap
+# Version: 1.0.0
+# Created: 2026-01-28
+#
+# PURPOSE: Track implementation phases for gap benefits.
+# Each phase has capabilities, dependencies, and exit criteria.
+
+manifest_id: contextcore.roadmap
+name: ContextCore Capability Roadmap
+version: "1.1.0"
+
+# ==============================================================================
+# ACTIVE ROADMAP ITEMS
+# ==============================================================================
+
+roadmap_items:
+
+  # ============================================================================
+  # INTEROPERABILITY: AOS COMPLIANCE
+  # ============================================================================
+
+  - benefit_id: interop.aos_compliance
+    name: "OWASP AOS Standards Compliance"
+    priority: medium
+    total_effort: medium
+    status: planned
+
+    phases:
+
+      - phase_id: "1A"
+        name: "AOS Trigger Events"
+        description: "Add trigger.type attribute to guidance system for autonomous triggers"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.aos.trigger_emit
+
+        functional_requirements:
+          - FR-101
+
+        deliverables:
+          - "GuidanceType enum extended with AUTONOMOUS, WEBHOOK, SCHEDULED"
+          - "Guidance spans emit trigger.type attribute"
+          - "AOS steps/agentTrigger event emittable"
+
+        exit_criteria:
+          - "Guidance spans include trigger.type attribute"
+          - "Autonomous triggers distinguishable from user triggers in Tempo"
+
+        depends_on: []
+
+      - phase_id: "1B"
+        name: "AOS Decision Events"
+        description: "Add DecisionOutcome enum and structured reason codes to insight system"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.aos.decision_emit
+
+        functional_requirements:
+          - FR-102
+          - FR-103
+
+        deliverables:
+          - "DecisionOutcome enum: allow, deny, modify"
+          - "insight.decision.outcome attribute"
+          - "insight.decision.reason_code structured attribute"
+          - "insight.decision.modified_request for MODIFY outcomes"
+
+        exit_criteria:
+          - "Decision insights include outcome enum"
+          - "Reason codes are structured (not freeform)"
+          - "MODIFY decisions include modified_request"
+
+        depends_on:
+          - contextcore.insight.emit
+
+      - phase_id: "1C"
+        name: "AOS Message Events"
+        description: "Emit steps/message events with AOS-compliant attributes"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.aos.message_emit
+
+        functional_requirements:
+          - FR-100
+
+        deliverables:
+          - "Message event emitter with sender.role, content, reasoning, citations"
+          - "Dual-emit alongside existing message handling"
+          - "AOS steps/message event format"
+
+        exit_criteria:
+          - "Message events include all AOS-required attributes"
+          - "Events validate against AOS schema"
+
+        depends_on: []
+
+      - phase_id: "1D"
+        name: "AOS Validation"
+        description: "CLI and API for validating AOS compliance"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.aos.validate
+
+        functional_requirements: []
+
+        deliverables:
+          - "contextcore aos validate CLI command"
+          - "Compliance score calculation"
+          - "Missing attribute reporting"
+          - "Recommendations for compliance"
+
+        exit_criteria:
+          - "CLI can validate trace against AOS schema"
+          - "Compliance score reflects actual attribute coverage"
+
+        depends_on:
+          - contextcore.aos.message_emit
+          - contextcore.aos.decision_emit
+          - contextcore.aos.trigger_emit
+
+      - phase_id: "2"
+        name: "MCP Protocol Telemetry"
+        description: "Emit protocols/MCP events for Model Context Protocol interactions"
+        status: planned
+        effort: medium
+
+        capabilities:
+          - contextcore.aos.mcp_emit
+
+        functional_requirements:
+          - FR-200
+          - FR-201
+
+        deliverables:
+          - "MCP telemetry emitter module"
+          - "protocols/MCP events for tools_list, tool_call, resource_read, prompt_get"
+          - "MCP tool → ContextCore capability mapping"
+          - "Integration with handoff system"
+
+        exit_criteria:
+          - "MCP tool calls emit protocols/MCP events"
+          - "Tool calls map to capability invocations"
+          - "Events include full request/response payloads"
+
+        depends_on:
+          - contextcore.handoff.initiate
+
+    total_phases: 5
+    completed_phases: 0
+
+    timeline:
+      estimated_start: "2026-02"
+      estimated_completion: "2026-03"
+      actual_start: null
+      actual_completion: null
+
+  # ============================================================================
+  # TIME SAVINGS: STATUS COMPILATION
+  # ============================================================================
+
+  - benefit_id: time.status_compilation_eliminated
+    name: "Eliminate Status Compilation Time"
+    priority: high
+    total_effort: medium
+    status: planned
+
+    phases:
+
+      - phase_id: "1"
+        name: "Status Aggregation Queries"
+        description: "Build TraceQL queries for status aggregation"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.dashboard.portfolio  # existing
+
+        functional_requirements:
+          - FR-001
+
+        deliverables:
+          - "TraceQL query templates for status aggregation"
+          - "API endpoint for aggregated status data"
+
+        exit_criteria:
+          - "Status data aggregatable via single API call"
+          - "Query includes task progress, blockers, velocity"
+
+        depends_on: []
+
+      - phase_id: "2"
+        name: "Report Generation"
+        description: "Template-based report generation from status data"
+        status: planned
+        effort: medium
+
+        capabilities:
+          - contextcore.report.status_generate  # new
+
+        functional_requirements:
+          - FR-002
+          - FR-003
+
+        deliverables:
+          - "Report template engine"
+          - "Markdown and HTML output formats"
+          - "CLI command: contextcore report generate"
+          - "Dashboard button for one-click generation"
+
+        exit_criteria:
+          - "Report generated with single command/click"
+          - "Report includes all required sections"
+          - "Output downloadable as Markdown or HTML"
+
+        depends_on:
+          - phase_id: "1"
+
+    total_phases: 2
+    completed_phases: 0
+
+    timeline:
+      estimated_start: "2026-02"
+      estimated_completion: "2026-02"
+      actual_start: null
+      actual_completion: null
+
+  # ============================================================================
+  # AI COLLABORATION: MULTI-AGENT ORCHESTRATION
+  # ============================================================================
+
+  - benefit_id: ai.orchestration_multi
+    name: "Multi-Agent Orchestration"
+    priority: medium
+    total_effort: large
+    status: in_progress
+
+    phases:
+
+      - phase_id: "0"
+        name: "A2A Protocol Foundation"
+        description: "Bidirectional A2A protocol support enabling agent discovery and cross-framework communication"
+        status: completed
+        effort: medium
+        completed_at: "2026-01-29"
+
+        capabilities:
+          - contextcore.a2a.server
+          - contextcore.a2a.client
+          - contextcore.a2a.task_adapter
+          - contextcore.a2a.content_model
+          - contextcore.handoff.input_request
+          - contextcore.api.unified
+
+        functional_requirements: []  # Foundation, not directly mapped to FRs
+
+        deliverables:
+          - "A2A JSON-RPC server with .well-known/agent.json discovery"
+          - "A2A client for sending messages to remote A2A agents"
+          - "Bidirectional HandoffStatus ↔ A2A TaskState mapping (9:7)"
+          - "Unified Part/Message/Artifact content model with to_a2a_dict()"
+          - "InputRequest/InputResponse for mid-handoff clarification"
+          - "ContextCoreAPI facade with resource.action pattern"
+
+        exit_criteria:
+          - "A2A server responds to JSON-RPC agent/send messages"
+          - "A2A client can communicate with remote A2A agents"
+          - "9 HandoffStatus states map to 7 A2A TaskState values"
+          - "Content model serializes bidirectionally"
+          - "Input requests enable mid-handoff clarification"
+
+        depends_on: []
+
+        notes: |
+          Delivered as part of Phase 4 Unified Alignment.
+          Provides the communication foundation that phases 1-3 build upon.
+
+      - phase_id: "1"
+        name: "Agent Registry"
+        description: "Define and discover agent capabilities"
+        status: partial
+        effort: medium
+
+        capabilities:
+          - contextcore.a2a.server  # Provides .well-known/agent.json discovery
+
+        functional_requirements:
+          - FR-010
+
+        deliverables:
+          - "Agent capability manifest schema"
+          - "Agent registry storage (CRD or Tempo)"
+          - "Agent discovery via TraceQL"
+
+        delivered:
+          - "A2A agent card discovery via .well-known/agent.json (Phase 0)"
+          - "Agent capabilities declared in AgentCard skills array"
+
+        remaining:
+          - "Centralized agent registry for multi-agent lookup"
+          - "TraceQL-based agent capability search"
+
+        exit_criteria:
+          - "Agents can register capabilities"
+          - "Capabilities queryable by other agents"
+
+        depends_on:
+          - phase_id: "0"
+
+      - phase_id: "2"
+        name: "Task Routing"
+        description: "Route subtasks to appropriate agents"
+        status: planned
+        effort: medium
+
+        capabilities: []  # TBD
+
+        functional_requirements:
+          - FR-011
+
+        deliverables:
+          - "Task routing logic"
+          - "Capability matching algorithm"
+          - "Load balancing (if multiple agents match)"
+
+        exit_criteria:
+          - "Tasks routed to best-match agent"
+          - "Routing decisions logged as insights"
+
+        depends_on:
+          - phase_id: "1"
+
+      - phase_id: "3"
+        name: "Result Aggregation"
+        description: "Aggregate outputs from multiple agents"
+        status: planned
+        effort: medium
+
+        capabilities: []  # TBD
+
+        functional_requirements:
+          - FR-012
+          - FR-013
+
+        deliverables:
+          - "Result aggregation logic"
+          - "Conflict resolution for overlapping outputs"
+          - "Shared context propagation"
+
+        exit_criteria:
+          - "Multi-agent results aggregated automatically"
+          - "Context shared between agents via OTel baggage"
+
+        depends_on:
+          - phase_id: "2"
+
+    total_phases: 4
+    completed_phases: 1
+
+    timeline:
+      estimated_start: "2026-Q1"
+      estimated_completion: "2026-Q3"
+      actual_start: "2026-01-29"
+      actual_completion: null
+
+  # ============================================================================
+  # VISIBILITY: AGENT DECISION INSIGHTS
+  # ============================================================================
+
+  - benefit_id: visibility.agent_insights
+    name: "Agent Decision Visibility"
+    priority: high
+    total_effort: small
+    status: planned
+
+    phases:
+
+      - phase_id: "1"
+        name: "Agent Insights Dashboard"
+        description: "Grafana dashboard for browsing agent decisions, lessons, and recommendations via gen_ai.* attributes"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.dashboard.agent_insights  # new
+
+        functional_requirements:
+          - FR-410
+
+        deliverables:
+          - "Grafana dashboard querying gen_ai.* spans from Tempo"
+          - "Panels: recent decisions, lessons learned, recommendations"
+          - "Filters by agent_id, project_id, insight.type, confidence"
+          - "Drill-down from insight to supporting evidence traces"
+
+        exit_criteria:
+          - "Dashboard shows agent insights from Tempo"
+          - "Filterable by insight type, agent, project, time range"
+          - "Drill-down to evidence traces works"
+
+        depends_on:
+          - contextcore.insight.emit
+
+      - phase_id: "2"
+        name: "Insight Browsing CLI"
+        description: "CLI commands for browsing and searching agent insights"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.insight.query  # existing
+
+        functional_requirements:
+          - FR-411
+
+        deliverables:
+          - "contextcore insight list --project PROJECT --type decision"
+          - "contextcore insight search --query KEYWORD --days 30"
+          - "JSON and table output formats"
+
+        exit_criteria:
+          - "CLI returns agent insights matching filters"
+          - "Output formats: table (default), JSON"
+
+        depends_on:
+          - phase_id: "1"
+
+    total_phases: 2
+    completed_phases: 0
+
+    timeline:
+      estimated_start: "2026-02"
+      estimated_completion: "2026-02"
+      actual_start: null
+      actual_completion: null
+
+  # ============================================================================
+  # VISIBILITY: CYCLE TIME (Complete Partial Benefit)
+  # ============================================================================
+
+  - benefit_id: visibility.cycle_time_realtime
+    name: "Complete Real-Time Cycle Time Visibility"
+    priority: medium
+    total_effort: medium
+    status: planned
+    note: "Existing partial benefit — sprint dashboard exists, recording rules pending"
+
+    phases:
+
+      - phase_id: "1"
+        name: "Loki Recording Rules"
+        description: "Deploy recording rules deriving task_percent_complete and cycle_time from structured logs"
+        status: planned
+        effort: medium
+
+        capabilities:
+          - contextcore.metrics.cycle_time  # new
+
+        functional_requirements:
+          - FR-310
+
+        deliverables:
+          - "Loki recording rules YAML for task metrics derivation"
+          - "Metrics: task_percent_complete, task_cycle_time_seconds, task_lead_time_seconds"
+          - "Recording rules deployed to Loki ruler"
+          - "Mimir receives derived metrics via recording rules"
+
+        exit_criteria:
+          - "task_percent_complete metric available in Mimir"
+          - "Cycle time metric updates within 5 minutes of task completion"
+          - "Sprint dashboard panels populated from derived metrics"
+
+        depends_on: []
+
+      - phase_id: "2"
+        name: "Sprint Burndown Derivation"
+        description: "Recording rules for sprint velocity and burndown from task events"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.dashboard.sprint  # existing
+
+        functional_requirements:
+          - FR-311
+
+        deliverables:
+          - "Sprint burndown recording rules"
+          - "Velocity trend metrics (story points/week)"
+          - "Sprint dashboard panels using Mimir-derived metrics"
+
+        exit_criteria:
+          - "Burndown chart reflects current state from Mimir metrics"
+          - "Velocity trend visible mid-sprint"
+
+        depends_on:
+          - phase_id: "1"
+
+    total_phases: 2
+    completed_phases: 0
+
+    timeline:
+      estimated_start: "2026-02"
+      estimated_completion: "2026-03"
+      actual_start: null
+      actual_completion: null
+
+  # ============================================================================
+  # QUALITY: DELIVERABLE VERIFICATION
+  # ============================================================================
+
+  - benefit_id: quality.deliverable_verification
+    name: "Deliverable Verification"
+    priority: high
+    total_effort: medium
+    status: planned
+
+    phases:
+
+      - phase_id: "1"
+        name: "Deliverable Schema"
+        description: "Define deliverable types, expected outputs, and verification criteria"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.task.deliverable_define  # new
+
+        functional_requirements:
+          - FR-510
+
+        deliverables:
+          - "Deliverable type definitions (file, artifact, test_result, document_section)"
+          - "Expected output schema for task spans"
+          - "Deliverable attributes in span events"
+
+        exit_criteria:
+          - "Tasks can declare expected deliverables"
+          - "Deliverable schema validates expected outputs"
+
+        depends_on: []
+
+      - phase_id: "2"
+        name: "Post-Completion Verification"
+        description: "Automated hooks verifying deliverables after task completion"
+        status: planned
+        effort: medium
+
+        capabilities:
+          - contextcore.task.deliverable_verify  # new
+
+        functional_requirements:
+          - FR-511
+
+        deliverables:
+          - "Post-completion verification hooks"
+          - "Deliverable existence and checksum verification"
+          - "Verification span events with pass/fail status"
+          - "Status downgrade on verification failure"
+
+        exit_criteria:
+          - "Task completion triggers deliverable verification"
+          - "Verification results emitted as span events"
+          - "Failed verification prevents premature 'done' status"
+
+        depends_on:
+          - phase_id: "1"
+
+      - phase_id: "3"
+        name: "Deliverable Dashboard"
+        description: "Dashboard panels showing verified vs unverified completions"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.dashboard.deliverables  # new
+
+        functional_requirements:
+          - FR-412
+
+        deliverables:
+          - "Dashboard panels: verified completions, pending, failed verifications"
+          - "Deliverable completion rate metric"
+          - "Drill-down from unverified task to missing deliverables"
+
+        exit_criteria:
+          - "Dashboard distinguishes verified from unverified completions"
+          - "Completion rate metric available in Mimir"
+
+        depends_on:
+          - phase_id: "2"
+
+    total_phases: 3
+    completed_phases: 0
+
+    timeline:
+      estimated_start: "2026-02"
+      estimated_completion: "2026-03"
+      actual_start: null
+      actual_completion: null
+
+  # ============================================================================
+  # DEVELOPER EXPERIENCE: DEPENDENCY VALIDATION
+  # ============================================================================
+
+  - benefit_id: devex.dependency_validation
+    name: "Automated Dependency Validation"
+    priority: medium
+    total_effort: small
+    status: planned
+
+    phases:
+
+      - phase_id: "1"
+        name: "CI Pipeline Validation"
+        description: "Pre-commit and CI checks validating dependency manifests are complete"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.validate.dependencies  # new
+
+        functional_requirements:
+          - FR-520
+
+        deliverables:
+          - "Pre-commit hook scanning for undeclared dependencies"
+          - "CI GitHub Action validating dependency manifests"
+          - "contextcore validate dependencies CLI command"
+
+        exit_criteria:
+          - "New dashboard/config dependencies detected in CI"
+          - "Pre-commit hook warns on undeclared dependencies"
+          - "CLI validates manifest completeness"
+
+        depends_on: []
+
+      - phase_id: "2"
+        name: "Runtime Dependency Verification"
+        description: "Extend contextcore install verify to check external dependencies"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.install.verify_dependencies  # extends existing
+
+        functional_requirements:
+          - FR-521
+
+        deliverables:
+          - "contextcore install verify checks dependency manifests"
+          - "Missing dependency reporting with install instructions"
+          - "Dependency health metrics for installation dashboard"
+
+        exit_criteria:
+          - "install verify reports missing dependencies"
+          - "Installation dashboard shows dependency status"
+
+        depends_on:
+          - phase_id: "1"
+
+    total_phases: 2
+    completed_phases: 0
+
+    timeline:
+      estimated_start: "2026-02"
+      estimated_completion: "2026-02"
+      actual_start: null
+      actual_completion: null
+
+  # ============================================================================
+  # DEVELOPER EXPERIENCE: CODE GENERATION HEALTH
+  # ============================================================================
+
+  - benefit_id: devex.codegen_health
+    name: "Code Generation Health Monitoring"
+    priority: low
+    total_effort: medium
+    status: planned
+
+    phases:
+
+      - phase_id: "1"
+        name: "Code Generation Health Dashboard"
+        description: "Grafana dashboard monitoring truncation rate, decomposition frequency, and verification results"
+        status: planned
+        effort: small
+
+        capabilities:
+          - contextcore.dashboard.codegen_health  # new
+
+        functional_requirements:
+          - FR-420
+
+        deliverables:
+          - "Grafana dashboard with code generation metrics"
+          - "Panels: truncation rate, decomposition frequency, size accuracy, verification results"
+          - "TraceQL queries for gen_ai.code.* attributes"
+
+        exit_criteria:
+          - "Dashboard shows code generation health metrics"
+          - "Truncation rate visible and alertable"
+
+        depends_on: []
+
+      - phase_id: "2"
+        name: "Generation Contracts Enforcement"
+        description: "Span-based generation contracts in CodeGenerationHandoff for proactive truncation prevention"
+        status: planned
+        effort: medium
+
+        capabilities:
+          - contextcore.codegen.contracts  # new
+
+        functional_requirements:
+          - FR-530
+
+        deliverables:
+          - "Size constraints in CodeGenerationHandoff ExpectedOutput"
+          - "Pre-flight spans with size estimates before generation"
+          - "Decomposition negotiation via span events"
+          - "Completeness marker verification (required exports, function signatures)"
+
+        exit_criteria:
+          - "Size constraints enforced before generation"
+          - "Decomposition triggered for over-limit requests"
+          - "Truncation events emitted as telemetry"
+
+        depends_on:
+          - phase_id: "1"
+
+    total_phases: 2
+    completed_phases: 0
+
+    timeline:
+      estimated_start: "2026-Q2"
+      estimated_completion: "2026-Q2"
+      actual_start: null
+      actual_completion: null
+
+# ==============================================================================
+# ROADMAP SUMMARY
+# ==============================================================================
+
+summary:
+  total_benefits: 8
+  planned: 7
+  in_progress: 1
+  completed: 0
+
+  by_priority:
+    high:
+      - benefit_id: time.status_compilation_eliminated
+        phases: 2
+        effort: medium
+      - benefit_id: visibility.agent_insights
+        phases: 2
+        effort: small
+      - benefit_id: quality.deliverable_verification
+        phases: 3
+        effort: medium
+    medium:
+      - benefit_id: interop.aos_compliance
+        phases: 5
+        effort: medium
+      - benefit_id: ai.orchestration_multi
+        phases: 4
+        completed: 1
+        effort: large
+      - benefit_id: visibility.cycle_time_realtime
+        phases: 2
+        effort: medium
+      - benefit_id: devex.dependency_validation
+        phases: 2
+        effort: small
+    low:
+      - benefit_id: devex.codegen_health
+        phases: 2
+        effort: medium
+
+  recommended_sequence:
+    - order: 1
+      benefit_id: visibility.agent_insights
+      reason: "Quick win — gen_ai.* attributes already emitted, just needs dashboard and CLI"
+    - order: 2
+      benefit_id: time.status_compilation_eliminated
+      reason: "High priority, medium effort, builds on existing dashboard infrastructure"
+    - order: 3
+      benefit_id: devex.dependency_validation
+      reason: "Quick win — dependency manifest pattern already documented, prevents deploy failures"
+    - order: 4
+      benefit_id: visibility.cycle_time_realtime
+      reason: "Completes existing partial benefit, sprint dashboard already exists"
+    - order: 5
+      benefit_id: quality.deliverable_verification
+      reason: "Addresses P2 risk (execution ≠ completion), foundational for trust in task status"
+    - order: 6
+      benefit_id: interop.aos_compliance
+      reason: "Medium priority, enables ecosystem integration with OWASP AOS standard"
+    - order: 7
+      benefit_id: ai.orchestration_multi
+      reason: "In progress — A2A foundation delivered, task routing and aggregation are large effort"
+    - order: 8
+      benefit_id: devex.codegen_health
+      reason: "Low priority — defer until code generation volume increases"
+
+# ==============================================================================
+# CHANGELOG
+# ==============================================================================
+
+changelog:
+  - version: "2.0.0"
+    date: "2026-01-29"
+    changes:
+      - "Added 5 new roadmap items from logical next steps analysis"
+      - "visibility.agent_insights: 2 phases (dashboard + CLI) — high priority, small effort"
+      - "visibility.cycle_time_realtime: 2 phases (recording rules + burndown) — medium priority"
+      - "quality.deliverable_verification: 3 phases (schema + hooks + dashboard) — high priority"
+      - "devex.dependency_validation: 2 phases (CI + runtime) — medium priority, small effort"
+      - "devex.codegen_health: 2 phases (dashboard + contracts) — low priority"
+      - "8 total roadmap items (was 3), prioritized recommended sequence"
+      - "New categories: QUALITY, DEVELOPER EXPERIENCE"
+  - version: "1.1.0"
+    date: "2026-01-29"
+    changes:
+      - "ai.orchestration_multi: Added Phase 0 (A2A Protocol Foundation) — completed"
+      - "ai.orchestration_multi: Status planned → in_progress (1/4 phases complete)"
+      - "ai.orchestration_multi Phase 1: Status planned → partial (A2A discovery delivered)"
+      - "Summary updated: 2 planned, 1 in_progress"
+  - version: "1.0.0"
+    date: "2026-01-28"
+    changes:
+      - "Initial roadmap with 3 gap benefits"
+      - "interop.aos_compliance: 5 phases for OWASP AOS alignment"
+      - "time.status_compilation_eliminated: 2 phases for report generation"
+      - "ai.orchestration_multi: 3 phases for multi-agent coordination"

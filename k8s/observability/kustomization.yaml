@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: observability
+
+resources:
+  - namespace.yaml
+  - configs.yaml
+  - deployments.yaml
+  - services.yaml
+
+# ConfigMap generator for dashboards from JSON files
+# Note: Dashboard files are copied from grafana/provisioning/dashboards/json/
+# to this directory to comply with kustomize security restrictions
+configMapGenerator:
+  - name: contextcore-dashboards
+    files:
+      - dashboards/installation.json
+      - dashboards/portfolio.json
+      - dashboards/project-progress.json
+      - dashboards/sprint-metrics.json
+      - dashboards/project-operations.json
+      - dashboards/value-capabilities.json
+      - dashboards/beaver-lead-contractor-progress.json
+      - dashboards/workflow.json
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: contextcore
+    includeSelectors: false

@@ -1,0 +1,14 @@
+# Dashboard UID Mapping Log
+# Format: OLD_UID -> NEW_UID
+
+contextcore-portfolio -> contextcore-core-project-portfolio-overview
+fox-alert-automation -> contextcore-fox-fox-alert-automation
+contextcore-workflow -> contextcore-rabbit-contextcore-workflow-manager
+contextcore-sprint-metrics -> contextcore-core-contextcore-sprint-metrics
+skills-browser -> contextcore-squirrel-skills-browser
+contextcore-installation -> contextcore-core-contextcore-installation-status
+agent-trigger -> contextcore-external-agent-trigger
+value-simple -> contextcore-squirrel-value-capabilities-explorer
+beaver-lead-contractor -> contextcore-beaver-lead-contractor-progress
+contextcore-project-operations -> contextcore-core-contextcore-project-to-operations
+contextcore-project-progress -> contextcore-core-contextcore-project-progress

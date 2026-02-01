@@ -1,0 +1,50 @@
+# =============================================================================
+# TERM: BEAVER (contextcore-beaver)
+# =============================================================================
+# Token budget: ~100 tokens
+# =============================================================================
+
+term:
+  id: beaver
+  name: Beaver
+  type: package
+  package_name: contextcore-beaver
+  version: "1.0.0"
+  former_name: startd8
+
+  anishinaabe:
+    name: Amik
+    meaning: "The builder"
+
+  definition: |
+    LLM provider abstraction with full observability. Wraps Claude, GPT-4,
+    Gemini, and others with automatic span emission, cost tracking, and
+    task linking.
+
+  purpose: LLM provider abstraction, cost tracking, token accounting
+
+  capabilities:
+    - Tracked agents (span emission per call)
+    - Cost analytics and tracking
+    - Insight bridge to ContextCore
+    - Multi-provider support (Claude, GPT, Gemini, Ollama)
+    - Lead Contractor workflow (architect + drafter pattern)
+
+  why_beaver: |
+    Beavers are master builders—industrious, persistent, transforming
+    their environment. This package builds LLM capabilities into
+    observable, cost-tracked operations.
+
+  triggers:
+    - beaver
+    - llm
+    - amik
+    - startd8
+    - cost_tracking
+    - provider_abstraction
+
+  depends_on:
+    - spider
+
+  persistence:
+    tempo_query: '{ term.id = "beaver" }'

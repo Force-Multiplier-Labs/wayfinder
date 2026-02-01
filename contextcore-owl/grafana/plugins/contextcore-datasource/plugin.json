@@ -1,0 +1,33 @@
+{
+    "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+    "type": "datasource",
+    "name": "ContextCore",
+    "id": "contextcore-datasource",
+    "metrics": true,
+    "info": {
+        "keywords": [
+            "datasource",
+            "claude",
+            "ai",
+            "rabbit",
+            "contextcore"
+        ],
+        "description": "Query Claude AI through the Rabbit API for intelligent data analysis",
+        "author": {
+            "name": "ContextCore"
+        },
+        "logos": {
+            "small": "img/logo.svg",
+            "large": "img/logo.svg"
+        },
+        "links": [],
+        "screenshots": [],
+        "version": "1.0.0",
+        "updated": "2026-01-25"
+    },
+    "dependencies": {
+        "grafanaDependency": ">=11.6.0",
+        "plugins": []
+    },
+    "buildMode": "production"
+}

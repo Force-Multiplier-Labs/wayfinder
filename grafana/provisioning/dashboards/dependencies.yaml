@@ -1,0 +1,109 @@
+# Grafana Dashboard Dependencies
+# This manifest declares all external dependencies required by ContextCore dashboards.
+# Validated at: pre-commit, CI build, runtime (contextcore install verify)
+#
+# See docs/DEPENDENCY_MANIFEST_PATTERN.md for the full pattern specification.
+#
+# NOTE: All dashboards now use only built-in datasources (Tempo, Loki, Mimir).
+# No external plugins required.
+
+apiVersion: contextcore.io/v1
+kind: DependencyManifest
+metadata:
+  name: grafana-dashboards
+  component: grafana
+  generated: "2026-01-25"
+  generator: manual
+
+spec:
+  # ==========================================================================
+  # GRAFANA PLUGINS
+  # No external plugins required - all dashboards use built-in datasources
+  # ==========================================================================
+  plugins: []
+
+  # ==========================================================================
+  # DATASOURCES
+  # Datasources that must be configured for dashboards to function
+  # All are built-in Grafana datasource types
+  # ==========================================================================
+  datasources:
+    # Core observability stack (required)
+    - uid: tempo
+      name: Tempo
+      type: tempo
+      required: true
+      reason: "Distributed tracing for task spans, workflow executions, and agent insights"
+      usedBy:
+        - portfolio.json
+        - project-progress.json
+        - sprint-metrics.json
+        - project-operations.json
+        - value-capabilities.json
+        - beaver-lead-contractor-progress.json
+        - fox-alert-automation.json
+        - skills-browser.json
+        - workflow.json
+
+    - uid: loki
+      name: Loki
+      type: loki
+      required: true
+      reason: "Log aggregation for task events and alert activity"
+      usedBy:
+        - portfolio.json
+        - fox-alert-automation.json
+        - agent-trigger.json
+
+    - uid: mimir
+      name: Mimir
+      type: prometheus
+      required: true
+      reason: "Metrics storage for installation verification and agent costs"
+      usedBy:
+        - installation.json
+        - beaver-lead-contractor-progress.json
+        - fox-alert-automation.json
+
+  # ==========================================================================
+  # EXTERNAL SERVICES
+  # No external services required - all data comes from telemetry
+  # ==========================================================================
+  services: []
+
+  # ==========================================================================
+  # GRAFANA FEATURES
+  # Grafana features/settings that must be enabled
+  # ==========================================================================
+  features:
+    - name: transformations
+      reason: "Table transformations used in task lists"
+      required: true
+
+    - name: explore
+      reason: "Drill-down from dashboards to trace details"
+      required: true
+
+# ==========================================================================
+# VALIDATION RULES
+# Rules for CI validation
+# ==========================================================================
+validation:
+  # Fail CI if required dependencies are missing from manifest
+  strict: true
+
+  # Allow dashboards to reference these built-in types without declaration
+  builtin_datasource_types:
+    - prometheus
+    - loki
+    - tempo
+    - elasticsearch
+    - influxdb
+    - mysql
+    - postgres
+    - graphite
+
+  # Patterns to ignore during scanning
+  ignore_patterns:
+    - "**/test-*.json"
+    - "**/example-*.json"

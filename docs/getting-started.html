@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ContextCore - Getting Started</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-hover: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #7dd3fc;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+            --border: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .tagline {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .nav-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--accent);
+        }
+
+        .nav-btn.active {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            margin: 1.5rem 0 1rem;
+            color: var(--text);
+        }
+
+        p {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h4 {
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .card p {
+            font-size: 0.9rem;
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block code {
+            color: #e6edf3;
+            font-size: 0.9rem;
+        }
+
+        .code-block .comment {
+            color: #8b949e;
+        }
+
+        .code-block .command {
+            color: var(--accent);
+        }
+
+        .code-block .string {
+            color: #a5d6ff;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .copy-btn:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-muted);
+        }
+
+        tr:hover td {
+            background: var(--surface);
+        }
+
+        /* Status indicators */
+        .status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status.healthy { background: var(--success); }
+        .status.warning { background: var(--warning); }
+        .status.error { background: var(--error); }
+
+        /* Quick start */
+        .quick-start {
+            background: linear-gradient(135deg, var(--surface), #1a2744);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-start h3 {
+            color: var(--accent);
+            margin-top: 0;
+        }
+
+        /* Benefits */
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--surface);
+            border-radius: 8px;
+        }
+
+        .benefit-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .benefit-content h4 {
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .benefit-content p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid var(--border);
+            margin-top: 3rem;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .nav {
+                flex-direction: column;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>ContextCore</h1>
+            <p class="tagline">One system. Every audience. Always current.</p>
+        </header>
+
+        <nav class="nav">
+            <button class="nav-btn active" data-section="overview">Overview</button>
+            <button class="nav-btn" data-section="quickstart">Quick Start</button>
+            <button class="nav-btn" data-section="features">Features</button>
+            <button class="nav-btn" data-section="commands">Commands</button>
+            <button class="nav-btn" data-section="stack">Stack</button>
+        </nav>
+
+        <!-- Overview Section -->
+        <section id="overview" class="section active">
+            <h2>What is ContextCore?</h2>
+            <p>A project management observability framework that models tasks as OpenTelemetry spans. Stop writing status reports—let your work speak for itself.</p>
+
+            <div class="quick-start">
+                <h3>Start in 60 Seconds</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <code><span class="comment"># Launch the TUI wizard</span>
+<span class="command">contextcore tui launch</span>
+
+<span class="comment"># Or one command to rule them all</span>
+<span class="command">make full-setup</span></code>
+                </div>
+                <p>Then open <a href="http://localhost:3000" target="_blank">http://localhost:3000</a> to see your dashboards.</p>
+            </div>
+
+            <h3>The Core Insight</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-icon">📊</div>
+                    <h4>Tasks = Spans</h4>
+                    <p>Project tasks have the same structure as distributed traces: start time, end time, status, hierarchy. Store them in Tempo.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🔄</div>
+                    <h4>Status = Derived</h4>
+                    <p>First commit? In progress. PR merged? Done. No manual updates—status flows from what you're already doing.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🤖</div>
+                    <h4>Agent Memory</h4>
+                    <p>AI agent insights persist across sessions. Query what Claude decided last week. Share context between agents.</p>
+                </div>
+            </div>
+
+            <h3>Time You'll Save</h3>
+            <table>
+                <tr>
+                    <th>Activity</th>
+                    <th>Before</th>
+                    <th>After</th>
+                </tr>
+                <tr>
+                    <td>Status reports</td>
+                    <td>30-60 min/week</td>
+                    <td>0 min (derived)</td>
+                </tr>
+                <tr>
+                    <td>"What's the status?"</td>
+                    <td>5-10 interruptions/week</td>
+                    <td>Share dashboard link</td>
+                </tr>
+                <tr>
+                    <td>Finding past decisions</td>
+                    <td>15 min searching</td>
+                    <td>TraceQL in seconds</td>
+                </tr>
+                <tr>
+                    <td>Project observability setup</td>
+                    <td>Hours of config</td>
+                    <td>make full-setup</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Quick Start Section -->
+        <section id="quickstart" class="section">
+            <h2>Quick Start</h2>
+
+            <h3>Option 1: TUI Wizard (Recommended)</h3>
+            <p>Interactive terminal interface that guides you through setup.</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="comment"># Launch the wizard</span>
+<span class="command">contextcore tui launch</span>
+
+<span class="comment"># Jump to installation</span>
+<span class="command">contextcore tui install</span>
+
+<span class="comment"># Check service health</span>
+<span class="command">contextcore tui status</span></code>
+            </div>
+
+            <h3>Option 2: One Command</h3>
+            <p>Full stack deployment with verification.</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="comment"># Deploy everything</span>
+<span class="command">make full-setup</span>
+
+<span class="comment"># Verify installation</span>
+<span class="command">contextcore install verify</span></code>
+            </div>
+
+            <h3>Option 3: Generate Custom Script</h3>
+            <p>Create a tailored installation script for your environment.</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="comment"># Interactive script generator</span>
+<span class="command">contextcore tui generate-script</span></code>
+            </div>
+
+            <h3>Verify Your Installation</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="comment"># Full verification with telemetry</span>
+<span class="command">contextcore install verify</span>
+
+<span class="comment"># Quick status check</span>
+<span class="command">contextcore install status</span>
+
+<span class="comment"># View dashboard</span>
+<span class="command">open http://localhost:3000/d/contextcore-installation</span></code>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="section">
+            <h2>Key Features</h2>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">📈</div>
+                <div class="benefit-content">
+                    <h4>Tasks as Spans</h4>
+                    <p>Every project task becomes an OpenTelemetry span—queryable with TraceQL, visualizable in Grafana, correlated with runtime telemetry.</p>
+                </div>
+            </div>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">🔗</div>
+                <div class="benefit-content">
+                    <h4>Dual Telemetry</h4>
+                    <p>Spans to Tempo (hierarchy, timing), logs to Loki (events, metrics derivation). Complete picture, one infrastructure.</p>
+                </div>
+            </div>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">🧠</div>
+                <div class="benefit-content">
+                    <h4>Agent Memory</h4>
+                    <p>AI agent insights persist across sessions. Query decisions, lessons, recommendations. Build on prior context.</p>
+                </div>
+            </div>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">📊</div>
+                <div class="benefit-content">
+                    <h4>Auto-Provisioned Dashboards</h4>
+                    <p>Six dashboards out of the box: Portfolio, Installation, Value, Progress, Sprint, Operations.</p>
+                </div>
+            </div>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">🖥️</div>
+                <div class="benefit-content">
+                    <h4>TUI Installation Wizard</h4>
+                    <p>Terminal interface with guided installation, status monitoring, and script generation.</p>
+                </div>
+            </div>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">🌐</div>
+                <div class="benefit-content">
+                    <h4>Vendor Agnostic</h4>
+                    <p>OTLP export to any compatible backend—Datadog, New Relic, Honeycomb, or the included Grafana stack.</p>
+                </div>
+            </div>
+
+            <h3>For AI Agents</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="comment"># Query prior decisions</span>
+from contextcore.agent import InsightQuerier
+querier = InsightQuerier()
+decisions = querier.query(project_id=<span class="string">"my-project"</span>, insight_type=<span class="string">"decision"</span>)
+
+<span class="comment"># Emit insights for future sessions</span>
+from contextcore.agent import InsightEmitter
+emitter = InsightEmitter(project_id=<span class="string">"my-project"</span>, agent_id=<span class="string">"claude"</span>)
+emitter.emit_decision(<span class="string">"Selected async pattern"</span>, confidence=0.9)</code>
+            </div>
+        </section>
+
+        <!-- Commands Section -->
+        <section id="commands" class="section">
+            <h2>Essential Commands</h2>
+
+            <h3>TUI Commands</h3>
+            <table>
+                <tr>
+                    <th>Command</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>contextcore tui launch</code></td>
+                    <td>Open main TUI interface</td>
+                </tr>
+                <tr>
+                    <td><code>contextcore tui install</code></td>
+                    <td>Launch installation wizard</td>
+                </tr>
+                <tr>
+                    <td><code>contextcore tui status</code></td>
+                    <td>Check service health</td>
+                </tr>
+                <tr>
+                    <td><code>contextcore tui generate-script</code></td>
+                    <td>Create custom install script</td>
+                </tr>
+            </table>
+
+            <h3>Task Tracking</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="comment"># Start a task</span>
+<span class="command">contextcore task start --id PROJ-123 --title "My feature" --type story</span>
+
+<span class="comment"># Update status</span>
+<span class="command">contextcore task update --id PROJ-123 --status in_progress</span>
+
+<span class="comment"># Complete task</span>
+<span class="command">contextcore task complete --id PROJ-123</span></code>
+            </div>
+
+            <h3>Installation & Verification</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="comment"># Full verification</span>
+<span class="command">contextcore install verify</span>
+
+<span class="comment"># Quick status</span>
+<span class="command">contextcore install status</span>
+
+<span class="comment"># Initialize with metrics seeding</span>
+<span class="command">contextcore install init</span></code>
+            </div>
+
+            <h3>Dashboard Management</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="comment"># Provision dashboards</span>
+<span class="command">contextcore dashboards provision</span>
+
+<span class="comment"># List provisioned dashboards</span>
+<span class="command">contextcore dashboards list</span></code>
+            </div>
+        </section>
+
+        <!-- Stack Section -->
+        <section id="stack" class="section">
+            <h2>The Stack</h2>
+            <p>ContextCore deploys a complete observability stack locally:</p>
+
+            <table>
+                <tr>
+                    <th>Service</th>
+                    <th>Port</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><span class="status healthy"></span>Grafana</td>
+                    <td>3000</td>
+                    <td>Dashboards & visualization</td>
+                </tr>
+                <tr>
+                    <td><span class="status healthy"></span>Tempo</td>
+                    <td>3200</td>
+                    <td>Traces (tasks, insights)</td>
+                </tr>
+                <tr>
+                    <td><span class="status healthy"></span>Mimir</td>
+                    <td>9009</td>
+                    <td>Metrics</td>
+                </tr>
+                <tr>
+                    <td><span class="status healthy"></span>Loki</td>
+                    <td>3100</td>
+                    <td>Logs & events</td>
+                </tr>
+                <tr>
+                    <td><span class="status healthy"></span>Alloy</td>
+                    <td>12345</td>
+                    <td>Telemetry collection</td>
+                </tr>
+                <tr>
+                    <td><span class="status healthy"></span>OTLP</td>
+                    <td>4317</td>
+                    <td>gRPC endpoint</td>
+                </tr>
+            </table>
+
+            <h3>Key Files</h3>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>.contextcore.yaml</code></td>
+                    <td>Project metadata, risks, SLOs</td>
+                </tr>
+                <tr>
+                    <td><code>CLAUDE.md</code></td>
+                    <td>AI agent instructions</td>
+                </tr>
+                <tr>
+                    <td><code>docker-compose.yaml</code></td>
+                    <td>Local stack definition</td>
+                </tr>
+                <tr>
+                    <td><code>Makefile</code></td>
+                    <td>Common operations</td>
+                </tr>
+                <tr>
+                    <td><code>docs/harbor-tour.md</code></td>
+                    <td>Self-guided exploration</td>
+                </tr>
+            </table>
+
+            <h3>Dashboards</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Installation</h4>
+                    <p>Verify stack health and completeness</p>
+                    <a href="http://localhost:3000/d/contextcore-installation" target="_blank">Open Dashboard</a>
+                </div>
+                <div class="card">
+                    <h4>Portfolio</h4>
+                    <p>High-level project overview</p>
+                    <a href="http://localhost:3000/d/contextcore-portfolio" target="_blank">Open Dashboard</a>
+                </div>
+                <div class="card">
+                    <h4>Progress</h4>
+                    <p>Sprint burndown, kanban, metrics</p>
+                    <a href="http://localhost:3000/d/contextcore-progress" target="_blank">Open Dashboard</a>
+                </div>
+                <div class="card">
+                    <h4>Value</h4>
+                    <p>Capability value exploration</p>
+                    <a href="http://localhost:3000/d/contextcore-value" target="_blank">Open Dashboard</a>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>ContextCore — The first project management system built for human-agent parity.</p>
+            <p><a href="https://github.com/contextcore/contextcore">GitHub</a> · <a href="./harbor-tour.md">Harbor Tour</a> · <a href="../CLAUDE.md">CLAUDE.md</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // Navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Update buttons
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Update sections
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(btn.dataset.section).classList.add('active');
+            });
+        });
+
+        // Copy code
+        function copyCode(btn) {
+            const code = btn.parentElement.querySelector('code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const original = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = original, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

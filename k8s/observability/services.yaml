@@ -1,0 +1,103 @@
+---
+# Mimir Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mimir
+  namespace: observability
+  labels:
+    app: mimir
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 9009
+      targetPort: 9009
+      nodePort: 30009
+    - name: grpc
+      port: 9095
+      targetPort: 9095
+  selector:
+    app: mimir
+---
+# Tempo Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo
+  namespace: observability
+  labels:
+    app: tempo
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 3200
+      targetPort: 3200
+      nodePort: 30200
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+  selector:
+    app: tempo
+---
+# Loki Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki
+  namespace: observability
+  labels:
+    app: loki
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 3100
+      targetPort: 3100
+      nodePort: 30100
+  selector:
+    app: loki
+---
+# Alloy Service (OTLP Collector)
+apiVersion: v1
+kind: Service
+metadata:
+  name: alloy
+  namespace: observability
+  labels:
+    app: alloy
+spec:
+  type: NodePort
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      nodePort: 30317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      nodePort: 30318
+    - name: http
+      port: 12345
+      targetPort: 12345
+  selector:
+    app: alloy
+---
+# Grafana Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: observability
+  labels:
+    app: grafana
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      nodePort: 30000
+  selector:
+    app: grafana

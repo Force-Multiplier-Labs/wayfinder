@@ -1,0 +1,141 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/health"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": ["application/json"],
+        "Access-Control-Allow-Origin": ["*"]
+      },
+      "body": {
+        "status": "healthy",
+        "version": "0.1.0"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/projects"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": ["application/json"],
+        "Access-Control-Allow-Origin": ["*"]
+      },
+      "body": {
+        "projects": [
+          {"id": "beaver-lead-contractor", "name": "Beaver Lead Contractor"},
+          {"id": "contextcore", "name": "ContextCore"},
+          {"id": "test-project", "name": "Test Project"}
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/workflow/dry-run"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": ["application/json"],
+        "Access-Control-Allow-Origin": ["*"]
+      },
+      "body": {
+        "status": "success",
+        "run_id": "dry-run-mock-123",
+        "project_id": "{{request.body.project_id}}",
+        "mode": "dry_run",
+        "steps": [
+          {"name": "Import backlog", "status": "would_execute"},
+          {"name": "Generate features", "status": "would_execute"},
+          {"name": "Integrate changes", "status": "would_execute"}
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/workflow/execute"
+    },
+    "httpResponse": {
+      "statusCode": 202,
+      "headers": {
+        "Content-Type": ["application/json"],
+        "Access-Control-Allow-Origin": ["*"]
+      },
+      "body": {
+        "status": "started",
+        "run_id": "wf-mock-456",
+        "project_id": "{{request.body.project_id}}",
+        "mode": "execute",
+        "message": "Workflow started"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/workflow/status/.*"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": ["application/json"],
+        "Access-Control-Allow-Origin": ["*"]
+      },
+      "body": {
+        "run_id": "wf-mock-456",
+        "status": "completed",
+        "started_at": "2026-01-25T12:00:00Z",
+        "completed_at": "2026-01-25T12:05:00Z",
+        "duration_seconds": 300,
+        "steps_completed": 3,
+        "steps_total": 3
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/invoke"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": ["application/json"],
+        "Access-Control-Allow-Origin": ["*"]
+      },
+      "body": {
+        "response": "This is a mock response from the Rabbit API. In production, this would be a Claude response.",
+        "metrics": {
+          "input_tokens": 50,
+          "output_tokens": 30,
+          "total_tokens": 80,
+          "latency_ms": 150
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "OPTIONS",
+      "path": "/.*"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Access-Control-Allow-Origin": ["*"],
+        "Access-Control-Allow-Methods": ["GET, POST, OPTIONS"],
+        "Access-Control-Allow-Headers": ["Content-Type, Authorization"]
+      }
+    }
+  }
+]

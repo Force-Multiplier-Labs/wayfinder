@@ -1,0 +1,46 @@
+# =============================================================================
+# TERM: RABBIT (contextcore-rabbit)
+# =============================================================================
+# Token budget: ~100 tokens
+# =============================================================================
+
+term:
+  id: rabbit
+  name: Rabbit
+  type: package
+  package_name: contextcore-rabbit
+  version: "1.0.0"
+
+  anishinaabe:
+    name: Waabooz
+    meaning: "Quick and alert"
+
+  definition: |
+    Vendor-agnostic alert automation framework. Receives, parses, and routes
+    alerts from any monitoring system through a pluggable architecture.
+
+  purpose: Alert automation framework (webhooks, parsers, actions)
+
+  capabilities:
+    - Webhook server for alert ingestion
+    - Grafana alert parser
+    - Alertmanager parser
+    - Pluggable action framework
+    - Structured logging of actions
+
+  why_rabbit: |
+    Rabbits are quick and alert—always aware of their surroundings.
+    This package provides quick, responsive alert handling.
+
+  triggers:
+    - rabbit
+    - alert
+    - waabooz
+    - webhook
+    - alert_automation
+
+  depends_on:
+    - spider
+
+  persistence:
+    tempo_query: '{ term.id = "rabbit" }'

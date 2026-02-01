@@ -1,0 +1,994 @@
+# ContextCore User-Facing Capability Index
+# Version: 1.2.0
+# Created: 2026-01-28
+# Updated: 2026-01-30
+# Audience: Users (primary), GTM (secondary)
+#
+# Complement to: contextcore.agent.yaml (technical/agent-focused)
+
+manifest_id: contextcore.user
+name: ContextCore User-Facing Capabilities
+version: "1.2.0"
+description: |
+  User-facing capabilities for ContextCore, organized by value delivered.
+  Project management as observability—eliminate the PM data silo by treating tasks as telemetry.
+
+owner: neilyashinsky
+repository: https://github.com/neilyashinsky/ContextCore
+
+labels:
+  domain: project-management
+  tier: user-facing
+  audience: human
+
+# Token estimates for LLM context management
+manifest_tokens: 500
+index_tokens: 3500
+
+# ==============================================================================
+# USER PERSONAS
+# ==============================================================================
+
+personas:
+  developer:
+    primary_value: No context switching
+    pain_point: "I update Jira, then GitHub, then Slack—same info 3 places"
+  project_manager:
+    primary_value: Real-time accurate data
+    pain_point: "Status reports are stale by the time I compile them"
+  engineering_leader:
+    primary_value: Portfolio visibility
+    pain_point: "I can't see across all projects without opening 5 tools"
+  operator:
+    primary_value: Incident context
+    pain_point: "Alert fires at 2am, I don't know why this service matters"
+  compliance:
+    primary_value: Evidence trail
+    pain_point: "Audit asks for history, I grep through chat logs"
+  ai_agent:
+    primary_value: Shared knowledge
+    pain_point: "Every session I rediscover what was decided before"
+
+# ==============================================================================
+# CAPABILITIES
+# ==============================================================================
+
+capabilities:
+
+  # ============================================================================
+  # CATEGORY 1: ELIMINATE MANUAL STATUS REPORTING
+  # ============================================================================
+
+  - capability_id: contextcore.status.auto_derive
+    category: action
+    maturity: beta
+    summary: Derive task status automatically from Git activity—commits, PRs, merges
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Stop manually updating task status across multiple tools. ContextCore watches
+        your Git activity and automatically moves tasks through their lifecycle:
+        - Push a commit with task ID → task moves to "in progress"
+        - Open a PR → task moves to "in review"
+        - Merge PR → task moves to "done"
+        Works with any task ID pattern you define.
+      gtm: |
+        Eliminate status update overhead. Your developers focus on code while
+        project visibility updates automatically. Studies show developers spend
+        30+ minutes per day on status updates—reclaim that time for real work.
+
+    user_benefit: |
+      Save 30+ minutes per developer per week on status updates.
+      Always-accurate project status without manual effort.
+
+    triggers:
+      - "auto status"
+      - "automatic updates"
+      - "git integration"
+      - "status from commits"
+      - "no more jira updates"
+
+    evidence:
+      - type: code
+        ref: examples/03_artifact_status_derivation.py
+        description: Reference implementation of status derivation
+      - type: doc
+        ref: docs/quickstart.md
+        description: Setup instructions for Git integration
+
+    confidence: 0.85
+
+    personas: [developer, project_manager]
+    measurable_outcome: "80% reduction in status update time"
+
+  - capability_id: contextcore.status.stale_detection
+    category: observe
+    maturity: beta
+    summary: Detect stale tasks with no activity and surface blockers automatically
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Get alerted when tasks go stale—no commits, no updates, no progress.
+        Configure thresholds (default: 7 days of inactivity) and receive alerts
+        in Grafana, Slack, or your preferred notification channel. Includes
+        context about last activity and potential blockers.
+      gtm: |
+        Never let a task silently stall again. Proactive stale detection surfaces
+        blocked work before it becomes a crisis. Reduce average blocker detection
+        time from weeks to hours.
+
+    user_benefit: |
+      Catch stalled work before it derails your sprint.
+      Reduce blocker detection time from weeks to less than a day.
+
+    triggers:
+      - "stale tasks"
+      - "blocked work"
+      - "no activity"
+      - "task alerts"
+
+    evidence:
+      - type: metric
+        ref: contextcore_task_stale_count
+        description: Prometheus metric for stale task count
+
+    confidence: 0.8
+
+    personas: [project_manager, engineering_leader]
+    measurable_outcome: "<1 day blocker detection time"
+
+  # ============================================================================
+  # CATEGORY 2: UNIFIED PROJECT VIEW
+  # ============================================================================
+
+  - capability_id: contextcore.dashboard.portfolio
+    category: query
+    maturity: stable
+    summary: See all projects in one Grafana dashboard with health, progress, and blockers
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Portfolio Overview dashboard in Grafana shows all your projects in one view.
+        See at a glance:
+        - Project health (on track, at risk, blocked)
+        - Epic and story progress
+        - Team workload distribution
+        - Blockers requiring attention
+        Drill down to any project for detailed task-level visibility.
+      gtm: |
+        Replace your weekly status compilation ritual with a real-time dashboard.
+        Engineering leaders see portfolio health instantly without scheduling
+        sync meetings or waiting for manual reports.
+
+    user_benefit: |
+      50% reduction in context switches between tools.
+      Real-time portfolio visibility without manual reporting.
+
+    triggers:
+      - "portfolio dashboard"
+      - "all projects"
+      - "project overview"
+      - "health dashboard"
+      - "project status"
+
+    evidence:
+      - type: doc
+        ref: k8s/observability/dashboards/portfolio.json
+        description: Portfolio Overview Grafana dashboard
+      - type: doc
+        ref: docs/dashboards/portfolio.md
+        description: Dashboard usage documentation
+
+    confidence: 0.95
+
+    personas: [engineering_leader, project_manager]
+    measurable_outcome: "50% reduction in context switches"
+
+  - capability_id: contextcore.dashboard.project_drilldown
+    category: query
+    maturity: stable
+    summary: Drill from portfolio to epic to story to task with full hierarchy
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Click any project in the portfolio view to drill down through the full
+        hierarchy: Epics → Stories → Tasks. Task details show:
+        - Time in each status (cycle time analysis)
+        - Who's assigned and when they last touched it
+        - Links to related commits, PRs, and discussions
+        Uses OTel span parent-child relationships—tasks are literally spans.
+      gtm: |
+        No more "where's that task?" hunting across tools. Complete project
+        visibility from portfolio down to individual work items, all queryable
+        with standard observability tools your team already knows.
+
+    user_benefit: |
+      Navigate project hierarchy without switching tools.
+      Full context for every work item in one place.
+
+    triggers:
+      - "project details"
+      - "epic breakdown"
+      - "task hierarchy"
+      - "drill down"
+      - "story to task"
+
+    evidence:
+      - type: doc
+        ref: k8s/observability/dashboards/project.json
+        description: Project Details Grafana dashboard
+      - type: code
+        ref: src/contextcore/tracker.py
+        description: TaskTracker with parent-child span relationships
+
+    confidence: 0.95
+
+    personas: [project_manager, developer]
+    measurable_outcome: "Single source of truth for project state"
+
+  - capability_id: contextcore.dashboard.sprint
+    category: query
+    maturity: beta
+    summary: Real-time sprint burndown, velocity, and cycle time metrics
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Sprint metrics dashboard shows real-time burndown derived from actual
+        task completion—not manual updates. See velocity trends, cycle time
+        percentiles, and WIP limits. Sprint retrospectives have real data to
+        discuss, not recollections.
+      gtm: |
+        Data-driven sprints. Your burndown chart updates as work completes,
+        not when someone remembers to update a ticket. Velocity calculations
+        based on actual delivery, not estimates.
+
+    user_benefit: |
+      Real-time sprint visibility without manual burndown updates.
+      Accurate velocity and cycle time for planning.
+
+    triggers:
+      - "sprint metrics"
+      - "burndown"
+      - "velocity"
+      - "cycle time"
+      - "sprint dashboard"
+
+    evidence:
+      - type: doc
+        ref: demo/dashboards/sprint-metrics.json
+        description: Sprint Metrics Grafana dashboard
+
+    confidence: 0.85
+
+    personas: [project_manager, engineering_leader]
+    measurable_outcome: "Accurate sprint data without manual tracking"
+
+  - capability_id: contextcore.dashboard.workload
+    category: query
+    maturity: beta
+    summary: See team workload distribution and identify overloaded/available members
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Workload dashboard shows task distribution across team members. Identify
+        who's overloaded (too many in-progress tasks) and who has capacity. Based
+        on assignee attributes in task spans—queries via TraceQL or PromQL.
+      gtm: |
+        Balance workload proactively. See at a glance who's drowning and who can
+        take on more. Resource allocation decisions backed by real data, not
+        self-reported status.
+
+    user_benefit: |
+      Balance team workload before burnout.
+      Data-driven resource allocation.
+
+    triggers:
+      - "team workload"
+      - "who's available"
+      - "resource allocation"
+      - "overloaded"
+      - "capacity"
+
+    evidence:
+      - type: metric
+        ref: contextcore_task_wip_by_assignee
+        description: WIP gauge by assignee
+
+    confidence: 0.8
+
+    personas: [engineering_leader, project_manager]
+    measurable_outcome: "Proactive workload balancing"
+
+  # ============================================================================
+  # CATEGORY 3: BUSINESS-AWARE OBSERVABILITY
+  # ============================================================================
+
+  - capability_id: contextcore.alert.enrichment
+    category: observe
+    maturity: beta
+    summary: Alerts include project owner, criticality, and business context automatically
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        When an alert fires, it includes ContextCore metadata automatically:
+        - Project owner and team
+        - Business criticality (critical/high/medium/low)
+        - Related epic and current sprint
+        - Runbook links from design docs
+        Metadata flows from ProjectContext CRD to alert annotations.
+      gtm: |
+        No more "who owns this?" scrambles at 2am. Every alert arrives with
+        full business context, enabling faster triage and correct escalation.
+        On-call engineers know exactly why a service matters.
+
+    user_benefit: |
+      Instant context when alerts fire—no hunting for ownership.
+      Faster triage with business criticality visible.
+
+    triggers:
+      - "alert context"
+      - "alert enrichment"
+      - "project context in alerts"
+      - "who owns this service"
+
+    evidence:
+      - type: code
+        ref: src/contextcore/models/core.py
+        description: ProjectContext CRD with business.criticality field
+      - type: doc
+        ref: docs/alert-enrichment.md
+        description: Alert enrichment setup guide
+
+    confidence: 0.85
+
+    personas: [operator, engineering_leader]
+    measurable_outcome: "50% reduction in mean time to acknowledge"
+
+  - capability_id: contextcore.alert.priority_routing
+    category: action
+    maturity: beta
+    summary: Critical projects automatically route to P1 alerts with appropriate escalation
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Alert severity derived from project criticality. A failing health check
+        on a critical, revenue-primary service routes differently than the same
+        check on an internal tool. Configure escalation policies per criticality
+        tier—critical services page immediately, others queue for business hours.
+      gtm: |
+        Right-size your alerting. Not every failure deserves a page. ContextCore
+        ensures critical services get urgent attention while non-critical issues
+        wait for appropriate handling.
+
+    user_benefit: |
+      Fewer false-positive pages for non-critical services.
+      Critical services get immediate attention.
+
+    triggers:
+      - "alert routing"
+      - "priority alerts"
+      - "critical service alerts"
+      - "escalation"
+
+    evidence:
+      - type: code
+        ref: src/contextcore/models/core.py
+        description: ProjectContext.spec.business.criticality field
+
+    confidence: 0.8
+
+    personas: [operator, engineering_leader]
+    measurable_outcome: "Alert fatigue reduction through smart routing"
+
+  - capability_id: contextcore.incident.context
+    category: query
+    maturity: beta
+    summary: During outages, see related tasks, recent changes, and project context
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        When investigating an incident, query related project context:
+        - Tasks recently completed (potential culprits)
+        - Tasks currently in progress (incomplete work)
+        - Design docs and ADRs for the affected service
+        - Team members and escalation contacts
+        Task-to-service linkage via resource attributes enables correlation.
+      gtm: |
+        Incident response with full context. Your on-call engineers see what
+        changed recently, who's working on related features, and where to find
+        design decisions—all without leaving their observability tools.
+
+    user_benefit: |
+      Faster incident resolution with full project context.
+      Correlate production issues to recent development activity.
+
+    triggers:
+      - "incident context"
+      - "outage investigation"
+      - "what changed"
+      - "recent tasks"
+      - "incident correlation"
+
+    evidence:
+      - type: code
+        ref: src/contextcore/tracker.py
+        description: get_task_link() for trace-to-task correlation
+
+    confidence: 0.8
+
+    personas: [operator, developer]
+    measurable_outcome: "Reduced mean time to resolution"
+
+  # ============================================================================
+  # CATEGORY 4: AGENT-HUMAN COLLABORATION
+  # ============================================================================
+
+  - capability_id: contextcore.agent.persistent_memory
+    category: action
+    maturity: beta
+    summary: AI agents remember decisions and lessons across sessions
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Claude (or other AI agents) can persist insights as OTel spans in Tempo.
+        Next session, the agent queries prior decisions, lessons learned, and
+        context—no re-explaining what was decided last week. Insights include
+        confidence scores and evidence links for validation.
+      gtm: |
+        End the "ground zero" problem with AI assistants. Your AI remembers
+        context across sessions, building on prior work instead of starting fresh.
+        Organizational knowledge persists even as agents restart.
+
+    user_benefit: |
+      No re-explaining context to AI assistants.
+      Decisions persist and compound over time.
+
+    triggers:
+      - "agent memory"
+      - "claude remembers"
+      - "persistent context"
+      - "cross-session"
+      - "agent knowledge"
+
+    evidence:
+      - type: code
+        ref: src/contextcore/agent/insights.py
+        description: InsightEmitter and InsightQuerier classes
+      - type: example
+        ref: examples/02_agent_insights.py
+        description: Working example of insight emission and query
+
+    confidence: 0.85
+
+    personas: [developer, ai_agent]
+    measurable_outcome: "Zero context loss between AI sessions"
+
+  - capability_id: contextcore.agent.constraints
+    category: query
+    maturity: beta
+    summary: Define rules agents must follow—constraints persist in ProjectContext CRD
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Define constraints in your ProjectContext CRD that agents must respect:
+        - "No breaking API changes without RFC" (blocking)
+        - "Prefer composition over inheritance" (advisory)
+        - "Maximum 150 lines per generated file" (blocking)
+        Agents query constraints before acting. Blocking constraints are mandatory;
+        advisory constraints inform but don't prevent.
+      gtm: |
+        Guardrails for AI assistance. Define your team's rules once, and every
+        AI agent respects them automatically. No more "the AI did something
+        we don't allow" surprises.
+
+    user_benefit: |
+      AI agents follow your team's rules automatically.
+      Consistent behavior across all AI interactions.
+
+    triggers:
+      - "agent constraints"
+      - "ai rules"
+      - "guardrails"
+      - "agent limits"
+      - "what agents can't do"
+
+    evidence:
+      - type: code
+        ref: src/contextcore/agent/guidance.py
+        description: GuidanceReader.get_constraints_for_path()
+      - type: doc
+        ref: docs/agent-communication-protocol.md
+        description: Constraint definition guide
+
+    confidence: 0.85
+
+    personas: [developer, engineering_leader]
+    measurable_outcome: "Zero constraint violations after setup"
+
+  - capability_id: contextcore.agent.decision_visibility
+    category: query
+    maturity: beta
+    summary: See why AI agents chose X over Y with confidence scores and evidence
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Every agent decision is recorded as an insight span with:
+        - Confidence score (0-1)
+        - Rationale explaining the choice
+        - Evidence links supporting the decision
+        - Alternatives considered
+        Query decisions via CLI or Grafana dashboard. Audit agent reasoning
+        after the fact.
+      gtm: |
+        AI transparency by default. Every AI decision is logged with reasoning,
+        queryable later. When someone asks "why did the AI do that?", you have
+        the answer.
+
+    user_benefit: |
+      Understand AI reasoning, not just outputs.
+      Audit and improve AI decisions over time.
+
+    triggers:
+      - "ai decisions"
+      - "why did claude"
+      - "agent reasoning"
+      - "decision audit"
+      - "ai transparency"
+
+    evidence:
+      - type: code
+        ref: src/contextcore/agent/insights.py
+        description: InsightType.decision with confidence and rationale
+
+    confidence: 0.85
+
+    personas: [developer, engineering_leader]
+    measurable_outcome: "Full audit trail of AI reasoning"
+
+  - capability_id: contextcore.agent.cross_collaboration
+    category: query
+    maturity: beta
+    summary: Multiple AI agents share knowledge via A2A protocol—any A2A agent can collaborate
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Insights stored in Tempo are agent-agnostic. If Claude analyzes a problem
+        and emits an insight, GPT-4 can query that insight in a later session.
+        With A2A protocol support (Phase 4), agents can also communicate directly:
+        - A2A server exposes agent capabilities via .well-known/agent.json
+        - A2A client sends messages to any A2A-compatible agent
+        - Handoffs convert bidirectionally between A2A Tasks and ContextCore format
+        - Input requests enable mid-task clarification across agents
+      gtm: |
+        [BETA] Cross-agent collaboration via the A2A protocol. Use the best AI for
+        each task—Claude for reasoning, GPT for certain code patterns—with shared
+        context and structured handoffs between them. Any A2A-compatible agent
+        can participate without custom integration.
+
+    user_benefit: |
+      Best-of-breed AI usage without context silos.
+      Structured agent-to-agent communication via A2A protocol.
+
+    triggers:
+      - "multi-agent"
+      - "agent collaboration"
+      - "cross-agent"
+      - "shared knowledge"
+      - "a2a protocol"
+      - "agent interoperability"
+
+    evidence:
+      - type: code
+        ref: src/contextcore/agent/a2a_server.py
+        description: A2A server with .well-known discovery and JSON-RPC endpoint
+      - type: code
+        ref: src/contextcore/agent/a2a_client.py
+        description: A2A client for remote agent communication
+      - type: code
+        ref: src/contextcore/agent/a2a_adapter.py
+        description: Bidirectional A2A Task ↔ Handoff conversion
+      - type: doc
+        ref: docs/agent-communication-protocol.md
+        description: Protocol 7 A2A Interoperability documentation
+
+    confidence: 0.8
+
+    personas: [developer, ai_agent]
+    measurable_outcome: "Cross-agent task delegation via A2A protocol"
+
+  # ============================================================================
+  # CATEGORY 5: COMPLIANCE & AUDIT
+  # ============================================================================
+
+  - capability_id: contextcore.audit.full_trail
+    category: query
+    maturity: stable
+    summary: Every status change logged—full history queryable via Loki
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        All task lifecycle events are logged to Loki as structured JSON:
+        - Status changes with timestamps
+        - Who changed what
+        - Links to triggering commits/PRs
+        Query via LogQL: `{job="contextcore"} | json | task_id="PROJ-123"`
+        Retention configurable per compliance requirements.
+      gtm: |
+        Audit-ready by design. When compliance asks "show me the history of
+        this feature", you query Loki—not grep through Slack. Full audit trail
+        without extra tooling.
+
+    user_benefit: |
+      Complete project history for audits.
+      No more reconstructing timelines from chat logs.
+
+    triggers:
+      - "audit trail"
+      - "full history"
+      - "compliance log"
+      - "who changed what"
+      - "task history"
+
+    evidence:
+      - type: code
+        ref: src/contextcore/logger.py
+        description: TaskLogger emitting structured logs to Loki
+      - type: log
+        ref: "{job=\"contextcore\"} | json"
+        description: LogQL query pattern for audit queries
+
+    confidence: 0.95
+
+    personas: [compliance, engineering_leader]
+    measurable_outcome: "Instant audit response instead of weeks of reconstruction"
+
+  - capability_id: contextcore.audit.time_queries
+    category: query
+    maturity: stable
+    summary: Query project state at any point in time—"What was happening in Q3?"
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        TraceQL and LogQL support time-range queries natively. Ask questions like:
+        - "What tasks were blocked in October?"
+        - "Who completed the most tasks in Q3?"
+        - "What was the cycle time trend last quarter?"
+        Historical data preserved according to retention policy (default: 90 days).
+      gtm: |
+        Time-travel for your project data. Answer retrospective questions
+        instantly instead of manually reconstructing from memory. Perfect for
+        quarterly reviews, post-mortems, and compliance audits.
+
+    user_benefit: |
+      Answer historical questions instantly.
+      Retrospectives and post-mortems backed by real data.
+
+    triggers:
+      - "time range query"
+      - "historical data"
+      - "what happened in"
+      - "quarter review"
+      - "retroactive analysis"
+
+    evidence:
+      - type: trace
+        ref: "{span.task.status != \"\"} | since(90d)"
+        description: TraceQL time-range query example
+
+    confidence: 0.95
+
+    personas: [compliance, project_manager, engineering_leader]
+    measurable_outcome: "Historical queries in seconds, not weeks"
+
+  - capability_id: contextcore.audit.evidence_linking
+    category: query
+    maturity: beta
+    summary: Trace from decision to code to test—full evidence chain
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        ContextCore evidence model links decisions to implementation:
+        - ADR (decision) → Code (implementation) → Test (verification)
+        - Task → Commits → PRs → Deployment
+        Query the chain: "Show me all code implementing ADR-015"
+        Uses span links and evidence references in capability definitions.
+      gtm: |
+        Complete traceability from business decision to production code.
+        When auditors ask "prove this decision was implemented correctly",
+        you show the evidence chain—not a slideshow.
+
+    user_benefit: |
+      End-to-end traceability for compliance.
+      Prove decisions were implemented as intended.
+
+    triggers:
+      - "evidence chain"
+      - "traceability"
+      - "decision to code"
+      - "proof of implementation"
+      - "audit evidence"
+
+    evidence:
+      - type: doc
+        ref: docs/capability-index/evidence-model.md
+        description: Evidence linking specification
+
+    confidence: 0.8
+
+    personas: [compliance, engineering_leader]
+    measurable_outcome: "Complete decision-to-deployment traceability"
+
+  # ============================================================================
+  # CATEGORY 6: VALUE ENGINEERING & PAIN ANALYSIS
+  # ============================================================================
+
+  - capability_id: contextcore.value.pain_points_manifest
+    category: query
+    maturity: stable
+    summary: Queryable manifest of 28 persona pain points with severity, friction type, and ROI
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        A structured YAML manifest capturing 28 pain points across 6 personas
+        (developer, PM, engineering leader, SRE, compliance, AI agent). Each pain
+        point includes severity, emotional weight, friction category, cost model,
+        and links back to the benefit that addresses it. Use it to understand
+        who hurts, how, and how much before ContextCore exists.
+      gtm: |
+        Data-driven pain analysis for product and sales conversations. Every
+        pain point is written in the persona's own voice with emotional context.
+        Pick the persona, use their language, and quantify the cost of inaction.
+
+    user_benefit: |
+      Understand and communicate customer pain with precision.
+      Prioritize roadmap by quantified pain cost, not intuition.
+
+    triggers:
+      - "pain points"
+      - "who hurts"
+      - "persona pain"
+      - "friction categories"
+      - "customer problems"
+
+    evidence:
+      - type: doc
+        ref: docs/capability-index/contextcore.pain_points.yaml
+        description: Pain points manifest v2.0 with 28 entries across 6 personas
+      - type: doc
+        ref: docs/capability-index/PAIN_POINTS_GUIDE.md
+        description: Usage guide with 6 scenarios and maintenance procedures
+      - type: doc
+        ref: docs/capability-index/pain-points-harbor-tour.html
+        description: Interactive HTML visualization of pain points data
+
+    confidence: 0.95
+
+    personas: [engineering_leader, project_manager]
+    measurable_outcome: "Persona-specific pain quantification for product decisions"
+
+  - capability_id: contextcore.value.roi_estimation
+    category: query
+    maturity: stable
+    summary: Order-of-magnitude ROI estimates across 3 org sizes using 3 estimation methods
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Every pain point includes an auditable ROI estimate with:
+        - Three org-size profiles (startup 5 devs, mid-market 25, enterprise 100)
+        - Per-person and per-org annual cost in USD
+        - Auditable formula you can recompute with your own numbers
+        - Confidence label (high +-30%, medium +-50%, low +-3-5x)
+        Three methods: time-based (direct labor), risk-based (probability x impact),
+        opportunity-based (capability delta x adoption drag).
+      gtm: |
+        Quantify the cost of NOT having ContextCore. Enterprise annual pain: ~$2.5M.
+        Already addressed: $1.4M (56%). Remaining opportunity: $835K (33%).
+        Every estimate includes the formula so prospects can verify with their own data.
+
+    user_benefit: |
+      Justify investment with order-of-magnitude cost estimates.
+      Adjust estimates for your own org size and rates.
+
+    triggers:
+      - "roi estimate"
+      - "cost of pain"
+      - "value engineering"
+      - "annual cost"
+      - "business case"
+
+    evidence:
+      - type: doc
+        ref: docs/capability-index/contextcore.pain_points.yaml
+        description: ROI estimates embedded in each of 28 pain points
+      - type: doc
+        ref: docs/capability-index/PAIN_POINTS_GUIDE.md
+        description: Estimation methodology and adjustment instructions
+
+    confidence: 0.9
+
+    personas: [engineering_leader, project_manager, compliance]
+    measurable_outcome: "Order-of-magnitude cost justification for ContextCore adoption"
+
+  - capability_id: contextcore.value.gap_prioritization
+    category: query
+    maturity: stable
+    summary: Ranked roadmap gaps by ROI signal—cost addressed vs implementation effort
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        The roi_rollup.gap_roi_ranking section ranks unaddressed benefits by:
+        - Annual cost they would address (enterprise scale)
+        - Implementation effort (small/medium/large)
+        - ROI signal (HIGHEST/HIGH/MODERATE)
+        Use this to answer "what should we build next?" with data, not opinions.
+        Currently: #1 gap is Agent Decision Visibility ($275K, small effort).
+      gtm: |
+        Data-driven roadmap prioritization. Show prospects that your roadmap
+        is driven by quantified customer pain, not feature-of-the-week thinking.
+        The #1 gap delivers $275K/yr in enterprise value with small effort.
+
+    user_benefit: |
+      Build the right thing next, backed by pain data.
+      Communicate roadmap rationale to stakeholders.
+
+    triggers:
+      - "gap ranking"
+      - "roadmap priority"
+      - "what to build next"
+      - "roi ranking"
+      - "highest value gap"
+
+    evidence:
+      - type: doc
+        ref: docs/capability-index/contextcore.pain_points.yaml
+        description: gap_roi_ranking section with ranked gaps
+      - type: doc
+        ref: docs/capability-index/contextcore.benefits.yaml
+        description: Benefits with delivery_status showing gaps
+
+    confidence: 0.9
+
+    personas: [engineering_leader, project_manager]
+    measurable_outcome: "Roadmap decisions backed by quantified gap analysis"
+
+# ==============================================================================
+# SUCCESS METRICS
+# ==============================================================================
+
+success_metrics:
+  - id: context_switches
+    capability_id: contextcore.dashboard.portfolio
+    metric: "Context switches per task"
+    target: "50% reduction"
+    measurement: "Survey: tools used to complete a single task"
+
+  - id: status_time
+    capability_id: contextcore.status.auto_derive
+    metric: "Time spent on status updates"
+    target: "80% reduction"
+    measurement: "Time to produce weekly status report"
+
+  - id: traceability
+    capability_id: contextcore.audit.evidence_linking
+    metric: "Commits linked to tasks"
+    target: "100%"
+    measurement: "Percentage of commits with task ID"
+
+  - id: blocker_detection
+    capability_id: contextcore.status.stale_detection
+    metric: "Time to identify blockers"
+    target: "<1 day"
+    measurement: "Time from task stall to alert"
+
+  - id: cycle_time_visibility
+    capability_id: contextcore.dashboard.sprint
+    metric: "Cycle time visibility"
+    target: "Real-time"
+    measurement: "Live dashboard vs calculated at sprint end"
+
+  - id: pain_quantification
+    capability_id: contextcore.value.pain_points_manifest
+    metric: "Pain points indexed with ROI"
+    target: "100% of personas covered"
+    measurement: "28 pain points across 6 personas with auditable ROI"
+
+  - id: gap_prioritization
+    capability_id: contextcore.value.gap_prioritization
+    metric: "Gaps ranked by ROI signal"
+    target: "All gaps ranked"
+    measurement: "Top 5 gaps with effort and cost estimates"
+
+# ==============================================================================
+# GTM GUIDELINES
+# ==============================================================================
+
+gtm_guidelines:
+  stable:
+    allowed: "Full value proposition, customer stories, competitive comparison"
+    examples:
+      - "ContextCore provides real-time portfolio visibility..."
+      - "Customers report 50% reduction in status report time..."
+
+  beta:
+    allowed: "Early access, preview, in development"
+    examples:
+      - "[BETA] Auto-derive task status from Git activity..."
+      - "Currently in early access—feedback welcome..."
+
+  draft:
+    allowed: "On roadmap, exploring"
+    prohibited:
+      - "Claiming availability"
+      - "Promising timelines"
+      - "Feature comparisons"
+    examples:
+      - "On our roadmap: Multi-agent orchestration..."
+      - "We're exploring how to coordinate multiple AI agents..."
+
+# ==============================================================================
+# CHANGELOG
+# ==============================================================================
+
+changelog:
+  - version: "1.2.0"
+    date: "2026-01-30"
+    changes:
+      - "Added Category 6: VALUE ENGINEERING & PAIN ANALYSIS (3 new capabilities)"
+      - "value.pain_points_manifest: Queryable 28-pain-point manifest by persona (stable)"
+      - "value.roi_estimation: Three-method ROI estimates across 3 org sizes (stable)"
+      - "value.gap_prioritization: Ranked roadmap gaps by ROI signal (stable)"
+      - "Added 2 success metrics: pain_quantification, gap_prioritization"
+      - "19 total capabilities: Status (2), Dashboard (4), Alerting (3), Agent (4), Audit (3), Value (3)"
+  - version: "1.1.0"
+    date: "2026-01-29"
+    changes:
+      - "Phase 4 Unified Alignment: A2A interoperability support"
+      - "agent.cross_collaboration upgraded from draft → beta (A2A protocol now implemented)"
+      - "Updated evidence refs: models.py → models/core.py (package conversion)"
+      - "Added A2A-related triggers to cross_collaboration capability"
+  - version: "1.0.0"
+    date: "2026-01-28"
+    changes:
+      - "Initial user-facing capability index"
+      - "16 capabilities across 5 categories"
+      - "Personas and success metrics defined"
+      - "GTM guidelines included"
+      - "Categories: Status (2), Dashboard (4), Alerting (3), Agent (4), Audit (3)"

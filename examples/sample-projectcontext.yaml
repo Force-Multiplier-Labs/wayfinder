@@ -1,0 +1,51 @@
+apiVersion: contextcore.io/v1
+kind: ProjectContext
+metadata:
+  name: checkout-service
+  namespace: commerce
+spec:
+  project:
+    id: checkout-service
+    epic: EPIC-42
+    tasks:
+      - TASK-101
+      - TASK-102
+  business:
+    criticality: critical
+    value: revenue-primary
+    owner: commerce-team
+  requirements:
+    latencyP99: "200ms"
+    latencyP50: "50ms"
+    throughput: "500rps"
+    availability: "99.95"
+    errorBudget: "0.001"
+  design:
+    doc: "https://docs.example.com/checkout-design"
+    adr: "ADR-001"
+    apiContract: "./openapi.yaml"
+  risks:
+    - type: security
+      scope: "src/api/*"
+      priority: P1
+      description: "Authentication and payment processing"
+      mitigation: "Security review required"
+      controls:
+        - "Input validation"
+        - "Rate limiting"
+    - type: data-integrity
+      scope: "src/models/*"
+      priority: P2
+      description: "Order and payment data models"
+    - type: financial
+      scope: "src/billing/*"
+      priority: P1
+      description: "Billing and metering code"
+  targets:
+    - kind: Deployment
+      name: checkout
+      namespace: commerce
+    - kind: Service
+      name: checkout-svc
+      namespace: commerce
+      port: 8080

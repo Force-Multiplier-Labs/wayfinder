@@ -1,0 +1,1053 @@
+# StartD8 Workflow Developer Benefits Manifest
+# Version: 1.0.0
+# Created: 2026-01-29
+#
+# PURPOSE: First-class user benefits for StartD8 workflow developers.
+# Benefits with delivery_status: "gap" represent roadmap opportunities.
+# Schema aligned with contextcore.benefits.yaml for cross-project consistency.
+
+manifest_id: startd8.workflow.benefits
+name: StartD8 Workflow Developer Benefits
+version: "1.0.0"
+description: |
+  User benefits for StartD8 SDK workflow developers, articulated independently
+  of implementation. Organized by 7 focus areas: authoring, testing, discovery,
+  execution, observability, integration, reusability.
+
+owner: neilyashinsky
+
+# ==============================================================================
+# PERSONAS
+# ==============================================================================
+
+personas:
+  workflow_author:
+    name: Workflow Author
+    description: Developer creating new StartD8 workflows
+    goals:
+      - Scaffold workflows quickly from templates
+      - Follow established patterns without reading source
+      - Get feedback on structure before runtime
+
+  workflow_consumer:
+    name: Workflow Consumer
+    description: Developer or agent invoking existing workflows
+    goals:
+      - Find the right workflow for a task
+      - Understand inputs and expected outputs
+      - Run workflows reliably with visibility
+
+  sdk_integrator:
+    name: SDK Integrator
+    description: Developer embedding StartD8 in larger systems
+    goals:
+      - Connect workflows to external services
+      - Compose workflows into pipelines
+      - Monitor execution programmatically
+
+  ai_agent:
+    name: AI Agent
+    description: LLM agent discovering and invoking workflows
+    goals:
+      - Token-efficient workflow discovery
+      - Structured input/output contracts
+      - Cost-aware execution
+
+# ==============================================================================
+# BENEFITS
+# ==============================================================================
+
+benefits:
+
+  # ============================================================================
+  # CATEGORY: AUTHORING
+  # ============================================================================
+
+  - benefit_id: authoring.scaffold_interactive
+    name: "Interactive Workflow Scaffolding"
+    value_statement: "Users can create new workflows through guided prompts so they produce correct structure without memorizing the API"
+
+    personas:
+      - persona_id: workflow_author
+        pain_point: "I have to pick a template upfront and then manually edit metadata—I don't know what options exist"
+        value_received: "Step-by-step guided creation: name, description, template type, agent requirements, inputs"
+        importance: high
+
+    measurable_outcome: "New workflow scaffolded in <2 minutes with correct metadata"
+    measurement_method: "Time from 'startd8 workflow new' to passing validate_config()"
+    baseline: "Scaffold + manual editing + reading docs = 10-15 minutes"
+
+    origin:
+      type: agent_insight
+      ref: "Codebase analysis: templates require upfront knowledge of WorkflowMetadata schema"
+      date: 2026-01-29
+
+    delivered_by:
+      - startd8.workflow.scaffold
+    delivery_status: partial
+
+    priority: medium
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-A01
+        description: "TUI questionnaire for workflow metadata during scaffolding"
+        type: presentation
+      - id: FR-A02
+        description: "Template preview showing what each template produces"
+        type: presentation
+
+    acceptance_criteria:
+      - "Interactive mode prompts for name, description, template, agent requirements"
+      - "Preview shows template output before writing to disk"
+      - "Generated workflow passes validate_config() with default config"
+
+  - benefit_id: authoring.validation_helpers
+    name: "Declarative Config Validation"
+    value_statement: "Users can declare config schemas so they get validation errors automatically without writing custom validation code"
+
+    personas:
+      - persona_id: workflow_author
+        pain_point: "Every workflow reimplements config validation from scratch—boilerplate for checking required fields, types, ranges"
+        value_received: "Declare schema once, get validation for free"
+        importance: high
+      - persona_id: workflow_consumer
+        pain_point: "I get cryptic KeyError when I pass wrong config—no upfront validation"
+        value_received: "Clear error messages before execution starts"
+        importance: medium
+
+    measurable_outcome: "Zero hand-written validate_config() for standard validation patterns"
+    measurement_method: "Lines of validation code per workflow"
+    baseline: "15-40 lines of manual validation per workflow"
+
+    origin:
+      type: agent_insight
+      ref: "Codebase analysis: each builtin workflow reimplements config checking"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-A10
+        description: "Schema-based validation from WorkflowInput definitions"
+        type: automation
+      - id: FR-A11
+        description: "Pre-execution validation with human-readable error messages"
+        type: presentation
+
+    acceptance_criteria:
+      - "WorkflowInput type/required/default drives automatic validation"
+      - "Validation errors list all problems, not just the first"
+      - "Custom validators composable with schema validation"
+
+  - benefit_id: authoring.decorator_pattern
+    name: "Decorator-Based Workflow Definition"
+    value_statement: "Users can define simple workflows with decorators so they don't need class boilerplate for straightforward tasks"
+
+    personas:
+      - persona_id: workflow_author
+        pain_point: "A simple 2-step workflow requires a full class with metadata property, validate_config, and _execute"
+        value_received: "@workflow decorator defines metadata inline, function body is _execute"
+        importance: medium
+      - persona_id: sdk_integrator
+        pain_point: "Class-based workflows are heavyweight for quick integrations"
+        value_received: "Functional style for simple workflows, class style for complex ones"
+        importance: medium
+
+    measurable_outcome: "Simple workflows defined in <20 lines vs 80+ lines"
+    measurement_method: "Lines of code for a single-agent, single-step workflow"
+    baseline: "80+ lines for class boilerplate including metadata, validation, execute"
+
+    origin:
+      type: vision
+      ref: "Common pattern in Python frameworks (Flask routes, Click commands, pytest fixtures)"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: low
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-A20
+        description: "@workflow decorator converting function to Workflow protocol implementation"
+        type: automation
+      - id: FR-A21
+        description: "Auto-generate WorkflowMetadata from function signature and docstring"
+        type: automation
+
+    acceptance_criteria:
+      - "Decorated function is discoverable via WorkflowRegistry"
+      - "Function parameters become WorkflowInput definitions"
+      - "Docstring becomes workflow description"
+      - "Class-based workflows unaffected"
+
+  # ============================================================================
+  # CATEGORY: TESTING
+  # ============================================================================
+
+  - benefit_id: testing.test_harness
+    name: "Workflow Test Harness"
+    value_statement: "Users can test workflows with predictable agent responses so they validate logic without LLM costs or nondeterminism"
+
+    personas:
+      - persona_id: workflow_author
+        pain_point: "Testing workflows requires manually constructing mock agents and WorkflowResult objects"
+        value_received: "WorkflowTestCase with mock agents, assertion helpers, and fixture generators"
+        importance: critical
+      - persona_id: ai_agent
+        pain_point: "I can't validate a workflow I wrote without spending real API tokens"
+        value_received: "Deterministic mock agents with scripted responses"
+        importance: high
+
+    measurable_outcome: "Workflow test setup reduced from 30+ lines to 5 lines"
+    measurement_method: "Lines of test setup code per test case"
+    baseline: "Each test manually creates mock agents, config, and asserts on raw dicts"
+
+    origin:
+      type: agent_insight
+      ref: "Codebase analysis: tests/unit/ shows repeated mock setup patterns"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-T01
+        description: "WorkflowTestCase base class with mock agent factories and assertion helpers"
+        type: automation
+      - id: FR-T02
+        description: "Scripted mock agents returning predetermined responses per prompt pattern"
+        type: automation
+      - id: FR-T03
+        description: "Assertion helpers: assert_step_completed, assert_cost_under, assert_output_matches"
+        type: automation
+
+    acceptance_criteria:
+      - "Mock agents return scripted responses based on prompt matching"
+      - "WorkflowTestCase provides run_workflow() with default config"
+      - "Assertion helpers cover: steps completed, cost under budget, output schema"
+      - "Zero real API calls during testing"
+
+  - benefit_id: testing.snapshot_regression
+    name: "Workflow Output Snapshot Testing"
+    value_statement: "Users can detect unexpected output changes so they catch regressions before shipping"
+
+    personas:
+      - persona_id: workflow_author
+        pain_point: "I changed a prompt and don't know if the output still makes sense—no baseline to compare"
+        value_received: "Snapshot files capture expected output; diffs show what changed"
+        importance: medium
+      - persona_id: sdk_integrator
+        pain_point: "Agent model upgrades change outputs—hard to detect subtle regressions"
+        value_received: "Snapshot comparison flags changed outputs for review"
+        importance: high
+
+    measurable_outcome: "Output regressions caught before merge"
+    measurement_method: "Regressions detected in CI vs discovered in production"
+    baseline: "Manual output inspection or no regression detection"
+
+    origin:
+      type: vision
+      ref: "Jest snapshot testing pattern adapted for LLM workflow outputs"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: medium
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-T10
+        description: "Snapshot capture and storage for workflow outputs"
+        type: automation
+      - id: FR-T11
+        description: "Semantic diff for LLM outputs (not character-exact matching)"
+        type: computation
+
+    acceptance_criteria:
+      - "First run captures snapshot; subsequent runs compare"
+      - "Diff shows meaningful changes, not whitespace or formatting"
+      - "Snapshot update command for intentional changes"
+      - "CI fails on unexpected snapshot changes"
+
+  # ============================================================================
+  # CATEGORY: DISCOVERY
+  # ============================================================================
+
+  - benefit_id: discovery.example_configs
+    name: "Embedded Example Configurations"
+    value_statement: "Users can see working examples in workflow metadata so they invoke workflows correctly without reading source code"
+
+    personas:
+      - persona_id: workflow_consumer
+        pain_point: "I found a workflow via 'startd8 workflow list' but I don't know what config to pass"
+        value_received: "Example configs shown in 'startd8 workflow show' and docs"
+        importance: critical
+      - persona_id: ai_agent
+        pain_point: "I discovered a workflow via registry but can't construct valid config"
+        value_received: "Example config in metadata—copy, modify, run"
+        importance: critical
+
+    measurable_outcome: "Workflow invoked correctly on first attempt"
+    measurement_method: "Config validation errors on first invocation"
+    baseline: "Trial-and-error or reading source code to find valid config"
+
+    origin:
+      type: support_ticket
+      ref: "Common question: 'What config does this workflow expect?'"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-D01
+        description: "Example configs as structured data in WorkflowMetadata"
+        type: data
+      - id: FR-D02
+        description: "CLI 'startd8 workflow show' displays example configs"
+        type: presentation
+      - id: FR-D03
+        description: "Filesystem export includes example configs in YAML"
+        type: presentation
+
+    acceptance_criteria:
+      - "WorkflowMetadata.examples contains at least one valid config"
+      - "'startd8 workflow show <id>' prints example config"
+      - "Filesystem export includes examples in workflow definition YAML"
+      - "Example config passes validate_config()"
+
+  - benefit_id: discovery.cost_estimates
+    name: "Pre-Run Cost Estimates"
+    value_statement: "Users can estimate workflow cost before execution so they avoid unexpected charges"
+
+    personas:
+      - persona_id: workflow_consumer
+        pain_point: "I ran a workflow and it cost $5—I had no idea before starting"
+        value_received: "Cost estimate shown before execution; can abort if too expensive"
+        importance: high
+      - persona_id: ai_agent
+        pain_point: "I can't evaluate cost/benefit before delegating to a workflow"
+        value_received: "Cost estimate in metadata enables informed agent decisions"
+        importance: high
+
+    measurable_outcome: "Zero surprise workflow costs exceeding estimate by 2x"
+    measurement_method: "Actual cost / estimated cost ratio"
+    baseline: "No cost visibility until workflow completes"
+
+    origin:
+      type: agent_insight
+      ref: "LeadContractorWorkflow tracks cost per step but no pre-run estimate"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: medium
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-D10
+        description: "Cost estimation based on agent model pricing and expected token usage"
+        type: computation
+      - id: FR-D11
+        description: "Cost estimate surfaced in CLI and programmatic API before execution"
+        type: presentation
+
+    acceptance_criteria:
+      - "Estimate available before run() is called"
+      - "CLI shows estimate and prompts for confirmation"
+      - "Estimate within 2x of actual cost for typical runs"
+      - "Estimate includes per-agent breakdown"
+
+  - benefit_id: discovery.workflow_relationships
+    name: "Workflow Relationship Graph"
+    value_statement: "Users can see how workflows relate to each other so they chain the right workflows for complex tasks"
+
+    personas:
+      - persona_id: workflow_consumer
+        pain_point: "I don't know if I should use lead-contractor or plain-language—they sound similar"
+        value_received: "Relationship metadata: alternatives, prerequisites, companions"
+        importance: medium
+      - persona_id: ai_agent
+        pain_point: "I can't plan multi-workflow execution without understanding dependencies"
+        value_received: "Prerequisite and successor relationships enable orchestration"
+        importance: high
+
+    measurable_outcome: "Correct workflow selected on first attempt for multi-step tasks"
+    measurement_method: "Workflow selection accuracy for complex tasks"
+    baseline: "Read all workflow descriptions, guess relationships"
+
+    origin:
+      type: vision
+      ref: "Workflow ecosystem growing beyond individual workflows"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: low
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-D20
+        description: "Relationship fields in WorkflowMetadata: alternatives, prerequisites, companions"
+        type: data
+      - id: FR-D21
+        description: "CLI and filesystem export surface relationships"
+        type: presentation
+
+    acceptance_criteria:
+      - "Workflows can declare alternatives, prerequisites, and companion workflows"
+      - "'startd8 workflow show' displays relationships"
+      - "Registry supports querying by relationship"
+
+  # ============================================================================
+  # CATEGORY: EXECUTION
+  # ============================================================================
+
+  - benefit_id: execution.timeout_protection
+    name: "Workflow Timeout Protection"
+    value_statement: "Users can set execution time limits so runaway workflows don't block indefinitely or waste budget"
+
+    personas:
+      - persona_id: workflow_consumer
+        pain_point: "A workflow hung on an agent call and I had to kill the process—no timeout"
+        value_received: "Configurable timeout per workflow and per step with graceful cleanup"
+        importance: critical
+      - persona_id: sdk_integrator
+        pain_point: "In production, stuck workflows block the pipeline with no recovery"
+        value_received: "Automatic timeout with partial result capture"
+        importance: critical
+
+    measurable_outcome: "Zero indefinitely-blocked workflow executions"
+    measurement_method: "Workflows exceeding max expected duration"
+    baseline: "No timeout enforcement—blocked workflows must be killed manually"
+
+    origin:
+      type: incident
+      ref: "Agent API timeouts cause workflow hangs with no recovery"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: critical
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-E01
+        description: "Configurable timeout_ms at workflow and step level"
+        type: automation
+      - id: FR-E02
+        description: "Graceful timeout with partial result capture"
+        type: automation
+
+    acceptance_criteria:
+      - "Workflow aborts after configured timeout"
+      - "Partial results captured up to timeout point"
+      - "Timeout error includes which step was running"
+      - "Cleanup hooks run on timeout"
+
+  - benefit_id: execution.cancellation
+    name: "Workflow Cancellation"
+    value_statement: "Users can cancel a running workflow so they stop wasting resources on unwanted executions"
+
+    personas:
+      - persona_id: workflow_consumer
+        pain_point: "I started the wrong workflow and can't stop it—it keeps spending tokens"
+        value_received: "Cancel via CLI or API with immediate resource release"
+        importance: high
+      - persona_id: sdk_integrator
+        pain_point: "No way to cancel programmatically when upstream conditions change"
+        value_received: "Cancellation token pattern for cooperative cancellation"
+        importance: high
+
+    measurable_outcome: "Cancelled workflows stop spending within 5 seconds"
+    measurement_method: "Time from cancel request to resource release"
+    baseline: "Kill process or wait for completion—no graceful cancellation"
+
+    origin:
+      type: vision
+      ref: "Standard execution control pattern missing from workflow runtime"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-E10
+        description: "CancellationToken pattern for cooperative workflow cancellation"
+        type: automation
+      - id: FR-E11
+        description: "CLI 'startd8 workflow cancel' command"
+        type: presentation
+
+    acceptance_criteria:
+      - "cancel() stops execution at next step boundary"
+      - "Partial results returned with CANCELLED status"
+      - "No new agent API calls after cancellation"
+      - "CLI and programmatic cancellation both supported"
+
+  - benefit_id: execution.retry_recovery
+    name: "Step Retry and Error Recovery"
+    value_statement: "Users can configure retry policies so transient agent failures don't fail the entire workflow"
+
+    personas:
+      - persona_id: workflow_consumer
+        pain_point: "Workflow failed on step 4 of 5 due to rate limit—have to restart from scratch"
+        value_received: "Automatic retry on transient errors; resume from last successful step"
+        importance: high
+      - persona_id: sdk_integrator
+        pain_point: "Production workflows must handle agent flakiness—no built-in retry"
+        value_received: "Configurable retry with exponential backoff per step"
+        importance: critical
+
+    measurable_outcome: "Transient failures recovered automatically in >90% of cases"
+    measurement_method: "Workflows completing despite transient errors / total transient errors"
+    baseline: "Any agent error fails the entire workflow"
+
+    origin:
+      type: incident
+      ref: "Rate limiting and transient API errors cause full workflow failures"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-E20
+        description: "Configurable retry policy per step: max_retries, backoff strategy, retryable errors"
+        type: automation
+      - id: FR-E21
+        description: "Checkpoint/resume: persist step results for restart from last success"
+        type: automation
+
+    acceptance_criteria:
+      - "Rate limit errors retried with exponential backoff"
+      - "Non-retryable errors fail immediately"
+      - "Checkpoint written after each successful step"
+      - "Resume from checkpoint on restart"
+
+  # ============================================================================
+  # CATEGORY: OBSERVABILITY
+  # ============================================================================
+
+  - benefit_id: observability.auto_spans
+    name: "Automatic Workflow Span Emission"
+    value_statement: "Users get workflow execution traces in their observability stack without any instrumentation code"
+
+    personas:
+      - persona_id: sdk_integrator
+        pain_point: "Only the ContextCore-specialized workflow emits spans—base workflows are invisible"
+        value_received: "Every workflow automatically emits spans to Tempo via OTLP"
+        importance: critical
+      - persona_id: workflow_consumer
+        pain_point: "I can't see what happened inside a workflow unless I read logs"
+        value_received: "TraceQL queries show workflow hierarchy: workflow > step > agent call"
+        importance: high
+
+    measurable_outcome: "100% of workflow executions have trace data in Tempo"
+    measurement_method: "Percentage of workflow runs with corresponding Tempo traces"
+    baseline: "Only ContextCore-instrumented workflows emit spans (1 of 12)"
+
+    origin:
+      type: agent_insight
+      ref: "LeadContractorContextCoreWorkflow is the only workflow with span emission"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-O01
+        description: "WorkflowBase automatically creates parent span per execution and child spans per step"
+        type: automation
+      - id: FR-O02
+        description: "Span attributes include workflow_id, step name, agent model, token usage, cost"
+        type: data
+      - id: FR-O03
+        description: "Opt-out via config for environments without OTLP endpoint"
+        type: automation
+
+    acceptance_criteria:
+      - "Every workflow.run() creates a root span with child spans per step"
+      - "Spans include cost, token usage, and agent model attributes"
+      - "TraceQL query: { resource.service.name = 'startd8' && span.workflow.id = 'X' }"
+      - "No spans emitted when OTLP endpoint is absent"
+
+  - benefit_id: observability.execution_dashboard
+    name: "Workflow Execution Dashboard"
+    value_statement: "Users can monitor workflow performance in Grafana so they spot cost trends, slow steps, and failure patterns"
+
+    personas:
+      - persona_id: sdk_integrator
+        pain_point: "No dashboard showing workflow execution history—I grep logs"
+        value_received: "Grafana dashboard with execution history, cost trends, step timing"
+        importance: high
+      - persona_id: workflow_consumer
+        pain_point: "I don't know if this workflow usually costs $0.10 or $5.00"
+        value_received: "Cost distribution and timing histograms per workflow"
+        importance: medium
+
+    measurable_outcome: "Workflow performance anomalies detected within 1 hour"
+    measurement_method: "Time from anomaly occurrence to dashboard alert"
+    baseline: "No aggregated visibility—individual run results only"
+
+    origin:
+      type: vision
+      ref: "ContextCore has 11 dashboards; StartD8 workflows have zero"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: medium
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-O10
+        description: "Grafana dashboard template for workflow execution metrics"
+        type: presentation
+      - id: FR-O11
+        description: "Dashboard panels: execution history, cost trends, step timing, error rate"
+        type: presentation
+
+    acceptance_criteria:
+      - "Dashboard shows last N workflow executions with status"
+      - "Cost trending over time per workflow"
+      - "Step-level timing breakdown (which step is slowest)"
+      - "Error rate and common failure reasons"
+
+  - benefit_id: observability.cost_alerts
+    name: "Workflow Cost Alerting"
+    value_statement: "Users get notified when workflow costs exceed budgets so they prevent runaway spending"
+
+    personas:
+      - persona_id: sdk_integrator
+        pain_point: "A loop bug caused a workflow to make 100 agent calls—discovered on the invoice"
+        value_received: "Alert fires when workflow cost exceeds threshold mid-execution"
+        importance: critical
+      - persona_id: workflow_consumer
+        pain_point: "No budget enforcement—any workflow can spend unlimited tokens"
+        value_received: "Per-workflow and global cost limits with alerts"
+        importance: high
+
+    measurable_outcome: "Zero undetected cost overruns exceeding 2x expected"
+    measurement_method: "Cost overruns detected by alerts / total cost overruns"
+    baseline: "Cost discovered only in provider billing after the fact"
+
+    origin:
+      type: incident
+      ref: "No cost guardrails on workflow execution"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-O20
+        description: "Per-workflow cost budget with mid-execution enforcement"
+        type: automation
+      - id: FR-O21
+        description: "Alert emission when cost exceeds configurable threshold"
+        type: automation
+
+    acceptance_criteria:
+      - "Workflow aborts when cost exceeds configured max_cost"
+      - "Warning emitted at 80% of budget"
+      - "Alert includes workflow_id, current cost, budget"
+      - "Global daily/monthly cost limits supported"
+
+  # ============================================================================
+  # CATEGORY: INTEGRATION
+  # ============================================================================
+
+  - benefit_id: integration.workflow_composition
+    name: "Workflow-of-Workflows Composition"
+    value_statement: "Users can compose existing workflows into pipelines so they build complex workflows from proven building blocks"
+
+    personas:
+      - persona_id: workflow_author
+        pain_point: "I want 'draft with lead-contractor then polish with design-polish' but I have to reimplement both"
+        value_received: "Declarative composition: run workflow A, pass output to workflow B"
+        importance: high
+      - persona_id: ai_agent
+        pain_point: "I can't orchestrate multi-workflow plans—must invoke each separately and manage state"
+        value_received: "Composite workflow definition with automatic state passing"
+        importance: critical
+
+    measurable_outcome: "Multi-workflow pipelines created in <5 minutes vs reimplementation"
+    measurement_method: "Time to create a workflow combining 2+ existing workflows"
+    baseline: "Must reimplement logic from each workflow or manually chain CLI calls"
+
+    origin:
+      type: vision
+      ref: "Pipeline workflow template exists but can't reference other workflows by ID"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: large
+
+    functional_requirements:
+      - id: FR-I01
+        description: "CompositeWorkflow class accepting workflow IDs and data mapping between them"
+        type: automation
+      - id: FR-I02
+        description: "YAML workflow definition referencing other workflows by ID"
+        type: data
+      - id: FR-I03
+        description: "Automatic output→input mapping between composed workflows"
+        type: automation
+
+    acceptance_criteria:
+      - "Composite workflow runs child workflows in sequence"
+      - "Output of workflow N is input to workflow N+1"
+      - "YAML definition: steps: [{workflow: lead-contractor, config: {...}}, ...]"
+      - "Composite workflow appears in registry like any other workflow"
+
+  - benefit_id: integration.file_io_patterns
+    name: "Standardized File I/O"
+    value_statement: "Users can read and write files from workflows using standard patterns so they don't reinvent file handling"
+
+    personas:
+      - persona_id: workflow_author
+        pain_point: "Every workflow that reads/writes files does it differently—no standard path resolution or sandboxing"
+        value_received: "WorkflowFileIO helper with path resolution, sandboxing, and format handling"
+        importance: medium
+      - persona_id: sdk_integrator
+        pain_point: "Workflows write files to unexpected locations—no output directory convention"
+        value_received: "Configurable output_dir with deterministic file naming"
+        importance: medium
+
+    measurable_outcome: "File operations use consistent patterns across all workflows"
+    measurement_method: "Percentage of workflows using WorkflowFileIO vs raw open()"
+    baseline: "Each workflow implements ad-hoc file handling"
+
+    origin:
+      type: agent_insight
+      ref: "No standard file I/O pattern in workflow base class or utilities"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: medium
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-I10
+        description: "WorkflowFileIO helper with read/write, path resolution, format detection"
+        type: automation
+      - id: FR-I11
+        description: "Configurable output_dir in workflow config with deterministic naming"
+        type: data
+
+    acceptance_criteria:
+      - "WorkflowFileIO resolves paths relative to project root or output_dir"
+      - "Supports YAML, JSON, Markdown, plain text read/write"
+      - "File operations logged with paths in step results"
+      - "No files written outside output_dir without explicit config"
+
+  - benefit_id: integration.event_hooks
+    name: "Workflow Event Hooks"
+    value_statement: "Users can react to workflow events programmatically so they integrate workflows into larger systems"
+
+    personas:
+      - persona_id: sdk_integrator
+        pain_point: "I can't get notified when a workflow step completes—only when the whole thing finishes"
+        value_received: "Event hooks for start, step_complete, error, complete, cancel"
+        importance: high
+      - persona_id: workflow_author
+        pain_point: "Progress callbacks are the only extensibility point—can't add custom behavior"
+        value_received: "Rich event hooks with full context for each lifecycle event"
+        importance: medium
+
+    measurable_outcome: "External systems react to workflow events in real-time"
+    measurement_method: "Event delivery latency from workflow to subscriber"
+    baseline: "Poll WorkflowResult after completion—no real-time events"
+
+    origin:
+      type: vision
+      ref: "ProgressCallback is the only hook; no pub/sub or event bus"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: medium
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-I20
+        description: "Event hook registration: on_start, on_step_complete, on_error, on_complete"
+        type: automation
+      - id: FR-I21
+        description: "Event payload includes workflow context, step results, timing"
+        type: data
+
+    acceptance_criteria:
+      - "Hooks fire synchronously at each lifecycle point"
+      - "Hook exceptions don't abort the workflow (logged, not propagated)"
+      - "Event payload includes full step context"
+      - "Multiple hooks per event supported"
+
+  # ============================================================================
+  # CATEGORY: REUSABILITY
+  # ============================================================================
+
+  - benefit_id: reusability.shared_steps
+    name: "Reusable Workflow Steps"
+    value_statement: "Users can define and share common steps across workflows so they eliminate duplication and ensure consistency"
+
+    personas:
+      - persona_id: workflow_author
+        pain_point: "Three workflows each implement 'generate with agent then validate JSON output'—same logic copied 3 times"
+        value_received: "Define step once, reference by ID in any workflow"
+        importance: high
+      - persona_id: sdk_integrator
+        pain_point: "Common patterns (retry, validate, parse) reimplemented in every workflow"
+        value_received: "Step library with tested, reusable components"
+        importance: high
+
+    measurable_outcome: "Common step patterns defined once, used across N workflows"
+    measurement_method: "Code duplication ratio for step logic"
+    baseline: "Step logic copy-pasted between workflows"
+
+    origin:
+      type: agent_insight
+      ref: "Codebase analysis: lead_contractor, plain_language, design_polish share similar step patterns"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: large
+
+    functional_requirements:
+      - id: FR-R01
+        description: "Step class with inputs, outputs, agent requirements, and execute method"
+        type: automation
+      - id: FR-R02
+        description: "Step registry for discovery and reuse"
+        type: data
+      - id: FR-R03
+        description: "Workflows reference steps by ID instead of reimplementing"
+        type: automation
+
+    acceptance_criteria:
+      - "Steps are independently testable units"
+      - "Workflows compose steps: steps = [generate_step, validate_step, format_step]"
+      - "Steps discoverable via step registry"
+      - "Step versioning prevents breaking changes"
+
+  - benefit_id: reusability.config_profiles
+    name: "Workflow Configuration Profiles"
+    value_statement: "Users can save and share named configurations so they run workflows consistently across environments"
+
+    personas:
+      - persona_id: workflow_consumer
+        pain_point: "I pass the same 10-field config every time I run this workflow"
+        value_received: "Save as profile 'production'—invoke with --profile production"
+        importance: medium
+      - persona_id: sdk_integrator
+        pain_point: "Different environments need different configs—no environment-aware defaults"
+        value_received: "Named profiles with environment overrides"
+        importance: medium
+
+    measurable_outcome: "Workflow invocation reduced to workflow name + profile name"
+    measurement_method: "Config parameters passed per invocation"
+    baseline: "Full config JSON on every invocation"
+
+    origin:
+      type: vision
+      ref: "Common pattern: AWS profiles, kubectl contexts, Git config"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: low
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-R10
+        description: "Named config profiles stored in .startd8/profiles/"
+        type: data
+      - id: FR-R11
+        description: "CLI --profile flag to select saved configuration"
+        type: presentation
+
+    acceptance_criteria:
+      - "Profiles saved to .startd8/profiles/{workflow_id}/{profile_name}.yaml"
+      - "'startd8 workflow run X --profile Y' loads saved config"
+      - "Profile overridable with inline --config"
+      - "Profiles listable: 'startd8 workflow profiles X'"
+
+  - benefit_id: reusability.yaml_workflow_definition
+    name: "YAML Workflow Definitions"
+    value_statement: "Users can define simple workflows in YAML so non-Python developers can create and share workflows"
+
+    personas:
+      - persona_id: workflow_consumer
+        pain_point: "I need Python expertise to create even a trivial workflow"
+        value_received: "Define workflow steps, agents, and config in YAML—no Python required"
+        importance: medium
+      - persona_id: ai_agent
+        pain_point: "I can generate YAML more reliably than Python class hierarchies"
+        value_received: "YAML workflow definitions are simpler to generate and validate"
+        importance: high
+
+    measurable_outcome: "Non-Python workflow creation possible for standard patterns"
+    measurement_method: "Percentage of workflows definable in YAML vs requiring Python"
+    baseline: "All workflows require Python class implementation"
+
+    origin:
+      type: vision
+      ref: "Filesystem export already creates YAML definitions—but they're read-only"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: medium
+    effort_estimate: large
+
+    functional_requirements:
+      - id: FR-R20
+        description: "YAML workflow definition schema with steps, agents, config, and metadata"
+        type: data
+      - id: FR-R21
+        description: "YAML workflow loader in WorkflowRegistry"
+        type: automation
+      - id: FR-R22
+        description: "YAML validation with human-readable errors"
+        type: automation
+
+    acceptance_criteria:
+      - "YAML-defined workflows discoverable via registry"
+      - "YAML schema supports sequential steps with agent assignment"
+      - "YAML workflows execute identically to Python equivalents"
+      - "Validation errors reference YAML line numbers"
+
+# ==============================================================================
+# GAP SUMMARY
+# ==============================================================================
+
+gap_summary:
+  total_benefits: 20
+  delivered: 0
+  partial: 1
+  gaps: 19
+
+  gaps_by_priority:
+    critical:
+      - benefit_id: execution.timeout_protection
+        effort: small
+        recommendation: "Add timeout_ms to WorkflowBase.run() and step execution"
+    high:
+      - benefit_id: authoring.validation_helpers
+        effort: small
+        recommendation: "Auto-generate validation from WorkflowInput definitions"
+      - benefit_id: testing.test_harness
+        effort: medium
+        recommendation: "Create startd8.testing module with WorkflowTestCase"
+      - benefit_id: discovery.example_configs
+        effort: small
+        recommendation: "Add examples field to WorkflowMetadata"
+      - benefit_id: execution.cancellation
+        effort: medium
+        recommendation: "CancellationToken checked at step boundaries"
+      - benefit_id: execution.retry_recovery
+        effort: medium
+        recommendation: "Configurable retry policy per step with checkpoint"
+      - benefit_id: observability.auto_spans
+        effort: medium
+        recommendation: "Instrument WorkflowBase.run() with OTel spans"
+      - benefit_id: observability.cost_alerts
+        effort: small
+        recommendation: "Cost accumulator with threshold checking per step"
+      - benefit_id: integration.workflow_composition
+        effort: large
+        recommendation: "CompositeWorkflow class with workflow chaining"
+      - benefit_id: reusability.shared_steps
+        effort: large
+        recommendation: "Step protocol and registry—foundational for composition"
+    medium:
+      - benefit_id: authoring.scaffold_interactive
+        effort: small
+        recommendation: "Already partial—add TUI questionnaire to 'workflow new'"
+      - benefit_id: testing.snapshot_regression
+        effort: medium
+        recommendation: "Capture output snapshots with semantic diff"
+      - benefit_id: discovery.cost_estimates
+        effort: small
+        recommendation: "Estimate from model pricing * expected tokens in metadata"
+      - benefit_id: integration.file_io_patterns
+        effort: small
+        recommendation: "WorkflowFileIO utility with path resolution"
+      - benefit_id: integration.event_hooks
+        effort: medium
+        recommendation: "Event hook registration on WorkflowBase"
+      - benefit_id: reusability.yaml_workflow_definition
+        effort: large
+        recommendation: "YAML loader in registry—builds on filesystem export"
+    low:
+      - benefit_id: authoring.decorator_pattern
+        effort: medium
+        recommendation: "Defer—class pattern works well for complex workflows"
+      - benefit_id: discovery.workflow_relationships
+        effort: small
+        recommendation: "Add relationship fields to WorkflowMetadata"
+      - benefit_id: reusability.config_profiles
+        effort: small
+        recommendation: "Simple file-based profiles in .startd8/"
+
+  partial_by_priority:
+    medium:
+      - benefit_id: authoring.scaffold_interactive
+        note: "Scaffolding exists but is not interactive—template selection and file generation only"
+
+# ==============================================================================
+# CHANGELOG
+# ==============================================================================
+
+changelog:
+  - version: "1.0.0"
+    date: "2026-01-29"
+    changes:
+      - "Initial StartD8 workflow developer benefits manifest"
+      - "20 benefits across 7 focus areas"
+      - "0 delivered, 1 partial, 19 gaps"
+      - "Focus areas: authoring (3), testing (2), discovery (3), execution (3), observability (3), integration (3), reusability (3)"
+      - "Schema aligned with contextcore.benefits.yaml"
+      - "4 personas: workflow_author, workflow_consumer, sdk_integrator, ai_agent"

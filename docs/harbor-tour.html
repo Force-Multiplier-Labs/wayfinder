@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayfinder Harbor Tour | The ContextCore Reference Implementation</title>
+    <style>
+        :root {
+            --water-dark: #0a1628;
+            --water-mid: #0d2137;
+            --water-light: #1a3a5c;
+            --sunset-orange: #f97316;
+            --sunset-gold: #fbbf24;
+            --sunset-pink: #f472b6;
+            --ship-brown: #78350f;
+            --sail-white: #f8fafc;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --spider-color: #a855f7;
+            --rabbit-color: #22c55e;
+            --fox-color: #f97316;
+            --coyote-color: #eab308;
+            --beaver-color: #8b5cf6;
+            --squirrel-color: #ec4899;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(180deg, var(--water-dark) 0%, var(--water-mid) 50%, var(--water-light) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Persona Navigation */
+        .persona-nav {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            padding: 1rem;
+            background: var(--water-dark);
+            border-bottom: 1px solid var(--water-light);
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .persona-nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .persona-nav a:hover {
+            background: var(--water-light);
+            color: var(--text-primary);
+        }
+
+        .persona-nav a.active {
+            background: var(--sunset-gold);
+            color: var(--water-dark);
+            font-weight: 600;
+        }
+
+        /* Header with sunset gradient */
+        .harbor-header {
+            background: linear-gradient(180deg,
+                #1e1b4b 0%,
+                #312e81 20%,
+                #4c1d95 40%,
+                #7c2d12 60%,
+                var(--sunset-orange) 80%,
+                var(--sunset-gold) 100%);
+            padding: 4rem 2rem 6rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .harbor-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(180deg, transparent, var(--water-dark));
+        }
+
+        .harbor-title {
+            font-size: 3.5rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .harbor-subtitle {
+            font-size: 1.25rem;
+            color: var(--sunset-gold);
+            font-style: italic;
+            margin-bottom: 2rem;
+        }
+
+        .philosophy-quote {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            border-left: 4px solid var(--sunset-gold);
+        }
+
+        .philosophy-quote p {
+            font-size: 1.1rem;
+            font-style: italic;
+            color: var(--sail-white);
+        }
+
+        /* Main content */
+        .harbor-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Creator reflection section */
+        .creator-reflection {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .creator-reflection h2 {
+            color: var(--sunset-gold);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .creator-reflection h2::before {
+            content: '🪞';
+        }
+
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .value-card {
+            background: rgba(0,0,0,0.3);
+            padding: 1.25rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--sunset-orange);
+        }
+
+        .value-card h4 {
+            color: var(--sunset-gold);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .value-card .metric {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--sail-white);
+        }
+
+        .value-card .description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Fleet overview */
+        .fleet-section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: var(--sail-white);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--water-light);
+        }
+
+        /* Ship cards */
+        .fleet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 2rem;
+        }
+
+        .ship-card {
+            background: linear-gradient(145deg, var(--water-mid), var(--water-dark));
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--water-light);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .ship-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .ship-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .ship-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .ship-card.spider .ship-icon { background: linear-gradient(135deg, var(--spider-color), #7c3aed); }
+        .ship-card.rabbit .ship-icon { background: linear-gradient(135deg, var(--rabbit-color), #16a34a); }
+        .ship-card.fox .ship-icon { background: linear-gradient(135deg, var(--fox-color), #ea580c); }
+        .ship-card.coyote .ship-icon { background: linear-gradient(135deg, var(--coyote-color), #ca8a04); }
+        .ship-card.beaver .ship-icon { background: linear-gradient(135deg, var(--beaver-color), #6d28d9); }
+        .ship-card.squirrel .ship-icon { background: linear-gradient(135deg, var(--squirrel-color), #db2777); }
+
+        .ship-titles h3 {
+            font-size: 1.4rem;
+            color: var(--sail-white);
+        }
+
+        .ship-titles .anishinaabe {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .ship-titles .tagline {
+            font-size: 0.95rem;
+            color: var(--sunset-gold);
+            margin-top: 0.25rem;
+        }
+
+        .ship-body {
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .ship-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .ship-capabilities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .capability-tag {
+            background: rgba(255,255,255,0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .ship-card.spider .capability-tag { border: 1px solid var(--spider-color); }
+        .ship-card.rabbit .capability-tag { border: 1px solid var(--rabbit-color); }
+        .ship-card.fox .capability-tag { border: 1px solid var(--fox-color); }
+        .ship-card.coyote .capability-tag { border: 1px solid var(--coyote-color); }
+        .ship-card.beaver .capability-tag { border: 1px solid var(--beaver-color); }
+        .ship-card.squirrel .capability-tag { border: 1px solid var(--squirrel-color); }
+
+        .ship-value {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .ship-value h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .ship-value ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .ship-value li {
+            padding: 0.25rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .ship-value li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--sunset-gold);
+        }
+
+        /* Dependency diagram */
+        .dependency-section {
+            background: var(--water-dark);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            border: 1px solid var(--water-light);
+        }
+
+        .dependency-diagram {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: var(--text-secondary);
+            overflow-x: auto;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+
+        .dependency-diagram .highlight {
+            color: var(--sunset-gold);
+        }
+
+        /* Ripple effects section */
+        .ripple-section {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .ripple-section h2 {
+            color: var(--rabbit-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .ripple-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .ripple-card {
+            background: rgba(0,0,0,0.3);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .ripple-card h4 {
+            color: var(--sail-white);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ripple-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* ROI Summary */
+        .roi-section {
+            background: linear-gradient(135deg, var(--sunset-orange), var(--sunset-pink));
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .roi-section h2 {
+            color: var(--water-dark);
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .roi-section .roi-quote {
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--water-dark);
+            line-height: 1.8;
+        }
+
+        /* Quick start */
+        .quickstart-section {
+            background: var(--water-dark);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--water-light);
+        }
+
+        .quickstart-section h2 {
+            margin-bottom: 1.5rem;
+        }
+
+        .quickstart-code {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .quickstart-code pre {
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #c9d1d9;
+        }
+
+        .quickstart-code .comment {
+            color: #8b949e;
+        }
+
+        .quickstart-code .command {
+            color: #79c0ff;
+        }
+
+        .quickstart-code .string {
+            color: #a5d6ff;
+        }
+
+        /* Footer */
+        .harbor-footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .harbor-footer .naming-note {
+            max-width: 600px;
+            margin: 0 auto 1rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .ship-card:nth-child(1) { animation: float 6s ease-in-out infinite; }
+        .ship-card:nth-child(2) { animation: float 6s ease-in-out infinite 0.5s; }
+        .ship-card:nth-child(3) { animation: float 6s ease-in-out infinite 1s; }
+        .ship-card:nth-child(4) { animation: float 6s ease-in-out infinite 1.5s; }
+        .ship-card:nth-child(5) { animation: float 6s ease-in-out infinite 2s; }
+        .ship-card:nth-child(6) { animation: float 6s ease-in-out infinite 2.5s; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .harbor-title { font-size: 2.5rem; }
+            .fleet-grid { grid-template-columns: 1fr; }
+            .ship-card { animation: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Persona Navigation -->
+    <nav class="persona-nav">
+        <a href="harbor-tour.html" class="active">All Audiences</a>
+        <a href="harbor-tour-platform-engineer.html">Platform Engineer</a>
+        <a href="harbor-tour-ai-developer.html">AI Developer</a>
+        <a href="harbor-tour-team-lead.html">Team Lead</a>
+        <a href="getting-started-solopreneur.html">Solo-preneur</a>
+    </nav>
+
+    <!-- Header -->
+    <header class="harbor-header">
+        <h1 class="harbor-title">⚓ WAYFINDER HARBOR</h1>
+        <p class="harbor-subtitle">The ContextCore Reference Implementation</p>
+        <div class="philosophy-quote">
+            <p>"The true measure of wealth is not what we extract, but what we sustain."</p>
+        </div>
+    </header>
+
+    <main class="harbor-content">
+        <!-- Creator Reflection (Audience of 1) -->
+        <section class="creator-reflection">
+            <h2>Audience of 1: Why This Exists</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                Every debugging session started with <em>"what was this code trying to do?"</em>
+                Every status meeting started with <em>"what did you work on?"</em>
+                Both questions have the same answer—but we stored them in different places.
+            </p>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                The frustration was clear: Jira doesn't know about your traces. Grafana doesn't know about your sprints.
+                Agents forget what they learned yesterday. <strong style="color: var(--sail-white);">What if we unified them?</strong>
+            </p>
+
+            <div class="value-grid">
+                <div class="value-card">
+                    <h4>Time Reclaimed</h4>
+                    <div class="metric">150+ hrs/yr</div>
+                    <div class="description">Status updates, debugging, agent context</div>
+                </div>
+                <div class="value-card">
+                    <h4>Cognitive Load</h4>
+                    <div class="metric">Eliminated</div>
+                    <div class="description">No more correlating tools manually</div>
+                </div>
+                <div class="value-card">
+                    <h4>Knowledge</h4>
+                    <div class="metric">Compounds</div>
+                    <div class="description">Every insight persists for future sessions</div>
+                </div>
+                <div class="value-card">
+                    <h4>Token Efficiency</h4>
+                    <div class="metric">95%</div>
+                    <div class="description">Reduction in skill discovery overhead</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fleet Overview -->
+        <section class="fleet-section">
+            <h2 class="section-title">🚢 The Fleet</h2>
+            <div class="fleet-grid">
+                <!-- Spider -->
+                <article class="ship-card spider">
+                    <div class="ship-header">
+                        <div class="ship-icon">🕷️</div>
+                        <div class="ship-titles">
+                            <h3>Spider</h3>
+                            <div class="anishinaabe">Asabikeshiinh — "Little Net Maker"</div>
+                            <div class="tagline">"Tasks that track themselves"</div>
+                        </div>
+                    </div>
+                    <div class="ship-body">
+                        <p class="ship-description">
+                            The core framework. Weaves intricate connections between project management
+                            and runtime observability by modeling tasks as OpenTelemetry spans.
+                        </p>
+                        <div class="ship-capabilities">
+                            <span class="capability-tag">Task Tracking</span>
+                            <span class="capability-tag">Agent Insights</span>
+                            <span class="capability-tag">Value-Based O11y</span>
+                            <span class="capability-tag">K8s CRDs</span>
+                        </div>
+                        <div class="ship-value">
+                            <h4>Value to Creator</h4>
+                            <ul>
+                                <li>62 hrs/year saved on status updates</li>
+                                <li>True velocity metrics, not guesses</li>
+                                <li>Debugging with business context</li>
+                            </ul>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Rabbit -->
+                <article class="ship-card rabbit">
+                    <div class="ship-header">
+                        <div class="ship-icon">🐰</div>
+                        <div class="ship-titles">
+                            <h3>Rabbit</h3>
+                            <div class="anishinaabe">Waabooz — Quick & Alert</div>
+                            <div class="tagline">"Alerts, unified"</div>
+                        </div>
+                    </div>
+                    <div class="ship-body">
+                        <p class="ship-description">
+                            Vendor-agnostic alert automation framework. Receives, parses, and routes
+                            alerts from any monitoring system through a pluggable architecture.
+                        </p>
+                        <div class="ship-capabilities">
+                            <span class="capability-tag">Webhook Server</span>
+                            <span class="capability-tag">Grafana Parser</span>
+                            <span class="capability-tag">Alertmanager Parser</span>
+                            <span class="capability-tag">Action Framework</span>
+                        </div>
+                        <div class="ship-value">
+                            <h4>Value to Creator</h4>
+                            <ul>
+                                <li>One framework for all alert sources</li>
+                                <li>No vendor lock-in</li>
+                                <li>Structured, logged actions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Fox -->
+                <article class="ship-card fox">
+                    <div class="ship-header">
+                        <div class="ship-icon">🦊</div>
+                        <div class="ship-titles">
+                            <h3>Fox</h3>
+                            <div class="anishinaabe">Waagosh — Clever & Adaptive</div>
+                            <div class="tagline">"Context-aware alerting"</div>
+                        </div>
+                    </div>
+                    <div class="ship-body">
+                        <p class="ship-description">
+                            Enriches alerts with project context from ContextCore. Makes connections
+                            others miss—adds criticality, owner, and SLOs to every alert.
+                        </p>
+                        <div class="ship-capabilities">
+                            <span class="capability-tag">Alert Enrichment</span>
+                            <span class="capability-tag">Intelligent Routing</span>
+                            <span class="capability-tag">Claude Integration</span>
+                            <span class="capability-tag">OTel Spans</span>
+                        </div>
+                        <div class="ship-value">
+                            <h4>Value to Creator</h4>
+                            <ul>
+                                <li>Critical alerts get critical treatment</li>
+                                <li>Business impact visible instantly</li>
+                                <li>Smart routing, not static rules</li>
+                            </ul>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Coyote -->
+                <article class="ship-card coyote">
+                    <div class="ship-header">
+                        <div class="ship-icon">🐺</div>
+                        <div class="ship-titles">
+                            <h3>Coyote</h3>
+                            <div class="anishinaabe">Wiisagi-ma'iingan — The Trickster</div>
+                            <div class="tagline">"Incidents that fix themselves"</div>
+                        </div>
+                    </div>
+                    <div class="ship-body">
+                        <p class="ship-description">
+                            Multi-agent incident resolution pipeline. Transforms production errors
+                            into tested fixes through investigation, design, implementation, and testing.
+                        </p>
+                        <div class="ship-capabilities">
+                            <span class="capability-tag">Investigator Agent</span>
+                            <span class="capability-tag">Designer Agent</span>
+                            <span class="capability-tag">Implementer Agent</span>
+                            <span class="capability-tag">Knowledge Capture</span>
+                        </div>
+                        <div class="ship-value">
+                            <h4>Value to Creator</h4>
+                            <ul>
+                                <li>AI does the detective work</li>
+                                <li>Structured process at 3am</li>
+                                <li>Every incident makes us smarter</li>
+                            </ul>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Beaver -->
+                <article class="ship-card beaver">
+                    <div class="ship-header">
+                        <div class="ship-icon">🦫</div>
+                        <div class="ship-titles">
+                            <h3>Beaver</h3>
+                            <div class="anishinaabe">Amik — The Builder</div>
+                            <div class="tagline">"Observable AI agents"</div>
+                        </div>
+                    </div>
+                    <div class="ship-body">
+                        <p class="ship-description">
+                            LLM provider abstraction with full observability. Wraps Claude, GPT-4,
+                            and Gemini with automatic span emission, cost tracking, and task linking.
+                        </p>
+                        <div class="ship-capabilities">
+                            <span class="capability-tag">Tracked Agents</span>
+                            <span class="capability-tag">Cost Analytics</span>
+                            <span class="capability-tag">Insight Bridge</span>
+                            <span class="capability-tag">Multi-LLM</span>
+                        </div>
+                        <div class="ship-value">
+                            <h4>Value to Creator</h4>
+                            <ul>
+                                <li>See what agents are doing</li>
+                                <li>Know exactly what AI costs</li>
+                                <li>Link agent work to tasks</li>
+                            </ul>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Squirrel -->
+                <article class="ship-card squirrel">
+                    <div class="ship-header">
+                        <div class="ship-icon">🐿️</div>
+                        <div class="ship-titles">
+                            <h3>Squirrel</h3>
+                            <div class="anishinaabe">Ajidamoo — Efficient Gatherer</div>
+                            <div class="tagline">"Skills on demand"</div>
+                        </div>
+                    </div>
+                    <div class="ship-body">
+                        <p class="ship-description">
+                            Token-efficient skills library. Like a squirrel storing nuts, provides
+                            progressive disclosure—load only what you need, when you need it.
+                        </p>
+                        <div class="ship-capabilities">
+                            <span class="capability-tag">Progressive Disclosure</span>
+                            <span class="capability-tag">MANIFEST Index</span>
+                            <span class="capability-tag">Dev Tour Guide</span>
+                            <span class="capability-tag">Value Promoter</span>
+                        </div>
+                        <div class="ship-value">
+                            <h4>Value to Creator</h4>
+                            <ul>
+                                <li>95% token reduction in discovery</li>
+                                <li>Load only what you need</li>
+                                <li>Fast skill matching</li>
+                            </ul>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Dependency Diagram -->
+        <section class="dependency-section">
+            <h2 class="section-title">🔗 How They Connect</h2>
+            <div class="dependency-diagram">
+<pre>
+<span class="highlight">contextcore-startd8</span> (Beaver - LLM abstraction)
+         │ Provides: TrackedAgents, CostTracker, InsightBridge
+         ▼
+<span class="highlight">contextcore-coyote</span> (Coyote - multi-agent pipeline)
+         │ Uses: LLM agents for investigation, design, implementation
+         ▼
+<span class="highlight">contextcore-fox</span> (Fox)  ◀──────── <span class="highlight">contextcore-skills</span> (Squirrel)
+         │ Uses: Alert enrichment      │ Provides: Skills for agent discovery
+         ▼                             │
+<span class="highlight">contextcore-rabbit</span> (Rabbit) ◀─────┘
+         │ Uses: Alert framework
+         ▼
+    ╔═══════════════════════════╗
+    ║    <span class="highlight">contextcore</span> (Spider)    ║
+    ║    Core Framework         ║
+    ╚═══════════════╦═══════════╝
+                    ║
+                    ▼
+    ┌───────────────────────────────────┐
+    │     Observability Backends        │
+    │  Tempo │ Mimir │ Loki │ Grafana   │
+    └───────────────────────────────────┘
+</pre>
+            </div>
+        </section>
+
+        <!-- Ripple Effects -->
+        <section class="ripple-section">
+            <h2>🌊 Ripple Effects</h2>
+            <div class="ripple-grid">
+                <div class="ripple-card">
+                    <h4>👨‍👩‍👧 For Family</h4>
+                    <p>
+                        Fewer late-night debugging sessions. Less mental load carried home.
+                        150+ hours/year translates to more dinners together, more presence,
+                        more quality time.
+                    </p>
+                </div>
+                <div class="ripple-card">
+                    <h4>👥 For Colleagues</h4>
+                    <p>
+                        Shared observability infrastructure—no duplicate stacks.
+                        Knowledge compounds through persistent lessons.
+                        Consistent practices via semantic conventions.
+                    </p>
+                </div>
+                <div class="ripple-card">
+                    <h4>🌍 For Community</h4>
+                    <p>
+                        Open-sourced ecosystem with 6 packages. OTel community contribution materials ready.
+                        Anishinaabe naming honors indigenous wisdom. Equitable Use License ensures sustainability.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ROI Summary -->
+        <section class="roi-section">
+            <h2>💎 The Real ROI</h2>
+            <p class="roi-quote">
+                "This ecosystem transforms how I work with projects and AI. Status updates are automatic.
+                Debugging has context. Agents remember. The 150 hours/year saved is real—but the cognitive
+                relief of not maintaining mental state across tools is invaluable. And every lesson my
+                agents learn compounds for future sessions."
+            </p>
+        </section>
+
+        <!-- Quick Start -->
+        <section class="quickstart-section">
+            <h2 class="section-title">🚀 Set Sail</h2>
+            <div class="quickstart-code">
+<pre>
+<span class="comment"># Install the core framework</span>
+<span class="command">cd</span> /path/to/ContextCore
+<span class="command">pip3 install</span> -e <span class="string">".[all]"</span>
+
+<span class="comment"># Start the observability stack</span>
+<span class="command">make</span> full-setup
+
+<span class="comment"># Track your first task</span>
+<span class="command">contextcore task start</span> --id HELLO-1 --title <span class="string">"Hello ContextCore"</span> --type task
+<span class="command">contextcore task complete</span> --id HELLO-1
+
+<span class="comment"># See it in Grafana</span>
+<span class="command">open</span> http://localhost:3000
+
+<span class="comment"># Install expansion packs as needed</span>
+<span class="command">pip3 install</span> -e /path/to/contextcore-rabbit<span class="string">[dev]</span>
+<span class="command">pip3 install</span> -e /path/to/contextcore-fox<span class="string">[dev]</span>
+<span class="command">pip3 install</span> -e /path/to/contextcore-coyote<span class="string">[all]</span>
+<span class="command">pip3 install</span> -e /path/to/contextcore-startd8<span class="string">[dev]</span>
+</pre>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="harbor-footer">
+        <div class="naming-note">
+            <strong>On Naming:</strong> <em>Wayfinder</em> is the reference implementation of the <em>ContextCore</em> standard.
+            The fleet uses Anishinaabe (Ojibwe) animal names to honor the indigenous peoples of Michigan
+            and the Great Lakes region. Each animal's character reflects its package's purpose.
+        </div>
+        <p>
+            Wayfinder by Force Multiplier Labs • Built on the ContextCore Standard<br>
+            Last Updated: January 2026
+        </p>
+    </footer>
+</body>
+</html>

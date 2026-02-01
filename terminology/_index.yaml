@@ -1,0 +1,108 @@
+# =============================================================================
+# WAYFINDER TERMINOLOGY INDEX
+# =============================================================================
+# Routing table for term discovery
+# Token budget: ~250 tokens
+# =============================================================================
+
+terminology_id: wayfinder-terminology
+index_version: "1.0.0"
+
+# -----------------------------------------------------------------------------
+# TERM TYPE DEFINITIONS
+# -----------------------------------------------------------------------------
+term_types:
+  standard:
+    description: A specification or metadata model
+    examples: [contextcore]
+
+  implementation:
+    description: A concrete product or suite implementing a standard
+    examples: [wayfinder]
+
+  paradigm:
+    description: A way of thinking or approach
+    examples: [business_observability]
+
+  era:
+    description: A period defined by technological characteristics
+    examples: [language_model_1_0]
+
+  package:
+    description: A software component in the ecosystem
+    examples: [spider, rabbit, fox, coyote, beaver, squirrel]
+
+  principle:
+    description: A guideline for decisions
+    examples: [naming_principles]
+
+# -----------------------------------------------------------------------------
+# KEY DISTINCTIONS (Common confusions resolved)
+# -----------------------------------------------------------------------------
+distinctions:
+
+  contextcore_vs_wayfinder:
+    question: "What's the difference between ContextCore and Wayfinder?"
+    answer: |
+      ContextCore is the STANDARD (metadata model, specification).
+      Wayfinder is the IMPLEMENTATION (the suite of tools).
+      Others could implement ContextCore differently.
+    analogy: "OpenTelemetry (spec) vs Tempo (implementation)"
+
+  spider_vs_contextcore:
+    question: "Is Spider the same as ContextCore?"
+    answer: |
+      No. Spider (contextcore package) is the core FRAMEWORK.
+      ContextCore is the broader STANDARD that Spider implements.
+      Spider is one component within Wayfinder.
+
+  wayfinder_vs_ecosystem:
+    question: "Is Wayfinder the whole ecosystem?"
+    answer: |
+      Wayfinder is the reference implementation suite.
+      The ecosystem includes Wayfinder + community implementations +
+      the ContextCore standard itself.
+
+# -----------------------------------------------------------------------------
+# HIERARCHICAL VIEW
+# -----------------------------------------------------------------------------
+hierarchy:
+  contextcore:  # Standard
+    wayfinder:  # Implementation
+      spider: "Core framework"
+      rabbit: "Alert automation"
+      fox: "Context enrichment"
+      coyote: "Incident resolution"
+      beaver: "LLM abstraction"
+      squirrel: "Skills library"
+
+# -----------------------------------------------------------------------------
+# ANIMAL NAME TRANSLATIONS
+# -----------------------------------------------------------------------------
+anishinaabe_translations:
+  spider: Asabikeshiinh  # "Little net maker"
+  rabbit: Waabooz
+  fox: Waagosh
+  coyote: Wiisagi-ma'iingan  # "The trickster"
+  beaver: Amik  # "The builder"
+  squirrel: Ajidamoo  # "Efficient gatherer"
+
+# -----------------------------------------------------------------------------
+# TERMS TO AVOID
+# -----------------------------------------------------------------------------
+avoid:
+  native:
+    reason: Potential cultural appropriation
+    alternatives: ["built for", "designed for", "first-class"]
+
+# -----------------------------------------------------------------------------
+# FOR AGENTS: QUICK REFERENCE
+# -----------------------------------------------------------------------------
+agent_summary: |
+  1. ContextCore = standard (like a spec)
+  2. Wayfinder = implementation (like a product)
+  3. Spider/Rabbit/Fox/etc. = components within Wayfinder
+  4. Business Observability = the paradigm
+  5. Language Model 1.0 = the era
+
+  When uncertain, load MANIFEST.yaml for authoritative definitions.

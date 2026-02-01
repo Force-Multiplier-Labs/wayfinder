@@ -1,0 +1,37 @@
+{
+  "name": "contextcore-owl",
+  "version": "0.1.0",
+  "description": "Owl (Gookooko'oo) - Unified Grafana Plugin Package for ContextCore",
+  "private": true,
+  "workspaces": [
+    "plugins/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present && rm -rf node_modules"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/contextcore/contextcore-owl"
+  },
+  "keywords": [
+    "grafana",
+    "plugin",
+    "contextcore",
+    "observability",
+    "workflow"
+  ],
+  "author": "ContextCore Team",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

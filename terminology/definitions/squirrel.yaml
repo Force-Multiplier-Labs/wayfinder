@@ -1,0 +1,54 @@
+# =============================================================================
+# TERM: SQUIRREL (contextcore-squirrel)
+# =============================================================================
+# Token budget: ~100 tokens
+# =============================================================================
+
+term:
+  id: squirrel
+  name: Squirrel
+  type: package
+  package_name: contextcore-squirrel
+  version: "1.0.0"
+
+  anishinaabe:
+    name: Ajidamoo
+    meaning: "Efficient gatherer"
+
+  definition: |
+    Token-efficient skills library. Provides progressive disclosure—agents
+    load only what they need, when they need it. Like a squirrel storing
+    nuts for later retrieval.
+
+  purpose: Skills library for token-efficient agent discovery
+
+  capabilities:
+    - Progressive disclosure (MANIFEST → index → full schema)
+    - Token-budgeted skill definitions
+    - Keyword routing tables
+    - Capability discovery via TraceQL
+    - Dev Tour Guide for onboarding
+
+  why_squirrel: |
+    Squirrels are efficient gatherers—storing exactly what they need
+    and retrieving it quickly. This package stores skill knowledge
+    efficiently and retrieves only what's needed.
+
+  patterns:
+    - MANIFEST.yaml as entry point
+    - _index.yaml for routing
+    - capabilities/*.yaml for full schemas
+    - Token budget annotations on every file
+
+  triggers:
+    - squirrel
+    - skills
+    - ajidamoo
+    - progressive_disclosure
+    - token_efficient
+
+  depends_on:
+    - spider
+
+  persistence:
+    tempo_query: '{ term.id = "squirrel" }'

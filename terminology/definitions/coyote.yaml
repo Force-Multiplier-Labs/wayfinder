@@ -1,0 +1,49 @@
+# =============================================================================
+# TERM: COYOTE (contextcore-coyote)
+# =============================================================================
+# Token budget: ~100 tokens
+# =============================================================================
+
+term:
+  id: coyote
+  name: Coyote
+  type: package
+  package_name: contextcore-coyote
+  version: "1.0.0"
+
+  anishinaabe:
+    name: Wiisagi-ma'iingan
+    meaning: "The trickster"
+
+  definition: |
+    Multi-agent incident resolution pipeline. Transforms production errors
+    into tested fixes through investigation, design, implementation, and testing.
+
+  purpose: Multi-agent incident resolution
+
+  capabilities:
+    - Investigator agent (root cause analysis)
+    - Designer agent (solution planning)
+    - Implementer agent (code generation)
+    - Tester agent (validation)
+    - Knowledge capture from resolutions
+
+  why_coyote: |
+    In indigenous stories, Coyote is the trickster—clever, resourceful,
+    able to find solutions others can't see. This package cleverly
+    resolves incidents that would otherwise require human intervention.
+
+  triggers:
+    - coyote
+    - incident
+    - resolve
+    - wiisagi_maiingan
+    - multi_agent
+    - auto_remediation
+
+  depends_on:
+    - spider
+    - beaver
+
+  persistence:
+    tempo_query: '{ term.id = "coyote" }'

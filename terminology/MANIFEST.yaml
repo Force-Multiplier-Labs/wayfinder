@@ -1,0 +1,156 @@
+# =============================================================================
+# WAYFINDER TERMINOLOGY MANIFEST
+# =============================================================================
+# PRIMARY ENTRY POINT FOR AGENTS AND HUMANS
+# Read this file FIRST. Load definitions on demand.
+# Token budget: ~200 tokens for this file
+# =============================================================================
+
+schema_version: "1.0.0"
+terminology_id: wayfinder-terminology
+last_updated: "2026-01-28"
+status: authoritative
+
+# -----------------------------------------------------------------------------
+# QUICK LOOKUP (Most common terms - definitions inline)
+# -----------------------------------------------------------------------------
+quick_lookup:
+
+  contextcore:
+    type: standard
+    one_liner: The metadata model/specification for business context
+    analogy: "ContextCore is to Wayfinder as OpenTelemetry is to Tempo"
+
+  wayfinder:
+    type: implementation
+    one_liner: The reference implementation suite (Project Muad'Dib)
+    producer: Force Multiplier Labs
+
+  business_observability:
+    type: paradigm
+    one_liner: Grounding observability in business context
+
+  language_model_1_0:
+    type: era
+    one_liner: Current computing era defined by conversational interfaces
+
+# -----------------------------------------------------------------------------
+# TERM CATEGORIES (Load full definitions on demand)
+# -----------------------------------------------------------------------------
+categories:
+
+  core_concepts:
+    description: Foundational terms for the ecosystem
+    terms:
+      - id: contextcore
+        file: definitions/contextcore.yaml
+        tokens: ~150
+      - id: wayfinder
+        file: definitions/wayfinder.yaml
+        tokens: ~200
+      - id: business_observability
+        file: definitions/business-observability.yaml
+        tokens: ~180
+      - id: language_model_1_0
+        file: definitions/language-model-1-0.yaml
+        tokens: ~150
+
+  expansion_packs:
+    description: Animal-named component packages
+    terms:
+      - id: spider
+        file: definitions/spider.yaml
+        tokens: ~120
+      - id: rabbit
+        file: definitions/rabbit.yaml
+        tokens: ~100
+      - id: fox
+        file: definitions/fox.yaml
+        tokens: ~100
+      - id: coyote
+        file: definitions/coyote.yaml
+        tokens: ~100
+      - id: beaver
+        file: definitions/beaver.yaml
+        tokens: ~100
+      - id: squirrel
+        file: definitions/squirrel.yaml
+        tokens: ~100
+
+  principles:
+    description: Naming and communication principles
+    terms:
+      - id: naming_principles
+        file: definitions/naming-principles.yaml
+        tokens: ~200
+
+# -----------------------------------------------------------------------------
+# ROUTING (Keyword -> term mapping)
+# -----------------------------------------------------------------------------
+routing:
+  # Core concepts
+  metadata_model: contextcore
+  specification: contextcore
+  standard: contextcore
+
+  suite: wayfinder
+  implementation: wayfinder
+  reference_implementation: wayfinder
+  muad_dib: wayfinder
+  project_muad_dib: wayfinder
+
+  paradigm: business_observability
+  grounded: business_observability
+
+  lm_1_0: language_model_1_0
+  era: language_model_1_0
+  human_in_the_middle: language_model_1_0
+
+  # Expansion packs
+  core: spider
+  asabikeshiinh: spider
+  alert: rabbit
+  waabooz: rabbit
+  enrich: fox
+  waagosh: fox
+  incident: coyote
+  resolve: coyote
+  llm: beaver
+  amik: beaver
+  skills: squirrel
+  ajidamoo: squirrel
+
+# -----------------------------------------------------------------------------
+# CONSTRAINTS
+# -----------------------------------------------------------------------------
+constraints:
+  - id: progressive_disclosure
+    rule: Load MANIFEST first, full definitions only when needed
+
+  - id: authoritative_source
+    rule: This terminology is the source of truth for naming
+
+  - id: avoid_native
+    rule: Do not use "native" in product naming (see naming-principles.yaml)
+
+# -----------------------------------------------------------------------------
+# PERSISTENCE
+# -----------------------------------------------------------------------------
+persistence:
+  tempo:
+    enabled: true
+    span_name: "terminology.definition"
+    attributes:
+      - term.id
+      - term.type
+      - term.category
+      - term.version
+    query_example: '{ span.terminology.term_id = "wayfinder" }'
+
+  loki:
+    enabled: true
+    labels:
+      - term_id
+      - term_type
+      - category
+    query_example: '{job="terminology"} | json | term_id="wayfinder"'

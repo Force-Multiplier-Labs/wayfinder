@@ -1,0 +1,762 @@
+# ContextCore Benefits Manifest
+# Version: 1.2.0
+# Created: 2026-01-28
+# Updated: 2026-01-29
+#
+# PURPOSE: First-class user benefits that drive capability creation.
+# Benefits with delivery_status: "gap" represent roadmap opportunities.
+
+manifest_id: contextcore.benefits
+name: ContextCore User Benefits
+version: "1.2.0"
+description: |
+  User benefits for ContextCore, articulated independently of implementation.
+  Benefits drive capability design; gaps become roadmap items.
+
+owner: neilyashinsky
+
+# ==============================================================================
+# PERSONAS (Referenced by benefits)
+# ==============================================================================
+
+personas:
+  developer:
+    name: Developer
+    description: Individual contributor writing code
+    goals:
+      - Minimize context switching
+      - Stay in flow state
+      - Reduce administrative overhead
+
+  project_manager:
+    name: Project Manager
+    description: Responsible for project delivery and reporting
+    goals:
+      - Accurate real-time data
+      - Eliminate manual reporting
+      - Early blocker detection
+
+  engineering_leader:
+    name: Engineering Leader
+    description: Manages multiple teams/projects
+    goals:
+      - Portfolio visibility
+      - Resource allocation insights
+      - Strategic planning data
+
+  operator:
+    name: Operator / SRE
+    description: Maintains production systems
+    goals:
+      - Fast incident triage
+      - Context during outages
+      - Reduced mean time to resolution
+
+  compliance:
+    name: Compliance Officer
+    description: Ensures regulatory compliance
+    goals:
+      - Complete audit trails
+      - Instant historical queries
+      - Evidence for auditors
+
+  ai_agent:
+    name: AI Agent
+    description: Claude, GPT, or other AI assistants
+    goals:
+      - Persistent memory across sessions
+      - Respect human constraints
+      - Transparent decision-making
+
+# ==============================================================================
+# BENEFITS
+# ==============================================================================
+
+benefits:
+
+  # ============================================================================
+  # CATEGORY: TIME SAVINGS
+  # ============================================================================
+
+  - benefit_id: time.status_updates_eliminated
+    name: "Eliminate Manual Status Updates"
+    value_statement: "Users can stop updating status in multiple tools because it's derived automatically from Git activity"
+
+    personas:
+      - persona_id: developer
+        pain_point: "I update Jira, then GitHub, then Slack—same info 3 places"
+        value_received: "Single source of truth, no manual updates"
+        importance: critical
+      - persona_id: project_manager
+        pain_point: "I chase developers for status updates"
+        value_received: "Status always current, no nagging needed"
+        importance: high
+
+    measurable_outcome: "80% reduction in time spent on status updates"
+    measurement_method: "Time tracking: minutes/week on status-related tasks"
+    baseline: "30+ minutes per developer per week on status updates across tools"
+
+    origin:
+      type: user_interview
+      ref: "ContextCore user research 2025"
+      date: 2025-06-15
+
+    delivered_by:
+      - contextcore.status.auto_derive
+    delivery_status: delivered
+    delivered_at: "2026-01-15"
+
+    acceptance_criteria:
+      - "Task status updates within 1 minute of Git push"
+      - "No manual status update required for standard workflow"
+      - "Status visible in dashboard without user action"
+
+  - benefit_id: time.status_compilation_eliminated
+    name: "Eliminate Status Compilation Time"
+    value_statement: "Users can generate status reports instantly from live data so they reclaim hours of weekly overhead"
+
+    personas:
+      - persona_id: project_manager
+        pain_point: "I spend 2 hours every Monday compiling status from 4 different tools"
+        value_received: "One-click status report generation"
+        importance: critical
+
+    measurable_outcome: "Status report generation in <1 minute vs 2 hours"
+    measurement_method: "Time to produce weekly status report"
+    baseline: "2 hours/week compiling from Jira, GitHub, Slack, Google Docs"
+
+    origin:
+      type: user_interview
+      ref: "PM feedback session 2026-01"
+      date: 2026-01-10
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-001
+        description: "Aggregate project status from all tracked tasks"
+        type: computation
+      - id: FR-002
+        description: "Format aggregated status into report template"
+        type: presentation
+      - id: FR-003
+        description: "One-click report generation from dashboard"
+        type: automation
+
+    acceptance_criteria:
+      - "Report generated with single user action"
+      - "Report includes task progress, blockers, velocity"
+      - "Report downloadable as Markdown or PDF"
+
+  # ============================================================================
+  # CATEGORY: VISIBILITY
+  # ============================================================================
+
+  - benefit_id: visibility.portfolio_unified
+    name: "Unified Portfolio Visibility"
+    value_statement: "Users can see all projects in one view so they don't context-switch between tools"
+
+    personas:
+      - persona_id: engineering_leader
+        pain_point: "I can't see across all projects without opening 5 tools"
+        value_received: "Single dashboard for all projects"
+        importance: critical
+      - persona_id: project_manager
+        pain_point: "No single view of project health"
+        value_received: "Dashboard with health, blockers, progress"
+        importance: high
+
+    measurable_outcome: "50% reduction in context switches per task"
+    measurement_method: "Survey: tools used to get complete project picture"
+    baseline: "Average 5 tools to see full project status"
+
+    origin:
+      type: user_interview
+      ref: "Engineering leader interviews 2025"
+      date: 2025-08-20
+
+    delivered_by:
+      - contextcore.dashboard.portfolio
+      - contextcore.dashboard.project_drilldown
+    delivery_status: delivered
+    delivered_at: "2026-01-01"
+
+    acceptance_criteria:
+      - "All projects visible in single dashboard"
+      - "Drill-down from portfolio to task level"
+      - "No login to external tools required"
+
+  - benefit_id: visibility.cycle_time_realtime
+    name: "Real-Time Cycle Time Visibility"
+    value_statement: "Users can see cycle time metrics live so they don't wait until sprint end to understand velocity"
+
+    personas:
+      - persona_id: project_manager
+        pain_point: "Cycle time calculated at sprint end when it's too late to act"
+        value_received: "Live cycle time as work progresses"
+        importance: high
+      - persona_id: engineering_leader
+        pain_point: "Velocity trends only visible in retrospect"
+        value_received: "Real-time velocity indicators"
+        importance: medium
+
+    measurable_outcome: "Cycle time visible in real-time vs sprint-end calculation"
+    measurement_method: "Dashboard latency: task completion to metric update"
+    baseline: "Metrics calculated once per sprint (2 weeks)"
+
+    origin:
+      type: vision
+      ref: "ContextCore product vision"
+      date: 2025-01-01
+
+    delivered_by:
+      - contextcore.dashboard.sprint
+    delivery_status: partial
+
+    acceptance_criteria:
+      - "Cycle time updates within 5 minutes of task completion"
+      - "Burndown chart reflects current state"
+      - "Velocity trend visible mid-sprint"
+
+  # ============================================================================
+  # CATEGORY: INCIDENT RESPONSE
+  # ============================================================================
+
+  - benefit_id: incident.context_instant
+    name: "Instant Incident Context"
+    value_statement: "Users can see project context during outages so they triage faster and escalate correctly"
+
+    personas:
+      - persona_id: operator
+        pain_point: "Alert fires at 2am, I don't know why this service matters"
+        value_received: "Project owner, criticality, recent changes in alert"
+        importance: critical
+
+    measurable_outcome: "50% reduction in mean time to acknowledge"
+    measurement_method: "Incident metrics: time from alert to acknowledgment"
+    baseline: "Average 15 minutes to identify owner and criticality"
+
+    origin:
+      type: incident
+      ref: "Post-incident review 2025-11"
+      date: 2025-11-15
+
+    delivered_by:
+      - contextcore.alert.enrichment
+      - contextcore.incident.context
+    delivery_status: delivered
+    delivered_at: "2025-12-15"
+
+    acceptance_criteria:
+      - "Alerts include project owner"
+      - "Alerts include business criticality"
+      - "Recent tasks queryable during incident"
+
+  # ============================================================================
+  # CATEGORY: COMPLIANCE
+  # ============================================================================
+
+  - benefit_id: compliance.audit_instant
+    name: "Instant Audit Response"
+    value_statement: "Users can query any historical state so they respond to audits in minutes instead of weeks"
+
+    personas:
+      - persona_id: compliance
+        pain_point: "Audit asks for project history, I grep through chat logs for days"
+        value_received: "Structured queries return history instantly"
+        importance: critical
+      - persona_id: engineering_leader
+        pain_point: "Preparing audit evidence disrupts team for weeks"
+        value_received: "Self-service audit queries"
+        importance: high
+
+    measurable_outcome: "Audit response time reduced from weeks to minutes"
+    measurement_method: "Time to produce audit evidence package"
+    baseline: "2-3 weeks to compile audit evidence manually"
+
+    origin:
+      type: support_ticket
+      ref: "SUPPORT-2025-892: Audit preparation taking too long"
+      date: 2025-09-10
+
+    delivered_by:
+      - contextcore.audit.full_trail
+      - contextcore.audit.time_queries
+      - contextcore.audit.evidence_linking
+    delivery_status: delivered
+    delivered_at: "2026-01-20"
+
+    acceptance_criteria:
+      - "Historical queries return in <10 seconds"
+      - "Full status change history available"
+      - "Evidence chain from decision to deployment"
+
+  # ============================================================================
+  # CATEGORY: AI COLLABORATION
+  # ============================================================================
+
+  - benefit_id: ai.memory_persistent
+    name: "Persistent AI Memory"
+    value_statement: "Users can continue AI conversations across sessions so they don't re-explain context every time"
+
+    personas:
+      - persona_id: developer
+        pain_point: "Every Claude session, I re-explain what we decided last week"
+        value_received: "Claude remembers prior decisions and lessons"
+        importance: high
+      - persona_id: ai_agent
+        pain_point: "I rediscover context every session"
+        value_received: "Query prior insights, build on history"
+        importance: critical
+
+    measurable_outcome: "Zero context loss between AI sessions"
+    measurement_method: "User survey: context re-explanation frequency"
+    baseline: "5-10 minutes per session re-establishing context"
+
+    origin:
+      type: agent_insight
+      ref: "Claude Code session observation"
+      date: 2025-10-01
+
+    delivered_by:
+      - contextcore.agent.persistent_memory
+    delivery_status: delivered
+    delivered_at: "2026-01-10"
+
+    acceptance_criteria:
+      - "AI can query decisions from prior sessions"
+      - "Lessons learned persist across sessions"
+      - "User doesn't need to re-explain decided context"
+
+  # ============================================================================
+  # CATEGORY: INTEROPERABILITY
+  # ============================================================================
+
+  - benefit_id: interop.aos_compliance
+    name: "OWASP AOS Standards Compliance"
+    value_statement: "Users can integrate ContextCore with AOS-compliant agent tools so they get interoperability without custom adapters"
+
+    personas:
+      - persona_id: developer
+        pain_point: "ContextCore telemetry format differs from industry standards, requiring custom integration code"
+        value_received: "Standard AOS event types work with any compliant observability tool"
+        importance: medium
+      - persona_id: ai_agent
+        pain_point: "My events don't follow standard formats, limiting cross-tool compatibility"
+        value_received: "Emit AOS-compliant events automatically, enabling ecosystem integration"
+        importance: high
+      - persona_id: operator
+        pain_point: "Different agent frameworks emit incompatible telemetry formats"
+        value_received: "Unified event schema across all agent tools"
+        importance: high
+
+    measurable_outcome: "Zero custom adapters required for AOS-compliant tool integration"
+    measurement_method: "Count of custom adapters needed for new tool integrations"
+    baseline: "Custom adapter required for each new agent observability tool"
+
+    origin:
+      type: vision
+      ref: "OWASP AOS specification analysis - https://aos.owasp.org/spec/trace/events/"
+      date: 2026-01-28
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: medium
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-100
+        description: "Emit steps/message events with AOS-compliant attributes"
+        type: data
+      - id: FR-101
+        description: "Add trigger.type attribute to guidance system for autonomous triggers"
+        type: data
+      - id: FR-102
+        description: "Add DecisionOutcome enum (Allow/Deny/Modify) to insight system"
+        type: data
+      - id: FR-103
+        description: "Add structured reason codes to decision events"
+        type: data
+      - id: FR-200
+        description: "Emit protocols/MCP events for tool and resource access"
+        type: integration
+      - id: FR-201
+        description: "Map MCP tool calls to ContextCore capability invocations"
+        type: integration
+
+    acceptance_criteria:
+      - "Message events include sender.role, content, reasoning, citations"
+      - "Guidance triggers include trigger.type with autonomous option"
+      - "Decision insights include outcome enum (allow/deny/modify)"
+      - "MCP tool calls emit protocols/MCP events"
+      - "Events validate against AOS schema"
+
+  # ============================================================================
+  # CATEGORY: AI COLLABORATION
+  # ============================================================================
+
+  - benefit_id: interop.a2a_protocol
+    name: "A2A Protocol Interoperability"
+    value_statement: "Users can connect ContextCore agents to any A2A-compatible agent framework so they get cross-platform agent collaboration without custom adapters"
+
+    personas:
+      - persona_id: developer
+        pain_point: "My agents can't talk to agents built with other frameworks"
+        value_received: "Standard A2A protocol enables cross-framework communication"
+        importance: high
+      - persona_id: ai_agent
+        pain_point: "I can't communicate with agents outside ContextCore"
+        value_received: "JSON-RPC client/server for any A2A agent, bidirectional handoff conversion"
+        importance: critical
+
+    measurable_outcome: "Zero custom adapters for A2A-compatible agent integration"
+    measurement_method: "Count of custom integrations needed for new agent frameworks"
+    baseline: "Custom adapter required for each agent framework"
+
+    origin:
+      type: vision
+      ref: "Phase 4 Unified Alignment - A2A protocol support"
+      date: 2026-01-29
+
+    delivered_by:
+      - contextcore.a2a.server
+      - contextcore.a2a.client
+      - contextcore.a2a.task_adapter
+      - contextcore.a2a.content_model
+      - contextcore.handoff.input_request
+      - contextcore.api.unified
+    delivery_status: delivered
+    delivered_at: "2026-01-29"
+
+    acceptance_criteria:
+      - "A2A server exposes .well-known/agent.json discovery"
+      - "A2A client can send messages to remote A2A agents"
+      - "Handoffs convert bidirectionally between A2A Task and ContextCore"
+      - "9 handoff states fully mapped to 7 A2A task states"
+      - "Input requests support mid-handoff clarification"
+
+  - benefit_id: ai.orchestration_multi
+    name: "Multi-Agent Orchestration"
+    value_statement: "Users can coordinate multiple AI agents on complex tasks so they use the best AI for each subtask"
+
+    personas:
+      - persona_id: developer
+        pain_point: "Different AIs are better at different things, but they don't talk to each other"
+        value_received: "Use Claude for reasoning, GPT for code, Gemini for search—coordinated"
+        importance: medium
+      - persona_id: ai_agent
+        pain_point: "I work in isolation from other agents"
+        value_received: "Shared context with other agents via A2A protocol"
+        importance: high
+
+    measurable_outcome: "Complex tasks completed faster with specialized agents"
+    measurement_method: "Task completion time: multi-agent vs single-agent"
+    baseline: "Manual context transfer between AI tools"
+
+    origin:
+      type: vision
+      ref: "ContextCore agent roadmap"
+      date: 2025-12-01
+
+    delivered_by:
+      - contextcore.a2a.server
+      - contextcore.a2a.client
+      - contextcore.a2a.task_adapter
+    delivery_status: partial
+
+    priority: medium
+    effort_estimate: large
+
+    functional_requirements:
+      - id: FR-010
+        description: "Define agent capabilities and specializations"
+        type: data
+      - id: FR-011
+        description: "Route subtasks to appropriate agents"
+        type: computation
+      - id: FR-012
+        description: "Aggregate agent outputs into coherent result"
+        type: computation
+      - id: FR-013
+        description: "Maintain shared context across agents"
+        type: data
+
+    acceptance_criteria:
+      - "User can define multi-agent workflow"
+      - "Subtasks automatically routed to best agent"
+      - "Results aggregated without manual stitching"
+      - "Context shared between agents automatically"
+
+  # ============================================================================
+  # CATEGORY: VISIBILITY (Gaps)
+  # ============================================================================
+
+  - benefit_id: visibility.agent_insights
+    name: "Agent Decision Visibility"
+    value_statement: "Users can browse AI agent decisions and reasoning in dashboards so they understand what agents decided and why without reading transcripts"
+
+    personas:
+      - persona_id: developer
+        pain_point: "I can't see what Claude decided in previous sessions without reading transcripts"
+        value_received: "Dashboard showing all agent decisions, lessons, recommendations with evidence links"
+        importance: high
+      - persona_id: engineering_leader
+        pain_point: "I have no visibility into what AI agents are doing across projects"
+        value_received: "Portfolio-level view of agent activity, decisions, and confidence scores"
+        importance: high
+      - persona_id: ai_agent
+        pain_point: "My decisions are in trace data but humans can't easily browse them"
+        value_received: "Decisions surfaced in Grafana dashboards for human review"
+        importance: medium
+
+    measurable_outcome: "Agent decisions browsable in <10 seconds vs reading transcript logs"
+    measurement_method: "Time to find a specific agent decision from a prior session"
+    baseline: "Read chat transcripts or grep Tempo raw spans manually"
+
+    origin:
+      type: agent_insight
+      ref: "Phase 4 Unified Alignment — gen_ai.* attributes emitted but no dashboard"
+      date: 2026-01-29
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-410
+        description: "Grafana dashboard querying gen_ai.* spans from Tempo"
+        type: presentation
+      - id: FR-411
+        description: "CLI commands for browsing and searching agent insights"
+        type: presentation
+
+    acceptance_criteria:
+      - "Dashboard shows agent insights with type, confidence, summary"
+      - "Filterable by agent_id, project_id, insight.type, time range"
+      - "Drill-down from insight to supporting evidence traces"
+      - "CLI returns insights matching filters in table and JSON format"
+
+  # ============================================================================
+  # CATEGORY: QUALITY
+  # ============================================================================
+
+  - benefit_id: quality.deliverable_verification
+    name: "Deliverable Verification"
+    value_statement: "Users can trust task 'done' status because deliverables are verified, not just execution completion"
+
+    personas:
+      - persona_id: developer
+        pain_point: "Tasks show 'done' but expected outputs weren't actually created"
+        value_received: "Automatic verification that expected deliverables exist after task completion"
+        importance: high
+      - persona_id: project_manager
+        pain_point: "Status shows complete but I can't verify what was actually delivered"
+        value_received: "Dashboard distinguishing verified completions from unverified"
+        importance: critical
+
+    measurable_outcome: "100% of completed tasks have deliverable verification status"
+    measurement_method: "Ratio of verified completions to total completions"
+    baseline: "Task 'done' = execution ran, no deliverable check"
+
+    origin:
+      type: agent_insight
+      ref: "P2 risk in .contextcore.yaml — execution ≠ completion discovered via phase tasks"
+      date: 2026-01-20
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: high
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-510
+        description: "Define deliverable types and expected output schema for tasks"
+        type: data
+      - id: FR-511
+        description: "Post-completion hooks verifying deliverables exist"
+        type: automation
+      - id: FR-412
+        description: "Dashboard panels showing verified vs unverified completions"
+        type: presentation
+
+    acceptance_criteria:
+      - "Tasks can declare expected deliverables (files, artifacts, test results)"
+      - "Completion triggers automatic deliverable verification"
+      - "Verification results emitted as span events"
+      - "Dashboard distinguishes verified from unverified completions"
+
+  # ============================================================================
+  # CATEGORY: DEVELOPER EXPERIENCE
+  # ============================================================================
+
+  - benefit_id: devex.dependency_validation
+    name: "Automated Dependency Validation"
+    value_statement: "Users can catch missing dependencies before deployment so they avoid 'works on my machine' failures"
+
+    personas:
+      - persona_id: developer
+        pain_point: "Dashboard references a Grafana plugin that isn't installed—discovered at deploy time"
+        value_received: "Pre-commit and CI catch undeclared dependencies before merge"
+        importance: high
+      - persona_id: operator
+        pain_point: "Deployment fails because implicit dependencies weren't declared"
+        value_received: "Runtime verification reports missing dependencies with install instructions"
+        importance: high
+
+    measurable_outcome: "Zero deploy-time dependency surprises"
+    measurement_method: "Count of deployment failures due to undeclared dependencies"
+    baseline: "Dependencies discovered only at deploy time (P2 risk)"
+
+    origin:
+      type: incident
+      ref: "Beaver dashboard referenced yesoreyeram-infinity-datasource plugin not configured"
+      date: 2026-01-20
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: medium
+    effort_estimate: small
+
+    functional_requirements:
+      - id: FR-520
+        description: "Pre-commit and CI checks validating dependency manifests"
+        type: automation
+      - id: FR-521
+        description: "Extend contextcore install verify to check external dependencies"
+        type: automation
+
+    acceptance_criteria:
+      - "Pre-commit hook warns on undeclared dependencies"
+      - "CI validates dependency manifest completeness"
+      - "contextcore install verify reports missing dependencies"
+      - "Missing dependency output includes install instructions"
+
+  - benefit_id: devex.codegen_health
+    name: "Code Generation Health Monitoring"
+    value_statement: "Users can monitor LLM code generation quality so they catch truncation and quality issues before they compound"
+
+    personas:
+      - persona_id: developer
+        pain_point: "Generated code was silently truncated, causing downstream failures"
+        value_received: "Dashboard showing truncation rate, decomposition frequency, verification results"
+        importance: medium
+      - persona_id: ai_agent
+        pain_point: "I can't tell if my output was truncated or incomplete"
+        value_received: "Pre-flight size estimation prevents generation of over-limit outputs"
+        importance: high
+
+    measurable_outcome: "Truncation rate <1%, zero undetected truncations"
+    measurement_method: "gen_ai.code.truncated telemetry from code generation spans"
+    baseline: "Truncation discovered only when generated code fails to compile"
+
+    origin:
+      type: agent_insight
+      ref: "Span-based generation contracts design — proactive truncation prevention"
+      date: 2026-01-22
+
+    delivered_by: []  # GAP
+    delivery_status: gap
+
+    priority: low
+    effort_estimate: medium
+
+    functional_requirements:
+      - id: FR-420
+        description: "Grafana dashboard monitoring code generation health metrics"
+        type: presentation
+      - id: FR-530
+        description: "Span-based generation contracts with size constraints in CodeGenerationHandoff"
+        type: automation
+
+    acceptance_criteria:
+      - "Dashboard shows truncation rate, decomposition frequency, size accuracy"
+      - "Size constraints enforced before code generation"
+      - "Decomposition triggered for over-limit requests"
+      - "Truncation events emitted as telemetry"
+
+# ==============================================================================
+# GAP SUMMARY
+# ==============================================================================
+
+gap_summary:
+  total_benefits: 14
+  delivered: 6
+  partial: 2
+  gaps: 6
+
+  gaps_by_priority:
+    high:
+      - benefit_id: time.status_compilation_eliminated
+        effort: medium
+        recommendation: "Build on existing dashboard infrastructure"
+      - benefit_id: visibility.agent_insights
+        effort: small
+        recommendation: "Quick win — gen_ai.* attributes already emitted, just needs dashboard"
+      - benefit_id: quality.deliverable_verification
+        effort: medium
+        recommendation: "Addresses P2 risk — execution ≠ completion"
+    medium:
+      - benefit_id: interop.aos_compliance
+        effort: medium
+        recommendation: "Implement in phases: AOS events first, MCP second"
+      - benefit_id: devex.dependency_validation
+        effort: small
+        recommendation: "Quick win — dependency manifest pattern already documented"
+    low:
+      - benefit_id: devex.codegen_health
+        effort: medium
+        recommendation: "Defer until code generation volume increases"
+
+  partial_by_priority:
+    medium:
+      - benefit_id: visibility.cycle_time_realtime
+        note: "Sprint dashboard exists, recording rules pending"
+      - benefit_id: ai.orchestration_multi
+        note: "A2A protocol foundation delivered (Phase 4), task routing and result aggregation pending"
+
+# ==============================================================================
+# CHANGELOG
+# ==============================================================================
+
+changelog:
+  - version: "1.3.0"
+    date: "2026-01-29"
+    changes:
+      - "Added 4 new gap benefits from logical next steps analysis"
+      - "New category: QUALITY (quality.deliverable_verification)"
+      - "New category: DEVELOPER EXPERIENCE (devex.dependency_validation, devex.codegen_health)"
+      - "visibility.agent_insights: Agent decision dashboard (high priority, small effort)"
+      - "quality.deliverable_verification: Task deliverable verification (high priority, medium effort)"
+      - "devex.dependency_validation: Automated dependency checks (medium priority, small effort)"
+      - "devex.codegen_health: Code generation monitoring (low priority, medium effort)"
+      - "14 total benefits: 6 delivered, 2 partial, 6 gaps"
+      - "Fixed delivered count: 6 (was incorrectly 7)"
+  - version: "1.2.0"
+    date: "2026-01-29"
+    changes:
+      - "Phase 4: Added interop.a2a_protocol benefit (delivered)"
+      - "ai.orchestration_multi upgraded gap → partial (A2A foundation delivered)"
+      - "10 total benefits: 7 delivered, 2 partial, 2 gaps (was 6/1/3)"
+  - version: "1.1.0"
+    date: "2026-01-28"
+    changes:
+      - "Added interop.aos_compliance benefit for OWASP AOS standards alignment"
+      - "New category: INTEROPERABILITY"
+      - "6 functional requirements for AOS compliance (FR-100 to FR-201)"
+      - "9 benefits across 6 categories, 3 gaps"
+  - version: "1.0.0"
+    date: "2026-01-28"
+    changes:
+      - "Initial benefits manifest"
+      - "8 benefits across 5 categories"
+      - "6 delivered, 1 partial, 2 gaps"
+      - "Gaps include FR derivation"

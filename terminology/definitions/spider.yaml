@@ -1,0 +1,46 @@
+# =============================================================================
+# TERM: SPIDER (contextcore)
+# =============================================================================
+# Token budget: ~120 tokens
+# =============================================================================
+
+term:
+  id: spider
+  name: Spider
+  type: package
+  package_name: contextcore
+  version: "1.0.0"
+
+  anishinaabe:
+    name: Asabikeshiinh
+    meaning: "Little net maker"
+
+  definition: |
+    The core framework package. Weaves connections between project management
+    and runtime observability by modeling tasks as OpenTelemetry spans.
+
+  purpose: Core framework—tasks as spans, agent insights, observability foundation
+
+  capabilities:
+    - Task tracking as OTel spans
+    - Agent insight emission and querying
+    - Value-based observability
+    - Kubernetes CRD support
+    - Dashboard provisioning
+
+  why_spider: |
+    Spiders weave intricate webs that connect many points. The core framework
+    weaves connections between previously siloed systems—project management,
+    observability, agent memory.
+
+  triggers:
+    - spider
+    - core
+    - contextcore
+    - asabikeshiinh
+    - tasks_as_spans
+
+  depends_on: []  # Core has no dependencies
+
+  persistence:
+    tempo_query: '{ term.id = "spider" }'
