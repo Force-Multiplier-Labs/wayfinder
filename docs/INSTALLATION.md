@@ -653,7 +653,7 @@ After installation:
 
 5. **Read the documentation:**
    - [README.md](../README.md) - Vision and concepts
-   - [docs/semantic-conventions.md](semantic-conventions.md) - Attribute reference
+   - [docs/semantic-conventions.md](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/semantic-conventions.md) - Attribute reference
    - [CLAUDE.md](../CLAUDE.md) - Developer reference
 
 ---

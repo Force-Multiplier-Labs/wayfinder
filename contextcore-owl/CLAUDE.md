@@ -276,4 +276,4 @@ If outdated, follow the "Full Plugin Deployment Workflow" to rebuild and sync.
 - [Grafana Plugin Development](https://grafana.com/developers/plugin-tools/)
 - [@grafana/ui Components](https://developers.grafana.com/ui/latest/)
 - [ContextCore Expansion Packs](../docs/EXPANSION_PACKS.md)
-- [Naming Convention](../docs/NAMING_CONVENTION.md)
+- [Naming Convention](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/NAMING_CONVENTION.md)

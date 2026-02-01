@@ -380,13 +380,13 @@ Your task is now a span. Welcome to project observability.
 - `sprint.id`, `sprint.name`, `sprint.goal`
 - `project.id`, `project.epic`
 
-Check the [semantic conventions doc](../docs/semantic-conventions.md) and contribute what's missing.
+Check the [semantic conventions doc](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/semantic-conventions.md) and contribute what's missing.
 
 ### For Platform Engineers
 
 **Deploy the CRD:**
 ```bash
-kubectl apply -f crds/projectcontext.yaml
+kubectl apply -f vendor/contextcore-spec/crds/projectcontext.yaml
 contextcore controller  # Run the operator
 ```
 Define a ProjectContext, watch ServiceMonitors appear.

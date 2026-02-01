@@ -1,0 +1,712 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: projectcontexts.contextcore.io
+  annotations:
+    contextcore.io/description: |
+      ProjectContext v2 extends the unified metadata model with agent communication
+      capabilities. Enables human-agent parity: same metadata serves project management,
+      observability, and agent-to-agent/agent-to-human communication.
+    contextcore.io/version: "2.0"
+spec:
+  group: contextcore.io
+  names:
+    kind: ProjectContext
+    listKind: ProjectContextList
+    plural: projectcontexts
+    singular: projectcontext
+    shortNames:
+      - pctx
+      - pc
+  scope: Namespaced
+  versions:
+    - name: v2
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              required:
+                - project
+                - targets
+              properties:
+                # =================================================================
+                # EXISTING SECTIONS (v1 compatibility)
+                # =================================================================
+
+                # Project identification
+                project:
+                  type: object
+                  required:
+                    - id
+                  properties:
+                    id:
+                      type: string
+                      description: "Project identifier (e.g., commerce-platform)"
+                    epic:
+                      type: string
+                      description: "Epic ID this context relates to"
+                    tasks:
+                      type: array
+                      items:
+                        type: string
+                      description: "Task IDs associated with these resources"
+                    traceId:
+                      type: string
+                      description: "OTel trace ID linking to project span"
+
+                # Design artifacts
+                design:
+                  type: object
+                  properties:
+                    doc:
+                      type: string
+                      format: uri
+                      description: "URL to design document"
+                    adr:
+                      type: string
+                      description: "ADR identifier or URL"
+                    apiContract:
+                      type: string
+                      format: uri
+                      description: "OpenAPI/AsyncAPI specification URL"
+                    diagrams:
+                      type: array
+                      items:
+                        type: string
+                        format: uri
+                      description: "Architecture diagram URLs"
+
+                # Business context
+                business:
+                  type: object
+                  properties:
+                    criticality:
+                      type: string
+                      enum: [critical, high, medium, low]
+                      description: "Business criticality level"
+                    value:
+                      type: string
+                      enum: [revenue-primary, revenue-secondary, cost-reduction, compliance, enabler, internal]
+                      description: "Business value classification"
+                    owner:
+                      type: string
+                      description: "Owning team or individual"
+                    costCenter:
+                      type: string
+                      description: "Cost center code for chargebacks"
+                    stakeholders:
+                      type: array
+                      items:
+                        type: string
+                      description: "Stakeholder contacts"
+
+                # Requirements (for SLO derivation)
+                requirements:
+                  type: object
+                  properties:
+                    availability:
+                      type: string
+                      pattern: "^\\d+\\.?\\d*$"
+                      description: "Target availability percentage (e.g., 99.95)"
+                    latencyP50:
+                      type: string
+                      description: "Target P50 latency (e.g., 50ms)"
+                    latencyP99:
+                      type: string
+                      description: "Target P99 latency (e.g., 200ms)"
+                    errorBudget:
+                      type: string
+                      pattern: "^\\d+\\.?\\d*$"
+                      description: "Error budget percentage (e.g., 0.05)"
+                    throughput:
+                      type: string
+                      description: "Target throughput (e.g., 1000rps)"
+                    source:
+                      type: string
+                      description: "Where these requirements originated"
+
+                # Risk signals
+                risks:
+                  type: array
+                  items:
+                    type: object
+                    required: [type]
+                    properties:
+                      type:
+                        type: string
+                        enum: [security, compliance, data-integrity, availability, financial, reputational]
+                      description:
+                        type: string
+                      priority:
+                        type: string
+                        enum: [P1, P2, P3, P4]
+                      mitigation:
+                        type: string
+                      controls:
+                        type: array
+                        items:
+                          type: string
+
+                # Target Kubernetes resources
+                targets:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [kind, name]
+                    properties:
+                      kind:
+                        type: string
+                        enum: [Deployment, StatefulSet, DaemonSet, Service, Ingress, ConfigMap, Secret, CronJob, Job]
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+
+                # Observability strategy
+                observability:
+                  type: object
+                  properties:
+                    traceSampling:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                    metricsInterval:
+                      type: string
+                      pattern: "^\\d+[smh]$"
+                    logLevel:
+                      type: string
+                      enum: [debug, info, warn, error]
+                    dashboardPlacement:
+                      type: string
+                      enum: [featured, standard, archived]
+                    alertChannels:
+                      type: array
+                      items:
+                        type: string
+                    runbook:
+                      type: string
+                      format: uri
+
+                # =================================================================
+                # NEW: AGENT COMMUNICATION SECTIONS (v2)
+                # =================================================================
+
+                # Human-to-agent guidance (persists across sessions)
+                agentGuidance:
+                  type: object
+                  description: "Human direction for agents working on this project"
+                  properties:
+                    focus:
+                      type: object
+                      description: "Current priority areas for agent attention"
+                      properties:
+                        areas:
+                          type: array
+                          items:
+                            type: string
+                          description: "Priority focus areas (e.g., 'performance optimization', 'security hardening')"
+                        reason:
+                          type: string
+                          description: "Why these areas are prioritized"
+                        until:
+                          type: string
+                          format: date-time
+                          description: "When this focus expires"
+
+                    constraints:
+                      type: array
+                      description: "What agents must NOT do"
+                      items:
+                        type: object
+                        required: [id, rule]
+                        properties:
+                          id:
+                            type: string
+                            description: "Constraint identifier"
+                          rule:
+                            type: string
+                            description: "The constraint (e.g., 'no breaking API changes')"
+                          scope:
+                            type: string
+                            description: "Scope pattern (e.g., 'src/auth/**')"
+                          severity:
+                            type: string
+                            enum: [blocking, warning, advisory]
+                            default: blocking
+                          reason:
+                            type: string
+                            description: "Why this constraint exists"
+
+                    preferences:
+                      type: array
+                      description: "Preferred approaches (not mandatory)"
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          preference:
+                            type: string
+                          reason:
+                            type: string
+
+                    questions:
+                      type: array
+                      description: "Questions for agents to answer"
+                      items:
+                        type: object
+                        required: [id, question]
+                        properties:
+                          id:
+                            type: string
+                          question:
+                            type: string
+                          priority:
+                            type: string
+                            enum: [critical, high, medium, low]
+                          context:
+                            type: string
+                          status:
+                            type: string
+                            enum: [open, answered, deferred]
+                            default: open
+
+                    context:
+                      type: array
+                      description: "Background information for agents"
+                      items:
+                        type: object
+                        properties:
+                          topic:
+                            type: string
+                          content:
+                            type: string
+                          source:
+                            type: string
+                            format: uri
+
+                # Agent session tracking
+                agentSessions:
+                  type: array
+                  description: "Active and recent agent sessions on this project"
+                  items:
+                    type: object
+                    required: [sessionId, agentId, startedAt]
+                    properties:
+                      sessionId:
+                        type: string
+                        description: "Unique session identifier"
+                      agentId:
+                        type: string
+                        description: "Agent identifier (e.g., 'claude-code', 'gpt-4-agent')"
+                      agentType:
+                        type: string
+                        enum: [code_assistant, orchestrator, specialist, automation]
+                      startedAt:
+                        type: string
+                        format: date-time
+                      endedAt:
+                        type: string
+                        format: date-time
+                      status:
+                        type: string
+                        enum: [active, completed, abandoned]
+                        default: active
+                      capabilitiesUsed:
+                        type: array
+                        items:
+                          type: string
+                      insightCount:
+                        type: integer
+                        description: "Number of insights generated"
+                      tasksCompleted:
+                        type: array
+                        items:
+                          type: string
+                        description: "Task IDs completed in this session"
+
+                # Agent-generated insights summary (detail in Tempo)
+                agentInsights:
+                  type: object
+                  description: "Summary of agent insights (full detail queryable via TraceQL)"
+                  properties:
+                    lastUpdated:
+                      type: string
+                      format: date-time
+                    totalCount:
+                      type: integer
+                    byType:
+                      type: object
+                      properties:
+                        decisions:
+                          type: integer
+                        recommendations:
+                          type: integer
+                        blockers:
+                          type: integer
+                        discoveries:
+                          type: integer
+                    recentHighConfidence:
+                      type: array
+                      description: "Recent insights with confidence > 0.9"
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          type:
+                            type: string
+                          summary:
+                            type: string
+                          confidence:
+                            type: number
+                          timestamp:
+                            type: string
+                            format: date-time
+                          traceId:
+                            type: string
+                            description: "Tempo trace ID for full insight"
+                    unresolvedBlockers:
+                      type: array
+                      description: "Blockers needing human attention"
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          summary:
+                            type: string
+                          createdAt:
+                            type: string
+                            format: date-time
+                          traceId:
+                            type: string
+
+                # Agent-to-agent handoff queue
+                handoffQueue:
+                  type: array
+                  description: "Pending agent-to-agent task delegations"
+                  items:
+                    type: object
+                    required: [id, fromAgent, toAgent, capabilityId, task, status]
+                    properties:
+                      id:
+                        type: string
+                      fromAgent:
+                        type: string
+                      toAgent:
+                        type: string
+                      capabilityId:
+                        type: string
+                      task:
+                        type: string
+                      priority:
+                        type: string
+                        enum: [critical, high, medium, low]
+                        default: medium
+                      status:
+                        type: string
+                        enum: [pending, accepted, in_progress, completed, failed, timeout]
+                      createdAt:
+                        type: string
+                        format: date-time
+                      timeoutMs:
+                        type: integer
+                        default: 300000
+                      resultTraceId:
+                        type: string
+                        description: "Trace ID containing handoff result"
+
+                # Personalization settings for different audiences
+                personalization:
+                  type: object
+                  description: "Audience-specific presentation hints"
+                  properties:
+                    executive:
+                      type: object
+                      properties:
+                        dashboardId:
+                          type: string
+                        summaryFields:
+                          type: array
+                          items:
+                            type: string
+                        alertThreshold:
+                          type: string
+                          enum: [critical_only, critical_high, all]
+                    manager:
+                      type: object
+                      properties:
+                        dashboardId:
+                          type: string
+                        reportingCadence:
+                          type: string
+                    developer:
+                      type: object
+                      properties:
+                        dashboardId:
+                          type: string
+                        preferredFormat:
+                          type: string
+                          enum: [detailed, standard, minimal]
+                    agent:
+                      type: object
+                      properties:
+                        preferredQueryBackend:
+                          type: string
+                          enum: [tempo, loki, k8s_api]
+                        maxContextTokens:
+                          type: integer
+                          description: "Token budget hint for agents"
+
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum: [Pending, Active, Degraded, Error]
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                generatedArtifacts:
+                  type: object
+                  properties:
+                    serviceMonitor:
+                      type: string
+                    prometheusRules:
+                      type: array
+                      items:
+                        type: string
+                    dashboard:
+                      type: string
+                annotatedResources:
+                  type: array
+                  items:
+                    type: string
+                lastSyncTime:
+                  type: string
+                  format: date-time
+
+                # NEW: Agent communication status
+                agentStatus:
+                  type: object
+                  properties:
+                    activeSessions:
+                      type: integer
+                    lastSessionEndedAt:
+                      type: string
+                      format: date-time
+                    pendingHandoffs:
+                      type: integer
+                    unresolvedBlockers:
+                      type: integer
+                    insightsLast24h:
+                      type: integer
+
+      subresources:
+        status: {}
+
+      additionalPrinterColumns:
+        - name: Project
+          type: string
+          jsonPath: .spec.project.id
+        - name: Criticality
+          type: string
+          jsonPath: .spec.business.criticality
+        - name: Value
+          type: string
+          jsonPath: .spec.business.value
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: ActiveAgents
+          type: integer
+          jsonPath: .status.agentStatus.activeSessions
+        - name: Blockers
+          type: integer
+          jsonPath: .status.agentStatus.unresolvedBlockers
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+
+    # Keep v1 for backwards compatibility
+    - name: v1
+      served: true
+      storage: false
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              required:
+                - project
+                - targets
+              properties:
+                project:
+                  type: object
+                  required:
+                    - id
+                  properties:
+                    id:
+                      type: string
+                    epic:
+                      type: string
+                    tasks:
+                      type: array
+                      items:
+                        type: string
+                    traceId:
+                      type: string
+                design:
+                  type: object
+                  properties:
+                    doc:
+                      type: string
+                      format: uri
+                    adr:
+                      type: string
+                    apiContract:
+                      type: string
+                      format: uri
+                    diagrams:
+                      type: array
+                      items:
+                        type: string
+                        format: uri
+                business:
+                  type: object
+                  properties:
+                    criticality:
+                      type: string
+                      enum: [critical, high, medium, low]
+                    value:
+                      type: string
+                      enum: [revenue-primary, revenue-secondary, cost-reduction, compliance, enabler, internal]
+                    owner:
+                      type: string
+                    costCenter:
+                      type: string
+                    stakeholders:
+                      type: array
+                      items:
+                        type: string
+                requirements:
+                  type: object
+                  properties:
+                    availability:
+                      type: string
+                    latencyP50:
+                      type: string
+                    latencyP99:
+                      type: string
+                    errorBudget:
+                      type: string
+                    throughput:
+                      type: string
+                    source:
+                      type: string
+                risks:
+                  type: array
+                  items:
+                    type: object
+                    required: [type]
+                    properties:
+                      type:
+                        type: string
+                        enum: [security, compliance, data-integrity, availability, financial, reputational]
+                      description:
+                        type: string
+                      priority:
+                        type: string
+                        enum: [P1, P2, P3, P4]
+                      mitigation:
+                        type: string
+                      controls:
+                        type: array
+                        items:
+                          type: string
+                targets:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [kind, name]
+                    properties:
+                      kind:
+                        type: string
+                        enum: [Deployment, StatefulSet, DaemonSet, Service, Ingress, ConfigMap, Secret, CronJob, Job]
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                observability:
+                  type: object
+                  properties:
+                    traceSampling:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                    metricsInterval:
+                      type: string
+                    logLevel:
+                      type: string
+                      enum: [debug, info, warn, error]
+                    dashboardPlacement:
+                      type: string
+                      enum: [featured, standard, archived]
+                    alertChannels:
+                      type: array
+                      items:
+                        type: string
+                    runbook:
+                      type: string
+                      format: uri
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum: [Pending, Active, Degraded, Error]
+                generatedArtifacts:
+                  type: object
+                  properties:
+                    serviceMonitor:
+                      type: string
+                    prometheusRules:
+                      type: array
+                      items:
+                        type: string
+                    dashboard:
+                      type: string
+                annotatedResources:
+                  type: array
+                  items:
+                    type: string
+                lastSyncTime:
+                  type: string
+                  format: date-time
+      subresources:
+        status: {}

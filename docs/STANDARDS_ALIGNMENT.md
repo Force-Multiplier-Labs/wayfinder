@@ -536,8 +536,8 @@ Connects agent capabilities to business value.
 - [AOS Trace Events](https://aos.owasp.org/spec/trace/events/)
 - [A2A Protocol](https://a2a-protocol.org)
 - [OTel GenAI Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/)
-- [ContextCore Semantic Conventions](./semantic-conventions.md)
-- [ContextCore Agent Conventions](./agent-semantic-conventions.md)
+- [ContextCore Semantic Conventions](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/semantic-conventions.md)
+- [ContextCore Agent Conventions](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/agent-semantic-conventions.md)
 - [OTel GenAI Migration Guide](./OTEL_GENAI_MIGRATION_GUIDE.md)
 
 ---

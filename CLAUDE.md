@@ -156,5 +156,5 @@ decisions = querier.query(project_id="checkout", insight_type="decision")
 ## Documentation
 
 - [README.md](README.md) — Vision, benefits, quick start
-- [docs/semantic-conventions.md](docs/semantic-conventions.md) — Full attribute reference (spec)
-- [docs/agent-communication-protocol.md](docs/agent-communication-protocol.md) — Agent integration (spec)
+- [docs/semantic-conventions.md](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/semantic-conventions.md) — Full attribute reference (spec)
+- [docs/agent-communication-protocol.md](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/agent-communication-protocol.md) — Agent integration (spec)

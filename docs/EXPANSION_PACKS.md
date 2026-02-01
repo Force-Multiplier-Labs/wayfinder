@@ -1,6 +1,6 @@
 # Expansion Packs
 
-ContextCore expansion packs extend the core framework with specialized capabilities. Each pack follows the [animal naming convention](NAMING_CONVENTION.md) and integrates seamlessly with ContextCore's observability infrastructure.
+ContextCore expansion packs extend the core framework with specialized capabilities. Each pack follows the [animal naming convention](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/NAMING_CONVENTION.md) and integrates seamlessly with ContextCore's observability infrastructure.
 
 ## Design Boundaries
 
@@ -415,7 +415,7 @@ cat skills/dev-tour-guide/agent/capabilities/observability.yaml
 
 ### Requirements
 
-1. **Naming**: Follow the [naming convention](NAMING_CONVENTION.md)
+1. **Naming**: Follow the [naming convention](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/NAMING_CONVENTION.md)
 2. **Integration**: Depend on `contextcore` and use its telemetry primitives
 3. **License**: Use a compatible open-source license
 4. **Documentation**: Include README with quick start and examples

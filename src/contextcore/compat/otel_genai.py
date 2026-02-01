@@ -270,12 +270,16 @@ class GapAnalysisGenerator:
         return attributes
 
     def analyze_contextcore_conventions(self) -> None:
-        """Analyze ContextCore semantic conventions from documentation files."""
+        """Analyze ContextCore semantic conventions from documentation files.
+
+        Spec docs live in the contextcore-spec repo. At runtime, we look for
+        vendored copies under vendor/contextcore-spec/docs/.
+        """
         doc_files = {
-            'agent': ('docs/agent-semantic-conventions.md', 'agent.'),
-            'insight': ('docs/semantic-conventions.md', 'insight.'),
-            'handoff': ('docs/semantic-conventions.md', 'handoff.'),
-            'general': ('docs/semantic-conventions.md', '')
+            'agent': ('vendor/contextcore-spec/docs/agent-semantic-conventions.md', 'agent.'),
+            'insight': ('vendor/contextcore-spec/docs/semantic-conventions.md', 'insight.'),
+            'handoff': ('vendor/contextcore-spec/docs/semantic-conventions.md', 'handoff.'),
+            'general': ('vendor/contextcore-spec/docs/semantic-conventions.md', '')
         }
         
         for category, (file_path, namespace) in doc_files.items():

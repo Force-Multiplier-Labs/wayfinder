@@ -2,7 +2,7 @@
 Pydantic models for ProjectContext CRD specification.
 
 These models provide Python type safety and validation for the ProjectContext
-custom resource, matching the OpenAPI schema defined in crds/projectcontext.yaml.
+custom resource, matching the OpenAPI schema defined in the contextcore-spec repo (crds/projectcontext.yaml).
 
 Note: Core type enums (Criticality, BusinessValue, etc.) are imported from
 contextcore.contracts.types which is the single source of truth.

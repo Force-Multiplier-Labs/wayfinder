@@ -1568,7 +1568,7 @@ def demo_setup(cluster_name: str, skip_cluster: bool, skip_observability: bool, 
     # Step 3: Apply ContextCore CRD
     click.echo()
     click.echo("[3/4] Applying ContextCore CRD...")
-    crd_path = os.path.join(os.path.dirname(__file__), "..", "..", "crds", "projectcontext.yaml")
+    crd_path = os.path.join(os.path.dirname(__file__), "..", "..", "vendor", "contextcore-spec", "crds", "projectcontext.yaml")
     if os.path.exists(crd_path):
         result = subprocess.run(
             ["kubectl", "apply", "-f", crd_path],

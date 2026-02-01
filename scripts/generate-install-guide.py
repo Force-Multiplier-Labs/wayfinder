@@ -375,7 +375,7 @@ def generate_guide(env: EnvironmentInfo) -> str:
                 if env.has_observability:
                     add("kubectl apply -k observability/")
                 if env.has_contextcore:
-                    add("kubectl apply -f contextcore/crds/")
+                    add("kubectl apply -f vendor/contextcore-spec/crds/")
                     add("kubectl apply -k contextcore/")
             add("```")
 

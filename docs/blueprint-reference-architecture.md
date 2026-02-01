@@ -221,7 +221,7 @@ spec:
     doc: "https://docs.internal/checkout-redesign"
 ```
 
-**Documentation**: [CRD Schema Reference](../crds/projectcontext.yaml)
+**Documentation**: [CRD Schema Reference](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/crds/projectcontext.yaml)
 
 ### Action 2: Configure TaskTracker SDK
 
@@ -285,7 +285,7 @@ emitter.emit_lesson(
 )
 ```
 
-**Documentation**: [Agent Communication Protocol](agent-communication-protocol.md)
+**Documentation**: [Agent Communication Protocol](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/agent-communication-protocol.md)
 
 ### Action 4: Provision Grafana Dashboards
 
@@ -371,7 +371,7 @@ The patterns described above have been implemented by:
 
 ### Full Reference
 
-See [Semantic Conventions](semantic-conventions.md) for complete attribute definitions.
+See [Semantic Conventions](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/semantic-conventions.md) for complete attribute definitions.
 
 ---
 

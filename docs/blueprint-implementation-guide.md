@@ -420,7 +420,7 @@ contextcore dashboards import --file portfolio.json
 
 ```bash
 # Apply CRD definition
-kubectl apply -f crds/projectcontext.yaml
+kubectl apply -f vendor/contextcore-spec/crds/projectcontext.yaml
 
 # Create your project context
 kubectl apply -f - <<EOF
