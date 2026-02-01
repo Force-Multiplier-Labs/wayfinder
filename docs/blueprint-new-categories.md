@@ -1,12 +1,12 @@
 # Proposed New OTel Blueprint Categories
 
-> **Phase 2 Deliverable**: New blueprint categories derived from ContextCore innovations.
+> **Phase 2 Deliverable**: New blueprint categories derived from Wayfinder innovations.
 
 ---
 
 ## Overview
 
-ContextCore introduces capabilities that don't fit existing OTel Blueprint categories. This document proposes two new blueprint categories for consideration by the OTel End-User SIG:
+Wayfinder introduces capabilities that don't fit existing OTel Blueprint categories. This document proposes two new blueprint categories for consideration by the OTel End-User SIG:
 
 1. **Project Management Observability Blueprint** — Tasks as spans, progress telemetry
 2. **AI Agent Communication Blueprint** — Agent insights, cross-session memory
@@ -168,7 +168,7 @@ Set up webhooks or polling to capture task lifecycle events.
 **Jira Webhook Configuration**:
 ```json
 {
-  "name": "ContextCore Task Sync",
+  "name": "Wayfinder Task Sync",
   "url": "https://your-service/webhooks/jira",
   "events": [
     "jira:issue_created",
@@ -297,7 +297,7 @@ contextcore dashboards provision
 
 ## Reference Architectures
 
-### ContextCore Reference Implementation
+### Wayfinder Reference Implementation
 
 **Environment**: Kubernetes cluster, Grafana stack (Tempo/Mimir/Loki)
 
@@ -601,7 +601,7 @@ Create dashboards to monitor agent decision quality and effectiveness.
 
 ## Reference Architectures
 
-### Claude Code with ContextCore
+### Claude Code with Wayfinder
 
 **Environment**: Developer workstation with Claude Code, Tempo backend
 

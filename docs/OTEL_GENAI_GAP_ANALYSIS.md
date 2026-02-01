@@ -8,9 +8,9 @@
 
 ## 1. Executive Summary
 
-ContextCore currently uses a custom `agent.*` namespace for agent telemetry. The OpenTelemetry community has recently stabilized the `gen_ai.*` namespace for Generative AI observability. To ensuring interoperability with the broader OTel ecosystem, ContextCore must align with these new conventions while preserving its unique project-management specific attributes.
+Wayfinder currently uses a custom `agent.*` namespace for agent telemetry. The OpenTelemetry community has recently stabilized the `gen_ai.*` namespace for Generative AI observability. To ensuring interoperability with the broader OTel ecosystem, Wayfinder must align with these new conventions while preserving its unique project-management specific attributes.
 
-This analysis identifies the gaps between ContextCore's current implementation and the OTel GenAI semantic conventions (v1.28.0+), proposing a migration path that maintains backward compatibility.
+This analysis identifies the gaps between Wayfinder's current implementation and the OTel GenAI semantic conventions (v1.28.0+), proposing a migration path that maintains backward compatibility.
 
 ## 2. Attribute Comparison
 

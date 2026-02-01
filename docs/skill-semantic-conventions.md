@@ -2,7 +2,7 @@
 
 This document defines the semantic conventions for storing skill capabilities as OpenTelemetry spans in Tempo.
 
-> **OTel GenAI Alignment (v2.0+)**: ContextCore is migrating to [OTel GenAI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/). Agent-related attributes are now dual-emitted with both legacy `agent.*` and new `gen_ai.*` equivalents. See [Migration Guide](OTEL_GENAI_MIGRATION_GUIDE.md).
+> **OTel GenAI Alignment (v2.0+)**: Wayfinder is migrating to [OTel GenAI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/). Agent-related attributes are now dual-emitted with both legacy `agent.*` and new `gen_ai.*` equivalents. See [Migration Guide](OTEL_GENAI_MIGRATION_GUIDE.md).
 
 ## Overview
 
@@ -13,9 +13,9 @@ Skills are stored as hierarchical spans following the same pattern as tasks:
 
 This enables TraceQL-based capability discovery and token-efficient agent-to-agent communication.
 
-### Integration with ContextCore Patterns
+### Integration with Wayfinder Patterns
 
-Skills integrate with the broader ContextCore ecosystem:
+Skills integrate with the broader Wayfinder ecosystem:
 - **Agent Attribution**: All spans tagged with `agent.id` and `agent.session_id`
 - **Insight System**: Discovery insights emitted when capabilities are found
 - **Handoff Protocol**: Capabilities linked via `capability_id` in handoffs

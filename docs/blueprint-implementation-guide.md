@@ -1,4 +1,4 @@
-# ContextCore Implementation Guide
+# Wayfinder Implementation Guide
 
 > **Phase 1 Deliverable**: Step-by-step implementation guide for Project Management Observability Blueprint.
 
@@ -6,7 +6,7 @@
 
 ## Prerequisites
 
-Before implementing ContextCore, ensure you have:
+Before implementing Wayfinder, ensure you have:
 
 - [ ] Kubernetes cluster (1.20+) or local Docker environment
 - [ ] OTLP-compatible backend (Tempo, Jaeger, or cloud equivalent)
@@ -23,7 +23,7 @@ Before implementing ContextCore, ensure you have:
 #### Step A.1: Deploy Observability Stack
 
 ```bash
-# Clone ContextCore repository
+# Clone Wayfinder repository
 git clone https://github.com/contextcore/contextcore.git
 cd contextcore
 
@@ -384,7 +384,7 @@ contextcore dashboards provision --dry-run
 #### Step E.2: Verify Dashboard Access
 
 1. Open Grafana → Dashboards
-2. Find "ContextCore" folder
+2. Find "Wayfinder" folder
 3. Open "Project Portfolio Overview"
 4. Open "Project Details"
 
@@ -446,7 +446,7 @@ spec:
 EOF
 ```
 
-#### Step F.2: Deploy ContextCore Controller
+#### Step F.2: Deploy Wayfinder Controller
 
 ```bash
 # Via Helm

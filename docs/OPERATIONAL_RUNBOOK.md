@@ -1,6 +1,6 @@
-# ContextCore Operational Runbook
+# Wayfinder Operational Runbook
 
-Quick reference for operating the ContextCore observability stack.
+Quick reference for operating the Wayfinder observability stack.
 
 ## Quick Reference
 
@@ -90,7 +90,7 @@ contextcore ops backup --output ./my-backups
 Backups include:
 - Grafana dashboards
 - Grafana datasources
-- ContextCore state
+- Wayfinder state
 
 ### Listing Backups
 

@@ -1,12 +1,12 @@
 # Expansion Packs
 
-ContextCore expansion packs extend the core framework with specialized capabilities. Each pack follows the [animal naming convention](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/NAMING_CONVENTION.md) and integrates seamlessly with ContextCore's observability infrastructure.
+Wayfinder expansion packs extend the core framework with specialized capabilities. Each pack follows the [animal naming convention](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/NAMING_CONVENTION.md) and integrates seamlessly with Wayfinder's observability infrastructure.
 
 ## Design Boundaries
 
 Understanding what each component IS and IS NOT is critical for maintaining clean architecture. These boundaries prevent scope creep and ensure each component serves its intended purpose.
 
-### Core ContextCore (Asabikeshiinh - Spider)
+### Core Wayfinder (Asabikeshiinh - Spider)
 
 **IS**:
 - Project observability framework (tasks as OpenTelemetry spans)
@@ -39,7 +39,7 @@ Understanding what each component IS and IS NOT is critical for maintaining clea
 ### Fox (Waagosh) - Context Enrichment
 
 **IS**:
-- ContextCore integration layer for Rabbit
+- Wayfinder integration layer for Rabbit
 - Alert enrichment with project context (criticality, owner, SLOs)
 - Intelligent routing based on project metadata
 
@@ -57,7 +57,7 @@ Understanding what each component IS and IS NOT is critical for maintaining clea
 
 **IS NOT**:
 - A workflow orchestration engine
-- A task management system (use Core ContextCore)
+- A task management system (use Core Wayfinder)
 
 ### Owl (Gookooko'oo) - Grafana Visualization
 
@@ -67,7 +67,7 @@ Understanding what each component IS and IS NOT is critical for maintaining clea
 > detail for Grafana plugin development.
 
 **IS**:
-- Grafana plugins for ContextCore visualization
+- Grafana plugins for Wayfinder visualization
 - Chat panels for interactive LLM queries
 - Trigger panels for initiating actions (via Rabbit)
 - Datasources for CORS-free API access
@@ -76,7 +76,7 @@ Understanding what each component IS and IS NOT is critical for maintaining clea
 **IS NOT**:
 - A data storage layer
 - A backend service
-- The source of truth for workflows (that's Core ContextCore)
+- The source of truth for workflows (that's Core Wayfinder)
 - **A user-facing product or capability**
 
 ### Squirrel (Ajidamoo) - Skills Library
@@ -88,7 +88,7 @@ Understanding what each component IS and IS NOT is critical for maintaining clea
 
 **IS NOT**:
 - A runtime execution engine
-- A replacement for ContextCore task tracking
+- A replacement for Wayfinder task tracking
 
 ---
 
@@ -111,7 +111,7 @@ Understanding what each component IS and IS NOT is critical for maintaining clea
 **Description**: Rabbit is a trigger mechanism that "wakes up" systems in response to alerts. It receives webhook payloads from monitoring systems (Grafana, Alertmanager), parses them into a unified format, and dispatches configured actions. Think of it as the alarm clock of the system—it doesn't manage the day, it just makes sure the right things wake up at the right time.
 
 **Key Design Principle**: Rabbit is for *triggering*, not *orchestrating*. It handles the alert → action pipeline but does not:
-- Manage ongoing workflows (use Core ContextCore for task tracking)
+- Manage ongoing workflows (use Core Wayfinder for task tracking)
 - Serve as a communication channel between components
 - Coordinate multi-step processes (use Coyote for pipelines)
 
@@ -141,7 +141,7 @@ server.run()
 
 ### contextcore-fox (Waagosh)
 
-**ContextCore Integration for Alert Automation**
+**Wayfinder Integration for Alert Automation**
 
 | Field | Value |
 |-------|-------|
@@ -152,11 +152,11 @@ server.run()
 | **License** | Equitable Use License v1.0 |
 | **Depends On** | contextcore-rabbit |
 
-**Description**: Fox is the ContextCore integration layer for alert automation. It builds on Rabbit and adds project context enrichment:
+**Description**: Fox is the Wayfinder integration layer for alert automation. It builds on Rabbit and adds project context enrichment:
 
 - **Project Context Enrichment**: Alerts enriched with criticality, owner, SLO targets
 - **Intelligent Routing**: Critical projects route to Claude for analysis
-- **ContextCore Telemetry**: Action spans emitted to observability stack
+- **Wayfinder Telemetry**: Action spans emitted to observability stack
 
 **Installation**:
 ```bash
@@ -168,13 +168,13 @@ pip install contextcore-fox  # Also installs contextcore-rabbit
 from contextcore_fox import configure
 from contextcore_fox.hermes import ProjectContextEnricher, ClaudeAction
 
-# Configure with ContextCore integration
+# Configure with Wayfinder integration
 configure(
     contextcore_enabled=True,
     otel_endpoint="http://localhost:4317"
 )
 
-# Fox re-exports Rabbit's WebhookServer with ContextCore extensions
+# Fox re-exports Rabbit's WebhookServer with Wayfinder extensions
 from contextcore_fox.hermes import BaseWebhookServer
 server = BaseWebhookServer(port=8080)
 server.run()
@@ -214,7 +214,7 @@ Each stage is handled by a specialized agent:
 - Pre-built agent personalities with customizable prompts
 - O11y integration (Prometheus, Loki, Tempo)
 - Knowledge base for lessons learned
-- ContextCore telemetry integration
+- Wayfinder telemetry integration
 
 **Installation**:
 ```bash
@@ -256,14 +256,14 @@ print(result.summary())
 | **Repository** | [contextcore-beaver](https://github.com/contextcore/contextcore-beaver) |
 | **License** | Equitable Use License v1.0 |
 
-**Description**: Beaver is the LLM provider abstraction layer. It provides a unified interface for interacting with multiple LLM providers (OpenAI, Anthropic, local models) with built-in cost tracking, token accounting, and ContextCore telemetry integration.
+**Description**: Beaver is the LLM provider abstraction layer. It provides a unified interface for interacting with multiple LLM providers (OpenAI, Anthropic, local models) with built-in cost tracking, token accounting, and Wayfinder telemetry integration.
 
 **Key Features**:
 - Unified provider interface (OpenAI, Anthropic, local models)
 - Cost tracking and token accounting
 - Rate limiting and retry logic
 - Streaming support across providers
-- ContextCore telemetry integration
+- Wayfinder telemetry integration
 - Workflow orchestration primitives
 
 **Installation**:
@@ -298,7 +298,7 @@ print(f"Tokens: {client.session_tokens}")
 > ⚠️ **Internal Sub-Component**: Owl is not a user-facing expansion pack. The name
 > "contextcore-owl" is unofficial and exists only as an internal code organization
 > convention. Do not include Owl in user documentation, onboarding flows, or the
-> "harbor tour" of ContextCore capabilities. Users interact with Grafana dashboards
+> "harbor tour" of Wayfinder capabilities. Users interact with Grafana dashboards
 > directly—they don't need to know about the plugin packaging.
 
 | Field | Value |
@@ -325,7 +325,7 @@ print(f"Tokens: {client.session_tokens}")
 | `contextcore-action-trigger-panel` | Panel | Fire Rabbit actions (wake agents, run scripts) |
 | `contextcore-datasource` | Datasource | Proxied access to Rabbit API endpoints |
 
-**Note**: The action trigger panel is for *initiating* Rabbit actions, not for managing workflows. To view project tasks, workflow history, and progress, use the Core ContextCore dashboards that query Tempo.
+**Note**: The action trigger panel is for *initiating* Rabbit actions, not for managing workflows. To view project tasks, workflow history, and progress, use the Core Wayfinder dashboards that query Tempo.
 
 **Installation**:
 ```bash
@@ -367,7 +367,7 @@ grafana:
 | **Repository** | [contextcore-squirrel](https://github.com/contextcore/contextcore-squirrel) |
 | **License** | Equitable Use License v1.0 |
 
-**Description**: Squirrel is the skills library for ContextCore. It provides ready-to-use skills that can be loaded into Tempo for token-efficient agent discovery. Skills use progressive disclosure—agents load minimal manifests first, then retrieve specific capabilities as needed.
+**Description**: Squirrel is the skills library for Wayfinder. It provides ready-to-use skills that can be loaded into Tempo for token-efficient agent discovery. Skills use progressive disclosure—agents load minimal manifests first, then retrieve specific capabilities as needed.
 
 **Key Features**:
 - Token-efficient progressive disclosure (MANIFEST → index → capabilities)
@@ -441,12 +441,12 @@ contextcore-{animal}/
 
 ### Integration Points
 
-Expansion packs should integrate with ContextCore through:
+Expansion packs should integrate with Wayfinder through:
 
 1. **Task/Action Spans**: Emit spans for significant operations
 2. **Project Context**: Use `ProjectContextDetector` to enrich telemetry
 3. **Configuration**: Follow the pattern from `contextcore.config`
-4. **Dashboards**: Provide Grafana dashboards that work with ContextCore's datasources
+4. **Dashboards**: Provide Grafana dashboards that work with Wayfinder's datasources
 
 ### pyproject.toml Template
 
@@ -454,7 +454,7 @@ Expansion packs should integrate with ContextCore through:
 [project]
 name = "contextcore-{animal}"
 version = "0.1.0"
-description = "{Animal} ({Anishinaabe}) - {Brief description} for ContextCore"
+description = "{Animal} ({Anishinaabe}) - {Brief description} for Wayfinder"
 readme = "README.md"
 license = {text = "MIT"}  # or your chosen license
 requires-python = ">=3.9"

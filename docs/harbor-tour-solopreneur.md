@@ -1,4 +1,4 @@
-# ContextCore Harbor Tour: Solo-Preneur Edition
+# Wayfinder Harbor Tour: Solo-Preneur Edition
 
 **Welcome aboard.** You're the developer who has five projects in flight, three half-baked ideas in `~/projects/`, and a growing collection of markdown files trying to keep it all straight.
 
@@ -33,9 +33,9 @@ This tour is for you—the solo builder who doesn't need to report status to any
 
 ## What If Your Work Tracked Itself?
 
-ContextCore stores your project activity as queryable data—not static markdown that gets stale.
+Wayfinder stores your project activity as queryable data—not static markdown that gets stale.
 
-| Markdown Reality | ContextCore Reality |
+| Markdown Reality | Wayfinder Reality |
 |------------------|---------------------|
 | `TODO.md` you forgot to update | Tasks derived from your commits |
 | `decisions.md` you can't find | Query: "What did I decide about auth?" |
@@ -68,7 +68,7 @@ Things you no longer need to hold in your head:
 
 ### The Real Win: Continuity
 
-The hardest part of solo work isn't the work—it's the **context switching**. Every time you jump between projects, you pay a tax. ContextCore minimizes that tax by making your history queryable, not narrative.
+The hardest part of solo work isn't the work—it's the **context switching**. Every time you jump between projects, you pay a tax. Wayfinder minimizes that tax by making your history queryable, not narrative.
 
 ---
 
@@ -105,7 +105,7 @@ recent = querier.query(project_id="saas-app", time_range="30d")
 
 ### AI Assistants That Remember
 
-When you use Claude, GPT, or any AI assistant with ContextCore:
+When you use Claude, GPT, or any AI assistant with Wayfinder:
 
 ```python
 from contextcore.agent import InsightEmitter, InsightQuerier
@@ -214,7 +214,7 @@ That's it. No status file to update. No decisions.md to maintain. Your work is a
 
 ## Replacing Your Markdown Files
 
-| Old File | ContextCore Replacement |
+| Old File | Wayfinder Replacement |
 |----------|------------------------|
 | `TODO.md` | Active tasks in Tempo (TraceQL query) |
 | `decisions.md` | Agent insights with `insight.type = "decision"` |
@@ -224,7 +224,7 @@ That's it. No status file to update. No decisions.md to maintain. Your work is a
 
 ### Migration: Don't Migrate
 
-You don't need to import your old markdown. Just start tracking new work. Old context can stay where it is—you'll naturally query ContextCore for recent work and only dig into old markdown for historical archaeology.
+You don't need to import your old markdown. Just start tracking new work. Old context can stay where it is—you'll naturally query Wayfinder for recent work and only dig into old markdown for historical archaeology.
 
 ---
 
@@ -235,7 +235,7 @@ Add this to your project's `CLAUDE.md` (or equivalent):
 ```markdown
 ## Project Memory
 
-This project uses ContextCore for persistent context. Before starting work:
+This project uses Wayfinder for persistent context. Before starting work:
 
 1. Query prior decisions:
    ```python
@@ -279,7 +279,7 @@ Full stack for complete observability:
 docker-compose up grafana tempo -d
 ```
 
-Or even simpler—ContextCore can export to files if you don't want to run services:
+Or even simpler—Wayfinder can export to files if you don't want to run services:
 
 ```bash
 export CONTEXTCORE_EXPORT_MODE=file
@@ -314,7 +314,7 @@ contextcore insight emit --summary "Decided X because Y" --confidence 0.9
 ## The Solo-Preneur Mental Model
 
 ```
-Traditional Solo Dev                 ContextCore Solo Dev
+Traditional Solo Dev                 Wayfinder Solo Dev
 ────────────────────                 ───────────────────────
 
 5 projects ──┐                       5 projects ──┐
@@ -370,7 +370,7 @@ make full-setup
 open http://localhost:3000
 
 # 4. Track your first task
-contextcore task start --id my-first-task --title "Try ContextCore" --project test
+contextcore task start --id my-first-task --title "Try Wayfinder" --project test
 
 # 5. Complete it
 contextcore task complete --id my-first-task
@@ -385,7 +385,7 @@ contextcore task complete --id my-first-task
 
 You don't need status reports. You need **context recovery**.
 
-ContextCore gives you:
+Wayfinder gives you:
 - **Queryable history** instead of scattered markdown
 - **AI assistants that remember** across sessions
 - **One dashboard** for all your projects
@@ -395,4 +395,4 @@ Stop maintaining TODO.md files that go stale. Let your work speak for itself.
 
 ---
 
-*ContextCore for Solo-Preneurs: Because your memory shouldn't be a single point of failure.*
+*Wayfinder for Solo-Preneurs: Because your memory shouldn't be a single point of failure.*

@@ -1,6 +1,6 @@
 # contextcore-owl (Gookooko'oo)
 
-**Owl - Unified Grafana Plugin Package for ContextCore**
+**Owl - Unified Grafana Plugin Package for the Wayfinder Suite**
 
 | Field | Value |
 |-------|-------|
@@ -15,7 +15,7 @@ The owl is renowned for its exceptional vision, watchful nature, and wisdom. In 
 
 ## Purpose
 
-contextcore-owl consolidates all ContextCore Grafana extensions into a single, well-maintained package:
+contextcore-owl consolidates all Wayfinder Grafana extensions into a single, well-maintained package:
 
 - **Avoids recreating the wheel**: Reuses proven patterns from O11yBubo plugins
 - **Consistent branding**: All plugins use ContextCore naming and conventions
@@ -55,12 +55,12 @@ contextcore-owl/
 
 ## Installation
 
-### ContextCore Stack (Automatic)
+### Wayfinder Stack (Automatic)
 
-The ContextCore observability stack automatically loads plugins when started:
+The Wayfinder observability stack automatically loads plugins when started:
 
 ```bash
-cd /path/to/ContextCore
+cd /path/to/wayfinder
 
 # Build plugins first
 cd contextcore-owl && npm install && npm run build && cd ..
@@ -220,7 +220,7 @@ Equitable Use License v1.0
 
 ## Links
 
-- [ContextCore Documentation](https://github.com/contextcore/contextcore)
+- [Wayfinder Documentation](https://github.com/contextcore/contextcore)
 - [Grafana Plugin Development](https://grafana.com/developers/plugin-tools/)
-- [Expansion Packs](../docs/EXPANSION_PACKS.md)
+- [Wayfinder Expansion Packs](../docs/EXPANSION_PACKS.md)
 - [Naming Convention](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/NAMING_CONVENTION.md)

@@ -1,6 +1,6 @@
-# ContextCore Harbor Tour
+# Wayfinder Harbor Tour
 
-**Welcome aboard.** You've docked at ContextCore—a project management observability framework that finally treats your work the way observability tools treat your services.
+**Welcome aboard.** You've docked at Wayfinder—a project management observability framework that finally treats your work the way observability tools treat your services.
 
 This is your self-guided tour for exploring what's here and understanding why it matters to *you*, right now, on your own machine.
 
@@ -31,7 +31,7 @@ You've felt it: the disconnect between the work you're doing and the "status" yo
 - Parent-child hierarchy
 - Events along the way
 
-ContextCore stores your tasks in the same infrastructure you'd use for tracing microservices. This isn't a new tool—it's a new use of tools you probably already run.
+Wayfinder stores your tasks in the same infrastructure you'd use for tracing microservices. This isn't a new tool—it's a new use of tools you probably already run.
 
 ---
 
@@ -39,7 +39,7 @@ ContextCore stores your tasks in the same infrastructure you'd use for tracing m
 
 ### Time Reclaimed
 
-| Activity | Before ContextCore | With ContextCore |
+| Activity | Before Wayfinder | With Wayfinder |
 |----------|-------------------|------------------|
 | Writing status reports | 30-60 min/week | 0 min (derived from artifacts) |
 | Answering "what's the status?" | 5-10 interruptions/week | Link to dashboard |
@@ -86,7 +86,7 @@ tracker.complete_task("PROJ-123")  # Ends span
 
 ### Dual Telemetry
 
-ContextCore emits both:
+Wayfinder emits both:
 - **Spans to Tempo** — hierarchy, timing, TraceQL queries
 - **Logs to Loki** — events, status changes, metrics derivation
 
@@ -97,7 +97,7 @@ This means your dashboards can show:
 
 ### Agent Memory That Persists
 
-When you use AI agents (Claude, GPT, etc.), their insights typically die when the session ends. ContextCore changes that:
+When you use AI agents (Claude, GPT, etc.), their insights typically die when the session ends. Wayfinder changes that:
 
 ```python
 from contextcore.agent import InsightEmitter, InsightQuerier
@@ -237,7 +237,7 @@ contextcore tui generate-script     # Create install script
 ## The Mental Model
 
 ```
-Traditional Approach              ContextCore Approach
+Traditional Approach              Wayfinder Approach
 ─────────────────────             ───────────────────────
 Jira ────┐
          │                        Commits ──┐
@@ -256,7 +256,7 @@ Status reports                    Grafana dashboards
 
 ## For AI Agent Integration
 
-If you're exploring ContextCore for AI agent use:
+If you're exploring Wayfinder for AI agent use:
 
 ```python
 # Check human-set constraints before acting
@@ -281,7 +281,7 @@ emitter.emit_decision("Chose X over Y because Z", confidence=0.9)
 
 1. **No new tools to learn** — Uses Grafana, Tempo, Loki you may already know
 2. **Vendor agnostic** — OTLP exports to any compatible backend
-3. **Self-monitoring** — ContextCore tracks its own installation status
+3. **Self-monitoring** — Wayfinder tracks its own installation status
 4. **Human-agent parity** — Same data accessible to humans and AI agents
 5. **Zero ongoing maintenance** — Status is derived, not manually entered
 
@@ -317,7 +317,7 @@ Open `http://localhost:3000/d/contextcore-installation` to see it visualized.
 
 ## The Bottom Line
 
-ContextCore gives you:
+Wayfinder gives you:
 - **Hours back every week** from eliminated status reporting
 - **Queryable project history** instead of lost context
 - **AI agent memory** that survives sessions
@@ -327,4 +327,4 @@ All running on your machine. All vendor-agnostic. All derived from work you're a
 
 ---
 
-*This is ContextCore. One system. Every audience. Always current.*
+*This is Wayfinder. One system. Every audience. Always current.*

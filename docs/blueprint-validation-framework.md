@@ -1,12 +1,12 @@
 # End-User Validation Framework
 
-> **Phase 2 Deliverable**: Framework and questionnaire for validating ContextCore blueprint patterns with end-user organizations.
+> **Phase 2 Deliverable**: Framework and questionnaire for validating Wayfinder blueprint patterns with end-user organizations.
 
 ---
 
 ## Overview
 
-Before submitting ContextCore patterns to the OTel Blueprint repository, we need validation from real end-user organizations. This document provides:
+Before submitting Wayfinder patterns to the OTel Blueprint repository, we need validation from real end-user organizations. This document provides:
 
 1. **Validation Criteria** — What constitutes successful validation
 2. **Interview Guide** — Questions to ask potential adopters

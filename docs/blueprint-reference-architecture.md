@@ -1,4 +1,4 @@
-# ContextCore: OTel Blueprint Reference Architecture
+# Wayfinder: OTel Blueprint Reference Architecture
 
 > **Phase 1 Deliverable**: Reference Architecture Documentation for Project Management Observability
 
@@ -108,7 +108,7 @@ By storing tasks in trace infrastructure:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Traditional                    ContextCore                 │
+│  Traditional                    Wayfinder                   │
 │                                                             │
 │  ┌──────────┐                  ┌──────────────────────────┐ │
 │  │   Jira   │                  │        Tempo             │ │
@@ -330,7 +330,7 @@ spec:
       - executive-dashboard
 ```
 
-The ContextCore controller watches `ProjectContext` resources and generates:
+The Wayfinder controller watches `ProjectContext` resources and generates:
 - `PrometheusRule` for SLO alerts
 - Sampling configuration for the OTel Collector
 - Dashboard placement based on business value
@@ -341,12 +341,12 @@ The ContextCore controller watches `ProjectContext` resources and generates:
 
 The patterns described above have been implemented by:
 
-### ContextCore Project (Dogfooding)
+### Wayfinder Project (Dogfooding)
 
 **Environment**: Single Kubernetes cluster, Grafana stack (Tempo/Mimir/Loki)
 
 **Value Realized**:
-- Eliminated manual status reporting for ContextCore development
+- Eliminated manual status reporting for Wayfinder development
 - AI agents (Claude) access project context via TraceQL
 - Decisions and lessons persist across coding sessions
 - 90%+ alignment with OTel Blueprint Template principles
@@ -377,7 +377,7 @@ See [Semantic Conventions](https://github.com/forcemultiplier-labs/contextcore-s
 
 ## Value Proposition Summary
 
-| Persona | Before ContextCore | After ContextCore |
+| Persona | Before Wayfinder | After Wayfinder |
 |---------|-------------------|-------------------|
 | **Platform Engineer** | 3 hrs/week compiling portfolio status | Real-time dashboard, zero manual work |
 | **Project Manager** | Status meetings rely on stale data | Live progress derived from commits/PRs |

@@ -1,6 +1,6 @@
 # Reusable Patterns for OTel Blueprints
 
-> **Phase 1 Deliverable**: Extracted patterns and conventions from ContextCore that can be applied to other OTel Blueprint implementations.
+> **Phase 1 Deliverable**: Extracted patterns and conventions from Wayfinder that can be applied to other OTel Blueprint implementations.
 
 ---
 

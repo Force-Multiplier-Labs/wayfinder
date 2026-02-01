@@ -1,18 +1,18 @@
-# ContextCore Integration with Existing OTel Blueprints
+# Wayfinder Integration with Existing OTel Blueprints
 
-> **Phase 2 Deliverable**: How ContextCore patterns enhance existing OTel Blueprint categories.
+> **Phase 2 Deliverable**: How Wayfinder patterns enhance existing OTel Blueprint categories.
 
 ---
 
 ## Overview
 
-ContextCore patterns complement and extend existing OTel Blueprint categories. This document maps ContextCore capabilities to active OTel projects, showing how project management observability enhances each domain.
+Wayfinder patterns complement and extend existing OTel Blueprint categories. This document maps Wayfinder capabilities to active OTel projects, showing how project management observability enhances each domain.
 
 ---
 
 ## Integration Matrix
 
-| OTel Project/Blueprint | ContextCore Enhancement | Value Added |
+| OTel Project/Blueprint | Wayfinder Enhancement | Value Added |
 |------------------------|------------------------|-------------|
 | **Kubernetes SemConv** | ProjectContext CRD, namespace-level context | Business metadata on K8s resources |
 | **CI/CD Phase 2** | Task-pipeline correlation, build context | Link deployments to project tasks |
@@ -28,7 +28,7 @@ ContextCore patterns complement and extend existing OTel Blueprint categories. T
 ### Current State
 Kubernetes SemConv defines attributes for pods, deployments, namespaces, and nodes. Resource attributes like `k8s.namespace.name`, `k8s.deployment.name` provide infrastructure context.
 
-### ContextCore Enhancement
+### Wayfinder Enhancement
 
 **Add ProjectContext CRD as first-class resource:**
 
@@ -51,7 +51,7 @@ k8s.namespace.name: "commerce"
 k8s.deployment.name: "checkout-service"
 k8s.pod.name: "checkout-service-abc123"
 
-# Enhanced with ContextCore: Business context included
+# Enhanced with Wayfinder: Business context included
 k8s.namespace.name: "commerce"
 k8s.deployment.name: "checkout-service"
 k8s.projectcontext.name: "checkout-context"
@@ -62,7 +62,7 @@ business.owner: "commerce-team"
 
 **Value Proposition:**
 
-| Persona | Without ContextCore | With ContextCore |
+| Persona | Without Wayfinder | With Wayfinder |
 |---------|---------------------|------------------|
 | SRE | "Pod is crashing" | "Critical revenue service owned by commerce-team is crashing" |
 | Platform | Manual tagging of business context | Auto-propagated from CRD |
@@ -94,7 +94,7 @@ propagate to all workloads automatically.
 ### Current State
 CI/CD SemConv (in development) defines attributes for pipelines, jobs, and artifacts. Focus is on build and deployment observability.
 
-### ContextCore Enhancement
+### Wayfinder Enhancement
 
 **Link pipelines to project tasks:**
 
@@ -105,7 +105,7 @@ cicd.pipeline.name: string
 cicd.job.id: string
 cicd.artifact.id: string
 
-# ContextCore correlation attributes
+# Wayfinder correlation attributes
 task.id: string              # Task that triggered this pipeline
 task.ids: string[]           # All tasks included in this deployment
 project.id: string           # Project context
@@ -160,7 +160,7 @@ span.set_attribute("project.id", get_project_from_repo())
 
 **Value Proposition:**
 
-| Persona | Without ContextCore | With ContextCore |
+| Persona | Without Wayfinder | With Wayfinder |
 |---------|---------------------|------------------|
 | Developer | "Build failed" | "Build for PROJ-123 failed" |
 | PM | Manual deployment tracking | Auto-update task status on deploy |
@@ -192,7 +192,7 @@ auto-complete tasks on successful deployment.
 ### Current State
 Gen AI SemConv defines attributes for LLM calls: `gen_ai.system`, `gen_ai.request.model`, token counts, etc. Focus is on model invocation telemetry.
 
-### ContextCore Enhancement
+### Wayfinder Enhancement
 
 **Add agent-level telemetry above individual LLM calls:**
 
@@ -203,7 +203,7 @@ gen_ai.request.model: "claude-3-opus"
 gen_ai.usage.input_tokens: 1500
 gen_ai.usage.output_tokens: 500
 
-# ContextCore agent layer (per session/task)
+# Wayfinder agent layer (per session/task)
 agent.id: string                    # Unique agent identifier
 agent.session.id: string            # Conversation/session ID
 agent.insight.type: enum            # decision | lesson | question | handoff
@@ -243,7 +243,7 @@ agent.insight.applies_to: string[]  # Files/modules affected
 
 **Value Proposition:**
 
-| Persona | Without ContextCore | With ContextCore |
+| Persona | Without Wayfinder | With Wayfinder |
 |---------|---------------------|------------------|
 | AI/ML Team | Token costs per call | Decisions per project, ROI per insight |
 | Developer | Agent context lost between sessions | Query prior decisions before coding |
@@ -276,7 +276,7 @@ storage, query prior context before making new decisions.
 ### Current State
 Service SemConv defines `service.name`, `service.namespace`, `service.version`. Deployment SemConv (in development) adds deployment environment context.
 
-### ContextCore Enhancement
+### Wayfinder Enhancement
 
 **Propagate business metadata to service identity:**
 
@@ -287,7 +287,7 @@ service.namespace: "commerce"
 service.version: "1.2.3"
 deployment.environment: "production"
 
-# ContextCore business context
+# Wayfinder business context
 business.criticality: "critical"
 business.owner: "commerce-team"
 business.value: "revenue-primary"
@@ -332,7 +332,7 @@ class ServiceObservabilityConfig:
 
 **Value Proposition:**
 
-| Persona | Without ContextCore | With ContextCore |
+| Persona | Without Wayfinder | With Wayfinder |
 |---------|---------------------|------------------|
 | Platform | Manual config per service | Auto-derived from business metadata |
 | FinOps | Uniform sampling = wasted spend | Cost scales with business value |
@@ -365,7 +365,7 @@ criticality declared in ProjectContext.
 ### Current State
 Security SemConv (in development) focuses on vulnerability attributes, security events, and threat detection telemetry.
 
-### ContextCore Enhancement
+### Wayfinder Enhancement
 
 **Link security telemetry to project risk context:**
 
@@ -375,7 +375,7 @@ security.vulnerability.id: "CVE-2024-1234"
 security.vulnerability.severity: "critical"
 security.event.type: "authentication_failure"
 
-# ContextCore risk context
+# Wayfinder risk context
 risk.type: "security"
 risk.priority: "P1"
 risk.mitigation: "ADR-015-input-validation"
@@ -406,7 +406,7 @@ routes:
 
 **Value Proposition:**
 
-| Persona | Without ContextCore | With ContextCore |
+| Persona | Without Wayfinder | With Wayfinder |
 |---------|---------------------|------------------|
 | Security | Alerts without project context | Risk priority + mitigation links in alerts |
 | Compliance | Manual risk tracking | Queryable risk telemetry with status |
@@ -419,7 +419,7 @@ routes:
 ### Current State
 System SemConv defines attributes for processes, containers, hosts. Focus is on system-level resource telemetry.
 
-### ContextCore Enhancement
+### Wayfinder Enhancement
 
 **Connect system resources to SLO requirements:**
 
@@ -430,7 +430,7 @@ process.memory.usage: 1073741824
 container.cpu.limit: 2.0
 container.memory.limit: 4294967296
 
-# ContextCore requirements context
+# Wayfinder requirements context
 requirement.latency_p99: "200ms"
 requirement.availability: "99.95"
 requirement.throughput: "1000rps"
@@ -465,7 +465,7 @@ def generate_slo_alerts(project_context: ProjectContext) -> list:
 
 ## Summary: Cross-Cutting Patterns
 
-ContextCore introduces three cross-cutting patterns that enhance all existing blueprints:
+Wayfinder introduces three cross-cutting patterns that enhance all existing blueprints:
 
 ### Pattern A: Business Context Propagation
 

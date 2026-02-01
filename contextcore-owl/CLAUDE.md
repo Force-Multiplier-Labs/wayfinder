@@ -5,7 +5,7 @@ This file provides guidance to Claude Code for the contextcore-owl expansion pac
 ## Project Context
 
 **Package**: contextcore-owl (Gookooko'oo - Owl)
-**Purpose**: Unified Grafana plugin package for ContextCore
+**Purpose**: Unified Grafana plugin package for the Wayfinder suite
 **Status**: Development
 
 ## Tech Stack
@@ -275,5 +275,5 @@ If outdated, follow the "Full Plugin Deployment Workflow" to rebuild and sync.
 
 - [Grafana Plugin Development](https://grafana.com/developers/plugin-tools/)
 - [@grafana/ui Components](https://developers.grafana.com/ui/latest/)
-- [ContextCore Expansion Packs](../docs/EXPANSION_PACKS.md)
+- [Wayfinder Expansion Packs](../docs/EXPANSION_PACKS.md)
 - [Naming Convention](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/NAMING_CONVENTION.md)

@@ -1,15 +1,15 @@
-# ContextCore OTel GenAI Migration Guide
+# Wayfinder OTel GenAI Migration Guide
 
 **Version:** 2.0.0
 **Date:** 2026-01-18
 
-ContextCore is adopting the official [OpenTelemetry GenAI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) to ensure interoperability with the broader observability ecosystem. This guide helps you migrate from ContextCore-specific attributes to the new standard.
+Wayfinder is adopting the official [OpenTelemetry GenAI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) to ensure interoperability with the broader observability ecosystem. This guide helps you migrate from ContextCore-specific attributes to the new standard.
 
 ---
 
 ## Migration Strategy: Dual-Emit
 
-To ensure a smooth transition, ContextCore introduces a **Dual-Emit Layer**. By default, the SDK emits **BOTH** the legacy `agent.*` attributes and the new `gen_ai.*` attributes.
+To ensure a smooth transition, Wayfinder introduces a **Dual-Emit Layer**. By default, the SDK emits **BOTH** the legacy `agent.*` attributes and the new `gen_ai.*` attributes.
 
 You can control this behavior with the `CONTEXTCORE_EMIT_MODE` environment variable:
 
