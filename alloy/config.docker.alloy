@@ -1,0 +1,84 @@
+// Grafana Alloy configuration for Docker Compose
+// Routes OTLP telemetry to the observability stack:
+// - Traces -> Tempo (via OTLP)
+// - Metrics -> Mimir (via Prometheus remote_write)
+// - Logs -> Loki (via Loki push API)
+//
+// This is the SINGLE OTLP ingestion point. All telemetry from applications
+// should be sent to Alloy on ports 4317 (gRPC) or 4318 (HTTP).
+
+// =============================================================================
+// OTLP Receiver - Single ingestion point for all telemetry
+// =============================================================================
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+    logs    = [otelcol.processor.batch.default.input]
+    traces  = [otelcol.processor.batch.default.input]
+  }
+}
+
+// =============================================================================
+// Batch Processor - Efficient batching before export
+// =============================================================================
+otelcol.processor.batch "default" {
+  timeout = "2s"
+  send_batch_size = 500
+
+  output {
+    metrics = [otelcol.exporter.prometheus.mimir.input]
+    logs    = [otelcol.exporter.loki.default.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+// =============================================================================
+// Metrics Export: OTLP -> Prometheus format -> Mimir
+// =============================================================================
+// Converts OTLP metrics to Prometheus format with unit suffix conversion:
+// - Unit "%" -> suffix "_percent" (e.g., contextcore.install.completeness -> contextcore_install_completeness_percent)
+// - Unit "1" -> suffix "_ratio" (e.g., contextcore.install.requirement.status -> contextcore_install_requirement_status_ratio)
+// - Unit "ms" -> suffix "_milliseconds"
+otelcol.exporter.prometheus "mimir" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://mimir:9009/api/v1/push"
+  }
+}
+
+// =============================================================================
+// Logs Export: OTLP -> Loki
+// =============================================================================
+otelcol.exporter.loki "default" {
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// =============================================================================
+// Traces Export: OTLP -> Tempo
+// =============================================================================
+// Forward traces to Tempo's internal OTLP endpoint
+// Note: Tempo listens on 4317 internally, Alloy forwards to it
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
