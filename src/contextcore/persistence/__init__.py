@@ -184,7 +184,15 @@ class PersistenceAnalyzer:
         elif 'cache' in volume_name.lower() or 'tmp' in volume_name.lower():
             category = DataCategory.CACHE
         importance_score = self._calculate_importance_score(criticality=80 if category == DataCategory.CRITICAL else 60, replaceability='difficult' if not external else 'moderate', business_value=70, size_mb=None)
-        requirement = PersistenceRequirement(path=Path(f'/var/lib/docker/volumes/{volume_name}'), category=category, importance_score=importance_score, description=f'Docker named volume: {volume_name}', source_config='docker-compose.yml:volumes', replaceability='difficult' if not external else 'moderate')
+        # Named volumes are managed by Docker — the host path is platform-dependent.
+        # Use a logical identifier; the actual mount point can be queried at runtime
+        # via `docker volume inspect <name>`.
+        import sys
+        if sys.platform == "win32":
+            volume_path = Path(volume_name)  # logical name only; no host-side path on Windows
+        else:
+            volume_path = Path(f'/var/lib/docker/volumes/{volume_name}')
+        requirement = PersistenceRequirement(path=volume_path, category=category, importance_score=importance_score, description=f'Docker named volume: {volume_name}', source_config='docker-compose.yml:volumes', replaceability='difficult' if not external else 'moderate')
         self.requirements.append(requirement)
 
     async def _analyze_observability_configs(self) -> None:

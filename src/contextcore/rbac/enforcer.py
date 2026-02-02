@@ -98,8 +98,12 @@ class PrincipalResolver:
                 agent_id=agent_id,
             )
 
-        # Human user
-        user = os.environ.get("CONTEXTCORE_USER") or os.environ.get("USER", "anonymous")
+        # Human user (USER on Unix, USERNAME on Windows)
+        user = (
+            os.environ.get("CONTEXTCORE_USER")
+            or os.environ.get("USER")
+            or os.environ.get("USERNAME", "anonymous")
+        )
         return Principal(
             id=user,
             principal_type=PrincipalType.USER,

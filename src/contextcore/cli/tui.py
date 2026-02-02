@@ -228,7 +228,9 @@ def generate_script(method: str, project_dir: Optional[str], output: Optional[st
             output_path = Path(output)
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(script)
-            output_path.chmod(0o755)
+            # Set executable permission (not applicable on Windows)
+            if sys.platform != "win32":
+                output_path.chmod(0o755)
             click.echo(f"Script saved to: {output_path}")
         else:
             click.echo(script)

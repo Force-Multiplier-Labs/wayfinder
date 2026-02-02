@@ -118,9 +118,8 @@ def git_link(commit_sha: str, commit_message: str, author: Optional[str], repo: 
 @click.option("--output", "-o", help="Output path (defaults to .git/hooks/<type>)")
 def git_hook(hook_type: str, project: str, output: Optional[str]):
     """Generate a git hook script for automatic commit linking."""
-    import stat
-
-    hook_content = f'''#!/bin/bash
+    # Use #!/bin/sh for portability — Git for Windows bundles sh.exe
+    hook_content = f'''#!/bin/sh
 # ContextCore git hook - auto-link commits to tasks
 COMMIT_SHA=$(git rev-parse HEAD)
 COMMIT_MSG=$(git log -1 --format=%B)
@@ -156,7 +155,10 @@ contextcore git link \\
     with open(hook_path, "w") as f:
         f.write(hook_content)
 
-    os.chmod(hook_path, os.stat(hook_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    # Set executable permission (no-op on Windows; Git for Windows handles this)
+    if sys.platform != "win32":
+        import stat
+        os.chmod(hook_path, os.stat(hook_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     click.echo(f"Git hook installed: {hook_path}")
 
 

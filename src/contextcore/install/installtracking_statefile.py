@@ -5,7 +5,7 @@ This module provides state persistence for installation steps, supporting:
 - Resume mode: Skip completed steps when resuming installation
 - Repair mode: Re-verify and fix failed steps
 - Atomic updates: Use temporary files to prevent corruption
-- Cross-platform: Works on macOS and Linux
+- Cross-platform: Works on macOS, Linux, and Windows
 
 State is stored as JSON at ~/.contextcore/install-state.json
 """
@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import tempfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -210,8 +211,9 @@ class StateFile:
             with os.fdopen(fd, 'w') as f:
                 json.dump(self.state.to_dict(), f, indent=2)
 
-            # Set secure permissions (600)
-            os.chmod(temp_path, 0o600)
+            # Set secure permissions (owner read/write only, not applicable on Windows)
+            if sys.platform != "win32":
+                os.chmod(temp_path, 0o600)
 
             # Atomic rename
             os.replace(temp_path, self.path)
