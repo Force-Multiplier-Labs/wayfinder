@@ -6,9 +6,9 @@ This document catalogs known issues in the ContextCore codebase and their soluti
 
 - [Workflow Trigger Shows "0/N Steps"](#workflow-trigger-shows-0n-steps)
 - [Prime Contractor Merge Corrupts Python Files](#prime-contractor-merge-corrupts-python-files)
-- [Module Import Errors](#module-import-errors)
-- [Example Code Executed at Import Time](#example-code-executed-at-import-time)
-- [Missing Module Files](#missing-module-files)
+- [Module Import Errors](#module-import-errors) *(resolved)*
+- [Example Code Executed at Import Time](#example-code-executed-at-import-time) *(resolved)*
+- [Missing Module Files](#missing-module-files) *(resolved)*
 
 ---
 
@@ -116,6 +116,8 @@ cp generated/phase3/a2a/parts/parts_partmodel_code.py src/contextcore/agent/part
 
 ## Module Import Errors
 
+> **RESOLVED (2026-02-02):** All four import issues below have been fixed. `discovery/__init__.py` imports from `.agentcard` correctly, `generators/__init__.py` no longer exports `write_tests`, and all modules pass `python3 -c "import ..."` cleanly. Kept for historical reference.
+
 ### `from __future__ imports must occur at the beginning`
 
 **Symptom:**
@@ -194,6 +196,8 @@ class Message:
 
 ## Example Code Executed at Import Time
 
+> **RESOLVED (2026-02-02):** `endpoint.py` and `docs_unifiedupdate.py` no longer contain module-level executable code. Kept for historical reference.
+
 **Symptom:** Module import fails with errors like:
 ```
 TypeError: AgentCard.__init__() missing 3 required positional arguments
@@ -233,6 +237,8 @@ mv src/contextcore/compat/docs_unifiedupdate.py \
 ---
 
 ## Missing Module Files
+
+> **RESOLVED (2026-02-02):** `agent/part.py` exists and imports succeed. `discovery/__init__.py` imports from `.agentcard` correctly. Kept for historical reference.
 
 ### `part.py` Missing (Part and PartType classes)
 
@@ -316,4 +322,4 @@ FeatureQueue().print_status()
 
 ---
 
-*Last updated: 2026-01-26*
+*Last updated: 2026-02-02*
