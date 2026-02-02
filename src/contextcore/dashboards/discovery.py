@@ -300,7 +300,7 @@ def discover_all_dashboards(extension: Optional[str] = None) -> List[DashboardCo
         >>> len(dashboards)
         11
         >>> dashboards[0].uid
-        'contextcore-core-project-portfolio-overview'
+        'cc-core-portfolio-overview'
     """
     seen_uids: set[str] = set()
     dashboards: List[DashboardConfig] = []

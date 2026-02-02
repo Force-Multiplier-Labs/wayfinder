@@ -871,7 +871,7 @@
   "timepicker": {},
   "timezone": "",
   "title": "[CORE] ContextCore: Project-to-Operations",
-  "uid": "contextcore-core-contextcore-project-to-operations",
+  "uid": "cc-core-project-operations",
   "version": 1,
   "weekStart": ""
 }

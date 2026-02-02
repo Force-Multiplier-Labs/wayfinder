@@ -298,17 +298,17 @@
                 "0": {
                   "color": "green",
                   "index": 2,
-                  "text": "🟢"
+                  "text": "\ud83d\udfe2"
                 },
                 "1": {
                   "color": "yellow",
                   "index": 1,
-                  "text": "🟡"
+                  "text": "\ud83d\udfe1"
                 },
                 "2": {
                   "color": "red",
                   "index": 0,
-                  "text": "🔴"
+                  "text": "\ud83d\udd34"
                 }
               },
               "type": "value"
@@ -962,7 +962,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "{service=\"contextcore\"} | json | event=~\"task.created|task.completed|task.blocked|task.unblocked|task.status_changed\" | line_format \"{{.event}} {{.project_id}} {{.task_id}} {{if .to_status}}{{.from_status}}→{{.to_status}}{{end}} {{if .reason}}\\\"{{.reason}}\\\"{{end}}\"",
+          "expr": "{service=\"contextcore\"} | json | event=~\"task.created|task.completed|task.blocked|task.unblocked|task.status_changed\" | line_format \"{{.event}} {{.project_id}} {{.task_id}} {{if .to_status}}{{.from_status}}\u2192{{.to_status}}{{end}} {{if .reason}}\\\"{{.reason}}\\\"{{end}}\"",
           "refId": "A"
         }
       ],
@@ -1093,7 +1093,7 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "[CORE] Project Portfolio Overview",
-  "uid": "contextcore-core-project-portfolio-overview",
+  "uid": "cc-core-portfolio-overview",
   "version": 1,
   "weekStart": ""
 }

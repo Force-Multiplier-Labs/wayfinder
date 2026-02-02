@@ -1,6 +1,6 @@
 {
   "title": "[SQUIRREL] Value Capabilities Explorer",
-  "uid": "contextcore-squirrel-value-capabilities-explorer",
+  "uid": "cc-squirrel-value-capabilities",
   "schemaVersion": 39,
   "time": {
     "from": "now-1h",

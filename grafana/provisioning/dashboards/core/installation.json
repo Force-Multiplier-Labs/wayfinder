@@ -830,7 +830,7 @@
   "timepicker": {},
   "timezone": "",
   "title": "[CORE] ContextCore Installation Status",
-  "uid": "contextcore-core-contextcore-installation-status",
+  "uid": "cc-core-installation-status",
   "version": 1,
   "weekStart": ""
 }
