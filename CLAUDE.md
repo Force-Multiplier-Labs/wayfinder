@@ -160,8 +160,6 @@ wayfinder/
 │       ├── mimir_query.py      # Mimir metric queries
 │       └── debug_display.py    # Debug output formatting
 ├── tests/                      # Test suite (13 test files + conftest.py)
-├── contextcore-rabbit/         # Expansion pack: alert automation (Waabooz)
-├── contextcore-owl/            # Internal: Grafana plugins (Gookooko'oo)
 ├── grafana/provisioning/       # 13 auto-provisioned Grafana dashboards
 │   ├── dashboards/
 │   │   ├── core/               # portfolio, sprint-metrics, installation, etc.
