@@ -457,14 +457,26 @@ class TestPrincipalResolver:
         assert principal.session_id == "session-123"
 
     def test_from_cli_context_default(self, monkeypatch):
-        """Resolve from CLI with default USER."""
+        """Resolve from CLI with default USER (or USERNAME on Windows)."""
         monkeypatch.delenv("CONTEXTCORE_USER", raising=False)
         monkeypatch.delenv("CONTEXTCORE_AGENT_ID", raising=False)
         monkeypatch.setenv("USER", "testuser")
+        monkeypatch.delenv("USERNAME", raising=False)
 
         principal = PrincipalResolver.from_cli_context()
         assert principal.principal_type == PrincipalType.USER
         assert principal.id == "testuser"
+
+    def test_from_cli_context_windows_username(self, monkeypatch):
+        """Resolve from CLI via USERNAME env var (Windows)."""
+        monkeypatch.delenv("CONTEXTCORE_USER", raising=False)
+        monkeypatch.delenv("CONTEXTCORE_AGENT_ID", raising=False)
+        monkeypatch.delenv("USER", raising=False)
+        monkeypatch.setenv("USERNAME", "winuser")
+
+        principal = PrincipalResolver.from_cli_context()
+        assert principal.principal_type == PrincipalType.USER
+        assert principal.id == "winuser"
 
     def test_from_cli_context_agent_mode(self, monkeypatch):
         """Resolve from CLI in agent mode."""
