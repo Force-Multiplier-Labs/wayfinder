@@ -8,6 +8,7 @@ Complete installation guide for the Wayfinder observability stack.
 |--------------|-------|
 | Get started fast (solo dev) | [Docker Compose Quick Start](#option-a-docker-compose) |
 | Use Kubernetes patterns | [Kind Cluster Quick Start](#option-b-kind-cluster) |
+| Install on Windows | [Windows Installation](#windows-installation) |
 | Use the interactive TUI | [Terminal User Interface](#terminal-user-interface-tui) |
 | Troubleshoot issues | [Troubleshooting](#troubleshooting) |
 | Verify my installation | [Verification](#verification) |
@@ -18,12 +19,12 @@ Complete installation guide for the Wayfinder observability stack.
 
 ### Required Tools
 
-| Tool | Version | Check Command | Install (macOS) |
-|------|---------|---------------|-----------------|
-| Docker | 20.10+ | `docker --version` | `brew install --cask docker` |
-| Python | 3.9+ | `python3 --version` | `brew install python@3.11` |
-| kubectl | 1.28+ | `kubectl version --client` | `brew install kubectl` |
-| Kind | 0.20+ | `kind --version` | `brew install kind` |
+| Tool | Version | Check Command | Install (macOS) | Install (Windows) |
+|------|---------|---------------|-----------------|-------------------|
+| Docker | 20.10+ | `docker --version` | `brew install --cask docker` | `winget install Docker.DockerDesktop` |
+| Python | 3.9+ | `python3 --version` (`python` on Windows) | `brew install python@3.11` | `winget install Python.Python.3.11` |
+| kubectl | 1.28+ | `kubectl version --client` | `brew install kubectl` | `winget install Kubernetes.kubectl` |
+| Kind | 0.20+ | `kind --version` | `brew install kind` | `winget install Kubernetes.kind` |
 
 ### System Requirements
 
@@ -35,6 +36,8 @@ Complete installation guide for the Wayfinder observability stack.
 ### Install Wayfinder CLI
 
 All commands below assume you are in the repository root directory.
+
+**macOS / Linux:**
 
 ```bash
 # Create and activate virtual environment (required on macOS with Homebrew Python)
@@ -51,6 +54,30 @@ contextcore --version
 **Note:** The virtual environment must be activated in each new terminal session:
 ```bash
 source .venv/bin/activate
+```
+
+**Windows (PowerShell):**
+
+```powershell
+# Create and activate virtual environment
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+
+# Install Wayfinder
+pip install -e ".[dev]"
+
+# Verify
+contextcore --version
+```
+
+**Note:** If `Activate.ps1` fails with an execution policy error, run:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+The virtual environment must be activated in each new PowerShell session:
+```powershell
+.venv\Scripts\Activate.ps1
 ```
 
 ---
@@ -278,6 +305,119 @@ kind delete cluster --name wayfinder-dev
 # Or just delete the observability namespace (keeps cluster)
 kubectl delete namespace observability
 ```
+
+---
+
+## Windows Installation
+
+> **Best for:** Windows users who want to run Wayfinder without WSL
+
+Wayfinder supports Windows natively — the Python package handles cross-platform file locking, path resolution, and the doctor/TUI detect your platform automatically. The main difference is that `make` targets assume a Unix shell, so Windows users run Docker Compose and the CLI directly.
+
+### Recommended: WSL2 + Docker Desktop
+
+For the smoothest experience, use WSL2 with Docker Desktop's WSL integration. This gives you a native Linux shell and the entire guide above works as-is:
+
+1. Install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) (`wsl --install` in an admin PowerShell)
+2. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and enable **WSL 2 backend** in Settings > General
+3. Open your WSL terminal and follow the [macOS/Linux instructions above](#install-wayfinder-cli)
+
+### Native Windows (PowerShell)
+
+If you prefer to stay in PowerShell without WSL:
+
+#### 1. Install Prerequisites
+
+```powershell
+winget install Python.Python.3.11
+winget install Docker.DockerDesktop
+winget install Git.Git
+```
+
+Restart your terminal after installing Python so `python` is on your `PATH`.
+
+#### 2. Clone and Install
+
+```powershell
+git clone https://github.com/Force-Multiplier-Labs/wayfinder.git
+cd wayfinder
+
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+
+pip install -e ".[dev]"
+contextcore --version
+```
+
+#### 3. Start the Observability Stack
+
+The `Makefile` uses bash constructs, so run Docker Compose directly in PowerShell:
+
+```powershell
+# Make sure Docker Desktop is running
+docker compose up -d
+
+# Check containers are up
+docker compose ps
+```
+
+Wait for services to become healthy, then verify:
+
+```powershell
+curl.exe http://localhost:3000/api/health    # Grafana
+curl.exe http://localhost:3200/ready         # Tempo
+curl.exe http://localhost:9009/ready         # Mimir
+curl.exe http://localhost:3100/ready         # Loki
+```
+
+> **Note:** Use `curl.exe` (not `curl`) in PowerShell. The bare `curl` is an alias for `Invoke-WebRequest`, which behaves differently.
+
+#### 4. Seed Metrics
+
+```powershell
+contextcore install verify --endpoint localhost:4317
+```
+
+#### 5. Verify and Open Dashboards
+
+```powershell
+contextcore install status
+Start-Process http://localhost:3000/d/cc-core-installation-status
+```
+
+Login: `admin` / `admin`.
+
+### Windows + Kind Clusters
+
+The Kind cluster creation script (`deploy/kind/scripts/create-cluster.sh`) is bash. To use Kind on Windows:
+
+- **With WSL:** Run the script from your WSL terminal — this is the recommended path.
+- **Without WSL:** Use Git Bash (included with Git for Windows) to run the script, or create the cluster manually:
+
+```powershell
+kind create cluster --name wayfinder-dev
+kubectl apply -f deploy/kind/namespaces.yaml
+kubectl apply -k k8s/observability/
+kubectl wait --for=condition=ready pod --all -n observability --timeout=180s
+```
+
+### Windows Teardown
+
+```powershell
+# Stop (preserve data)
+docker compose down
+
+# Destroy (delete all data)
+docker compose down -v
+```
+
+### Windows-Specific Notes
+
+- **Python command:** Use `python` and `pip` (not `python3`/`pip3`). The doctor script detects this automatically.
+- **File locking:** State persistence uses `msvcrt` on Windows instead of `fcntl`. This is handled transparently.
+- **State directory:** Stored at `%USERPROFILE%\.contextcore\state\<project>\`. Falls back to `%TEMP%\contextcore\state` if not writable.
+- **TUI script generator:** Detects Windows and generates PowerShell (`.ps1`) scripts instead of bash.
+- **Make targets:** If you install Make via `winget install GnuWin32.Make` or Chocolatey, most targets work from Git Bash but not from PowerShell directly.
 
 ---
 
@@ -515,13 +655,26 @@ curl -s "http://localhost:9009/prometheus/api/v1/query?query=contextcore_install
 
 **Cause:** Previous containers or other services using the port.
 
-**Fix:**
+**Fix (macOS/Linux):**
 ```bash
 # Find what's using the port
 lsof -i :3000
 
 # Docker Compose: stop everything
 make down
+docker compose down -v
+
+# Kind: check for existing cluster
+kind get clusters
+kind delete cluster --name wayfinder-dev
+```
+
+**Fix (Windows PowerShell):**
+```powershell
+# Find what's using the port
+netstat -ano | findstr :3000
+
+# Stop containers
 docker compose down -v
 
 # Kind: check for existing cluster
