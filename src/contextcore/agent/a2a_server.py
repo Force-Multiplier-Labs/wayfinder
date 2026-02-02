@@ -1,7 +1,5 @@
 """
 HTTP server implementation for A2A (Agent-to-Agent) protocol.
-__all__ = ['A2AServer', 'create_a2a_server']
-
 
 This module provides an HTTP server that implements A2A protocol endpoints,
 including discovery (.well-known) and JSON-RPC message handling with support
@@ -279,9 +277,3 @@ def create_a2a_server(
     skills_api = SkillsAPI(agent_id=agent_id)
 
     return A2AServer(agent_card, handoffs_api, skills_api, host, port)
-
-
-__all__ = [
-    "A2AServer",
-    "create_a2a_server",
-]

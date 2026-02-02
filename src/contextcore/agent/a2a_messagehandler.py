@@ -1,6 +1,4 @@
-# File: src/contextcore/a2a/message_handler.py
 """JSON-RPC 2.0 message handler for A2A protocol methods."""
-__all__ = ['A2AErrorCode', 'A2AMessageHandler']
 
 
 from enum import IntEnum
@@ -281,12 +279,6 @@ class A2AMessageHandler:
             Dictionary of input parameters
         """
         return {
-            k: v for k, v in message.items() 
+            k: v for k, v in message.items()
             if k not in ["type", "content"]
         }
-
-
-__all__ = [
-    "A2AErrorCode",
-    "A2AMessageHandler",
-]

@@ -1,6 +1,4 @@
-# src/contextcore/discovery/client.py
-__all__ = ['DiscoveryClient']
-
+"""Discovery client for ContextCore agent discovery."""
 
 __all__ = ["DiscoveryClient"]
 

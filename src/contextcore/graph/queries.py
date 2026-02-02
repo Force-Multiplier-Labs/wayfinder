@@ -1,7 +1,5 @@
 """
 Knowledge Graph Queries module for ContextCore.
-__all__ = ['ImpactReport', 'DependencyReport', 'GraphQueries']
-
 
 Provides query operations on the knowledge graph for impact analysis,
 dependency discovery, and path finding using BFS traversal.
@@ -283,10 +281,3 @@ class GraphQueries:
             links.append(link_data)
 
         return {"nodes": nodes, "links": links}
-
-
-__all__ = [
-    "ImpactReport",
-    "DependencyReport", 
-    "GraphQueries"
-]

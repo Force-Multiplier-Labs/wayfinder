@@ -1,6 +1,4 @@
 """Agent Learning Models module for ContextCore.
-__all__ = ['LessonCategory', 'LessonSource', 'Lesson', 'LessonQuery', 'LessonApplication']
-
 
 This module defines data models for the agent learning system that stores and retrieves
 lessons learned during agent work sessions using OpenTelemetry spans in Tempo.

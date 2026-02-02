@@ -1,6 +1,4 @@
 """Knowledge Graph Schema module for ContextCore.
-__all__ = ['NodeType', 'EdgeType', 'Node', 'Edge', 'Graph']
-
 
 This module defines the data models for a knowledge graph that represents
 ProjectContext relationships, enabling impact analysis and cross-project intelligence.

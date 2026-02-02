@@ -1,6 +1,4 @@
 """A2A Task Adapter for ContextCore.
-__all__ = ['TaskState', 'TaskAdapter']
-
 
 Provides bidirectional translation between A2A Task format and ContextCore Handoff,
 enabling interoperability with A2A-compatible agents.
@@ -191,6 +189,3 @@ class TaskAdapter:
                 # Skip malformed artifacts
                 continue
         return artifacts
-
-
-__all__ = ["TaskState", "TaskAdapter"]

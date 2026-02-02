@@ -1,7 +1,5 @@
 """
 Knowledge Graph Builder module for ContextCore.
-__all__ = ['GraphBuilder', 'GraphWatcher']
-
 
 This module builds a knowledge graph from ProjectContext CRDs, extracting nodes and edges
 from the structured metadata to create a comprehensive view of project relationships,

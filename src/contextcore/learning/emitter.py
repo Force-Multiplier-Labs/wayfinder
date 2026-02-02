@@ -1,7 +1,5 @@
 """
 Lesson Emitter module for ContextCore.
-__all__ = ['LessonEmitter']
-
 
 Emits lessons as OpenTelemetry spans for storage in Tempo, enabling
 persistent learning across agent sessions.

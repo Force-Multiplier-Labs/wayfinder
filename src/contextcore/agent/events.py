@@ -1,7 +1,5 @@
 """
 State transition event model for tracking handoff lifecycle via OpenTelemetry.
-__all__ = ['HandoffEventType', 'HandoffEvent', 'HandoffEventEmitter']
-
 
 This module provides structured event types and an emitter for tracking handoff
 state changes as OTel span events, enabling monitoring and debugging of the
@@ -274,10 +272,3 @@ class HandoffEventEmitter:
 
 # Global default emitter instance for ease of use
 default_emitter = HandoffEventEmitter()
-
-__all__ = [
-    "HandoffEventType",
-    "HandoffEvent", 
-    "HandoffEventEmitter",
-    "default_emitter"
-]
