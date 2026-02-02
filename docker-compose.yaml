@@ -31,7 +31,7 @@ services:
   # Grafana - Visualization
   # ==========================================================================
   grafana:
-    image: grafana/grafana:11.4.0
+    image: grafana/grafana:12.3.1
     container_name: contextcore-grafana
     ports:
       - "3000:3000"
@@ -67,7 +67,7 @@ services:
   # Note: OTLP ports (4317/4318) are NOT exposed to host - Alloy is the OTLP ingestion point.
   # Tempo still listens on 4317 internally for Alloy to forward traces to.
   tempo:
-    image: grafana/tempo:2.6.1
+    image: grafana/tempo:2.9.1
     container_name: contextcore-tempo
     command: ["-config.file=/etc/tempo/tempo.yaml"]
     ports:
@@ -88,7 +88,7 @@ services:
   # Mimir - Metrics (Prometheus-compatible)
   # ==========================================================================
   mimir:
-    image: grafana/mimir:2.14.1
+    image: grafana/mimir:3.0.2
     container_name: contextcore-mimir
     command: ["-config.file=/etc/mimir/mimir.yaml"]
     ports:
@@ -109,7 +109,7 @@ services:
   # Loki - Log Aggregation
   # ==========================================================================
   loki:
-    image: grafana/loki:3.3.2
+    image: grafana/loki:3.6.4
     container_name: contextcore-loki
     command: ["-config.file=/etc/loki/loki.yaml"]
     ports:
@@ -134,7 +134,7 @@ services:
   # - Routes metrics to Mimir (via Prometheus remote_write)
   # - Routes logs to Loki
   alloy:
-    image: grafana/alloy:v1.5.1
+    image: grafana/alloy:v1.12.2
     container_name: contextcore-alloy
     command: ["run", "/etc/alloy/config.docker.alloy", "--server.http.listen-addr=0.0.0.0:12345"]
     ports:
