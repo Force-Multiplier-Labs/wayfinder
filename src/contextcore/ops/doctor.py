@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import shutil
 import socket
-import os
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -75,8 +74,9 @@ REQUIRED_PORTS = {
     4318: "OTLP HTTP",
 }
 
-# Required tools
-REQUIRED_TOOLS = ["docker", "python3"]
+# Required tools (python3 on Unix, python on Windows)
+import sys as _sys
+REQUIRED_TOOLS = ["docker", "python" if _sys.platform == "win32" else "python3"]
 
 # Optional tools
 OPTIONAL_TOOLS = ["docker-compose", "kubectl", "kind"]
@@ -87,6 +87,8 @@ DATA_DIRS = ["data/tempo", "data/mimir", "data/loki", "data/grafana"]
 
 def check_tool(name: str) -> CheckResult:
     """Check if a tool is available in PATH."""
+    import sys
+
     path = shutil.which(name)
     if path:
         return CheckResult(
@@ -95,11 +97,19 @@ def check_tool(name: str) -> CheckResult:
             message=f"{name} found",
             details=path,
         )
+    if name == "python3":
+        details = None
+    elif sys.platform == "win32":
+        details = f"Install {name} via winget, choco, or scoop"
+    elif sys.platform == "darwin":
+        details = f"Install with: brew install {name}"
+    else:
+        details = f"Install {name} via your package manager"
     return CheckResult(
         name=f"tool:{name}",
         status=CheckStatus.FAIL,
         message=f"{name} not found",
-        details="Install with: brew install {name}" if name != "python3" else None,
+        details=details,
     )
 
 
@@ -119,11 +129,18 @@ def check_docker_running() -> CheckResult:
                 status=CheckStatus.PASS,
                 message="Docker is running",
             )
+        import sys as _sys
+        if _sys.platform == "win32":
+            detail = "Start Docker Desktop from the Start menu"
+        elif _sys.platform == "darwin":
+            detail = "Start Docker Desktop from Applications"
+        else:
+            detail = "Start Docker Desktop or run: sudo systemctl start docker"
         return CheckResult(
             name="docker:daemon",
             status=CheckStatus.FAIL,
             message="Docker is not running",
-            details="Start Docker Desktop or run: sudo systemctl start docker",
+            details=detail,
         )
     except subprocess.TimeoutExpired:
         return CheckResult(
@@ -173,8 +190,8 @@ def check_port_available(port: int, service: str) -> CheckResult:
 def check_disk_space(min_gb: int = 10) -> CheckResult:
     """Check if sufficient disk space is available."""
     try:
-        stat = os.statvfs(".")
-        free_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)
+        usage = shutil.disk_usage(".")
+        free_gb = usage.free / (1024**3)
         if free_gb >= min_gb:
             return CheckResult(
                 name="disk:space",

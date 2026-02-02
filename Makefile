@@ -66,9 +66,8 @@ doctor: ## Check system readiness (ports, container engine, tools)
 	@echo ""
 	@echo "Checking port availability..."
 	@for port in $(REQUIRED_PORTS); do \
-		if lsof -i :$$port >/dev/null 2>&1; then \
-			echo "$(RED)❌ Port $$port is in use by:$(NC)"; \
-			lsof -i :$$port | head -2; \
+		if python3 -c "import socket; s=socket.socket(); s.settimeout(1); exit(0 if s.connect_ex(('127.0.0.1',$$port)) == 0 else 1)" 2>/dev/null; then \
+			echo "$(RED)❌ Port $$port is in use$(NC)"; \
 		else \
 			echo "$(GREEN)✅ Port $$port is available$(NC)"; \
 		fi; \
@@ -147,8 +146,8 @@ health: ## Show one-line health status per component
 	@printf "Mimir:       "; curl -sf http://localhost:9009/ready >/dev/null 2>&1 && echo "$(GREEN)✅ Ready$(NC)" || echo "$(RED)❌ Not Ready$(NC)"
 	@printf "Loki:        "; curl -sf http://localhost:3100/ready >/dev/null 2>&1 && echo "$(GREEN)✅ Ready$(NC)" || echo "$(RED)❌ Not Ready$(NC)"
 	@printf "Alloy:       "; curl -sf http://localhost:12345/ready >/dev/null 2>&1 && echo "$(GREEN)✅ Ready$(NC)" || echo "$(RED)❌ Not Ready$(NC)"
-	@printf "OTLP (gRPC): "; nc -z localhost 4317 2>/dev/null && echo "$(GREEN)✅ Listening (Alloy)$(NC)" || echo "$(RED)❌ Not Listening$(NC)"
-	@printf "OTLP (HTTP): "; nc -z localhost 4318 2>/dev/null && echo "$(GREEN)✅ Listening (Alloy)$(NC)" || echo "$(RED)❌ Not Listening$(NC)"
+	@printf "OTLP (gRPC): "; python3 -c "import socket; s=socket.socket(); s.settimeout(1); exit(0 if s.connect_ex(('127.0.0.1',4317))==0 else 1)" 2>/dev/null && echo "$(GREEN)✅ Listening (Alloy)$(NC)" || echo "$(RED)❌ Not Listening$(NC)"
+	@printf "OTLP (HTTP): "; python3 -c "import socket; s=socket.socket(); s.settimeout(1); exit(0 if s.connect_ex(('127.0.0.1',4318))==0 else 1)" 2>/dev/null && echo "$(GREEN)✅ Listening (Alloy)$(NC)" || echo "$(RED)❌ Not Listening$(NC)"
 
 smoke-test: ## Validate entire stack is working after deployment
 	@echo "$(CYAN)=== Smoke Test ===$(NC)"
