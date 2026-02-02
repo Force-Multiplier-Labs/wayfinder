@@ -14,19 +14,6 @@ Complete installation guide for ContextCore observability stack.
 
 ---
 
-## Environment Notice
-
-**Two environments exist until datasets are merged:**
-
-| Environment | Path | Grafana Password | Purpose |
-|-------------|------|------------------|---------|
-| **DEV** | `~/Documents/dev/ContextCore` | `admin` | Development, newer code |
-| **TEST** | `~/Documents/Deploy` | `adminadminadmin` | Testing, stable deployments |
-
-Both target the `observability` namespace in the `o11y-dev` Kind cluster. Use the Grafana password to identify which environment you're connected to.
-
----
-
 ## Prerequisites
 
 ### Required Tools
@@ -48,7 +35,7 @@ Both target the `observability` namespace in the `o11y-dev` Kind cluster. Use th
 ### Install ContextCore CLI
 
 ```bash
-cd ~/Documents/dev/ContextCore
+cd ~/Documents/dev/wayfinder
 
 # Create and activate virtual environment (required on macOS with Homebrew Python)
 python3 -m venv .venv
@@ -63,7 +50,7 @@ contextcore --version
 
 **Note:** The virtual environment must be activated in each new terminal session:
 ```bash
-source ~/Documents/dev/ContextCore/.venv/bin/activate
+source ~/Documents/dev/wayfinder/.venv/bin/activate
 ```
 
 ---
@@ -84,7 +71,7 @@ source ~/Documents/dev/ContextCore/.venv/bin/activate
 ### Quick Start
 
 ```bash
-cd ~/Documents/dev/ContextCore
+cd ~/Documents/dev/wayfinder
 
 # One command setup (runs doctor, starts stack, waits for ready, seeds metrics)
 make full-setup
@@ -100,7 +87,7 @@ make full-setup
 ### Step-by-Step Setup (Alternative)
 
 ```bash
-cd ~/Documents/dev/ContextCore
+cd ~/Documents/dev/wayfinder
 
 # 1. Preflight checks
 make doctor
@@ -153,43 +140,51 @@ make destroy
 ### Quick Start
 
 ```bash
-cd ~/Documents/Deploy
+cd ~/Documents/dev/wayfinder
 
-# One command setup (creates cluster, deploys stack, waits for pods)
-./scripts/create-cluster.sh
+# One command setup (interactive — confirms defaults, then creates cluster)
+make kind-up
 
-# With detailed progress output
-./scripts/create-cluster.sh --verbose
+# Accept all defaults without prompting
+make kind-up YES=1
 
-# Tutorial mode - explains what each step does and why (great for learning)
-./scripts/create-cluster.sh --verbose-tutorial
+# 3-node topology with criticality tiers
+make kind-up PROFILE=test
 ```
+
+The script prompts you to confirm or override each default (paths, cluster name,
+profile). Pass `YES=1` to accept all defaults non-interactively.
 
 **Script options:**
 
-| Flag | Description |
-|------|-------------|
-| (none) | Standard setup with progress output |
+| Flag / Variable | Description |
+|-----------------|-------------|
+| `PROFILE=dev` (default) | 2-node: control-plane + 1 combined worker |
+| `PROFILE=test` | 3-node: control-plane + platform (tainted) + workload |
+| `YES=1` | Accept all defaults without prompting |
 | `--verbose` | Show detailed progress (commands being run, resource lists) |
 | `--verbose-tutorial` | Explain each step - what it does and why (learning mode) |
 | `--skip-wait` | Don't wait for pods (faster, for debugging) |
 | `--delete` | Delete cluster with confirmation (requires typing cluster name) |
 
 The script will:
-1. Run preflight checks (Docker, kind, kubectl)
-2. Create a 3-node Kind cluster (`o11y-dev`)
-3. Deploy the observability stack to `observability` namespace
-4. Wait for all pods to be ready
-5. Verify port accessibility
-6. Print next steps
+1. Present configuration defaults for review (paths, cluster name, profile)
+2. Run preflight checks (Docker, kind, kubectl)
+3. Render the Kind config template (substitutes repo root path)
+4. Create the Kind cluster (`wayfinder-dev` or `wayfinder-test`)
+5. Deploy the observability stack to `observability` namespace
+6. Wait for all pods to be ready
+7. Verify port accessibility
+8. Print next steps
 
 ### After Cluster Creation
 
 ```bash
-# Activate ContextCore venv
-source ~/Documents/dev/ContextCore/.venv/bin/activate
-
 # Seed metrics to populate dashboards
+make kind-seed
+
+# Or manually:
+source .venv/bin/activate
 contextcore install verify --endpoint localhost:4317
 
 # Open the dashboard
@@ -203,20 +198,25 @@ If you prefer manual control or need to debug:
 #### 1. Create Kind Cluster
 
 ```bash
-cd ~/Documents/Deploy
+cd ~/Documents/dev/wayfinder
 
-# Create cluster with port mappings
-kind create cluster --config kind-cluster.yaml
+# Run the script directly with verbose output
+deploy/kind/scripts/create-cluster.sh --verbose
 
-# Verify nodes (should see 3: control-plane + 2 workers)
+# Verify nodes
 kubectl get nodes
 ```
 
 #### 2. Deploy Observability Stack
 
+The script handles this automatically. To reapply manually:
+
 ```bash
+# Apply namespaces
+kubectl apply -f deploy/kind/namespaces.yaml
+
 # Apply observability manifests
-kubectl apply -k ~/Documents/dev/ContextCore/k8s/observability/
+kubectl apply -k k8s/observability/
 
 # Wait for all pods (up to 3 minutes for image pulls)
 kubectl wait --for=condition=ready pod --all -n observability --timeout=180s
@@ -249,17 +249,13 @@ nc -z localhost 4317 && echo "OTLP: OK"
 #### 4. Seed Metrics
 
 ```bash
-cd ~/Documents/dev/ContextCore
-source .venv/bin/activate
-
-# Run installation verification (sends metrics to Mimir)
-contextcore install verify --endpoint localhost:4317
+make kind-seed
 ```
 
 ### Architecture (Kind Cluster)
 
 ```
-Kind Cluster (o11y-dev)
+Kind Cluster (wayfinder-dev)
 │
 ├── observability namespace
 │   ├── Alloy (NodePort 30317/30318) ──► OTLP ingestion
@@ -274,18 +270,18 @@ Host Port Mappings (via Kind extraPortMappings)
 ├── localhost:3200 → 30200 → Tempo
 ├── localhost:4317 → 30317 → Alloy OTLP gRPC
 ├── localhost:4318 → 30318 → Alloy OTLP HTTP
-└── localhost:9009 → 30009 → Mimir
+├── localhost:9009 → 30009 → Mimir
+└── localhost:12345 → 31234 → Alloy UI
 ```
 
 ### Teardown (Kind Cluster)
 
 ```bash
-# Delete cluster with confirmation (like make destroy)
-cd ~/Documents/Deploy
-./scripts/create-cluster.sh --delete
+# Delete cluster with confirmation
+make kind-down
 
 # Or delete directly without confirmation
-kind delete cluster --name o11y-dev
+kind delete cluster --name wayfinder-dev
 
 # Or just delete the observability namespace (keeps cluster)
 kubectl delete namespace observability
@@ -300,7 +296,7 @@ kubectl delete namespace observability
 ### Launch the TUI
 
 ```bash
-cd ~/Documents/dev/ContextCore
+cd ~/Documents/dev/wayfinder
 source .venv/bin/activate
 
 # Launch the welcome screen
@@ -539,7 +535,7 @@ docker compose down -v
 
 # Kind: check for existing cluster
 kind get clusters
-kind delete cluster --name o11y-dev
+kind delete cluster --name wayfinder-dev
 ```
 
 #### Pods stuck in Pending or ImagePullBackOff

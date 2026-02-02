@@ -60,6 +60,9 @@ kubeconfig
 # Generated artifacts
 generated/
 
+# Kind rendered configs (generated at runtime)
+deploy/kind/.generated/
+
 # Environment
 .env
 .env.local

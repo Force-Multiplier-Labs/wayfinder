@@ -1,6 +1,9 @@
 # Wayfinder Makefile
 # Reference implementation of the ContextCore metadata standard
 #
+# Container engine agnostic — works with Docker or Podman.
+# Override with: make up CONTAINER_ENGINE=podman
+#
 # Usage:
 #   make help         Show available commands
 #   make doctor       Preflight checks
@@ -14,7 +17,18 @@
 .PHONY: help doctor up down destroy status health smoke-test verify backup restore \
         storage-status storage-clean logs-tempo logs-mimir logs-loki logs-grafana \
         test lint typecheck build install clean dashboards-provision dashboards-list \
-        seed-metrics full-setup wait-ready install-verify
+        seed-metrics full-setup wait-ready install-verify \
+        kind-up kind-down kind-status kind-seed
+
+# Container engine detection (Docker or Podman — override with CONTAINER_ENGINE=podman)
+CONTAINER_ENGINE ?= $(shell which docker >/dev/null 2>&1 && echo docker || (which podman >/dev/null 2>&1 && echo podman || echo docker))
+COMPOSE_CMD ?= $(shell \
+	if [ "$(CONTAINER_ENGINE)" = "podman" ]; then \
+		which podman-compose >/dev/null 2>&1 && echo "podman-compose" || echo "podman compose"; \
+	else \
+		docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose"; \
+	fi)
+ENGINE_LABEL := $(shell echo $(CONTAINER_ENGINE) | sed 's/.*/\u&/' 2>/dev/null || echo $(CONTAINER_ENGINE))
 
 # Configuration
 COMPOSE_FILE := docker-compose.yaml
@@ -37,16 +51,18 @@ NC := \033[0m # No Color
 
 # === Preflight Checks ===
 
-doctor: ## Check system readiness (ports, Docker, tools)
+doctor: ## Check system readiness (ports, container engine, tools)
 	@echo "$(CYAN)=== Preflight Check ===$(NC)"
 	@echo ""
+	@echo "Container engine: $(CONTAINER_ENGINE) (compose: $(COMPOSE_CMD))"
+	@echo ""
 	@echo "Checking required tools..."
-	@which docker >/dev/null 2>&1 && echo "$(GREEN)✅ docker$(NC)" || echo "$(RED)❌ docker not found$(NC)"
-	@which docker-compose >/dev/null 2>&1 && echo "$(GREEN)✅ docker-compose$(NC)" || (which docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1 && echo "$(GREEN)✅ docker compose$(NC)" || echo "$(RED)❌ docker-compose not found$(NC)")
+	@which $(CONTAINER_ENGINE) >/dev/null 2>&1 && echo "$(GREEN)✅ $(CONTAINER_ENGINE)$(NC)" || echo "$(RED)❌ $(CONTAINER_ENGINE) not found$(NC)"
+	@$(COMPOSE_CMD) version >/dev/null 2>&1 && echo "$(GREEN)✅ $(COMPOSE_CMD)$(NC)" || echo "$(RED)❌ $(COMPOSE_CMD) not found$(NC)"
 	@which python3 >/dev/null 2>&1 && echo "$(GREEN)✅ python3$(NC)" || echo "$(RED)❌ python3 not found$(NC)"
 	@echo ""
-	@echo "Checking Docker daemon..."
-	@docker info >/dev/null 2>&1 && echo "$(GREEN)✅ Docker is running$(NC)" || echo "$(RED)❌ Docker is not running$(NC)"
+	@echo "Checking $(ENGINE_LABEL) daemon..."
+	@$(CONTAINER_ENGINE) info >/dev/null 2>&1 && echo "$(GREEN)✅ $(ENGINE_LABEL) is running$(NC)" || echo "$(RED)❌ $(ENGINE_LABEL) is not running$(NC)"
 	@echo ""
 	@echo "Checking port availability..."
 	@for port in $(REQUIRED_PORTS); do \
@@ -76,17 +92,17 @@ up: doctor ## Start the stack (runs doctor first, creates data dirs)
 	@echo "$(CYAN)=== Starting Wayfinder Stack ===$(NC)"
 	@mkdir -p $(DATA_DIR)/tempo $(DATA_DIR)/mimir $(DATA_DIR)/loki $(DATA_DIR)/grafana
 	@if [ -f "$(COMPOSE_FILE)" ]; then \
-		docker compose -f $(COMPOSE_FILE) up -d; \
+		$(COMPOSE_CMD) -f $(COMPOSE_FILE) up -d; \
 		echo "$(GREEN)Stack started. Run 'make health' to verify.$(NC)"; \
 	else \
 		echo "$(YELLOW)No $(COMPOSE_FILE) found. Using CLI to verify OTLP endpoint...$(NC)"; \
-		echo "Stack can be started with: docker compose up -d"; \
+		echo "Stack can be started with: $(COMPOSE_CMD) up -d"; \
 	fi
 
 down: ## Stop the stack (preserves data)
 	@echo "$(CYAN)=== Stopping Wayfinder Stack ===$(NC)"
 	@if [ -f "$(COMPOSE_FILE)" ]; then \
-		docker compose -f $(COMPOSE_FILE) down; \
+		$(COMPOSE_CMD) -f $(COMPOSE_FILE) down; \
 		echo "$(GREEN)Stack stopped. Data preserved in $(DATA_DIR)/.$(NC)"; \
 		echo "Run 'make up' to restart."; \
 	else \
@@ -109,7 +125,7 @@ destroy: ## Delete the stack (auto-backup first, requires confirmation)
 	@echo ""
 	@read -p "Are you sure? Type 'yes' to confirm: " confirm && [ "$$confirm" = "yes" ] || (echo "Aborted." && exit 1)
 	@if [ -f "$(COMPOSE_FILE)" ]; then \
-		docker compose -f $(COMPOSE_FILE) down -v; \
+		$(COMPOSE_CMD) -f $(COMPOSE_FILE) down -v; \
 	fi
 	@rm -rf $(DATA_DIR)
 	@echo "$(GREEN)Stack destroyed. Run 'make up' for fresh start.$(NC)"
@@ -117,9 +133,9 @@ destroy: ## Delete the stack (auto-backup first, requires confirmation)
 status: ## Show container status
 	@echo "$(CYAN)=== Container Status ===$(NC)"
 	@if [ -f "$(COMPOSE_FILE)" ]; then \
-		docker compose -f $(COMPOSE_FILE) ps; \
+		$(COMPOSE_CMD) -f $(COMPOSE_FILE) ps; \
 	else \
-		docker ps --filter "name=contextcore" --filter "name=tempo" --filter "name=mimir" --filter "name=loki" --filter "name=grafana" --filter "name=alloy"; \
+		$(CONTAINER_ENGINE) ps --filter "name=contextcore" --filter "name=tempo" --filter "name=mimir" --filter "name=loki" --filter "name=grafana" --filter "name=alloy"; \
 	fi
 
 # === Health & Validation ===
@@ -169,7 +185,7 @@ verify: ## Quick cluster health check
 	done
 	@echo ""
 	@echo "Containers:"
-	@running=$$(docker ps --filter "name=tempo\|mimir\|loki\|grafana\|alloy" --format "{{.Names}}" 2>/dev/null | wc -l | tr -d ' '); \
+	@running=$$($(CONTAINER_ENGINE) ps --filter "name=tempo" --filter "name=mimir" --filter "name=loki" --filter "name=grafana" --filter "name=alloy" --format "{{.Names}}" 2>/dev/null | wc -l | tr -d ' '); \
 	if [ "$$running" -gt 0 ]; then \
 		echo "$(GREEN)  ✅ $$running container(s) running$(NC)"; \
 	else \
@@ -312,16 +328,16 @@ storage-clean: ## Delete all data (WARNING: destructive, requires confirmation)
 # === Logs ===
 
 logs-tempo: ## Follow Tempo logs
-	@docker logs -f $$(docker ps --filter "name=tempo" --format "{{.Names}}" | head -1) 2>/dev/null || echo "Tempo container not running"
+	@$(CONTAINER_ENGINE) logs -f $$($(CONTAINER_ENGINE) ps --filter "name=tempo" --format "{{.Names}}" | head -1) 2>/dev/null || echo "Tempo container not running"
 
 logs-mimir: ## Follow Mimir logs
-	@docker logs -f $$(docker ps --filter "name=mimir" --format "{{.Names}}" | head -1) 2>/dev/null || echo "Mimir container not running"
+	@$(CONTAINER_ENGINE) logs -f $$($(CONTAINER_ENGINE) ps --filter "name=mimir" --format "{{.Names}}" | head -1) 2>/dev/null || echo "Mimir container not running"
 
 logs-loki: ## Follow Loki logs
-	@docker logs -f $$(docker ps --filter "name=loki" --format "{{.Names}}" | head -1) 2>/dev/null || echo "Loki container not running"
+	@$(CONTAINER_ENGINE) logs -f $$($(CONTAINER_ENGINE) ps --filter "name=loki" --format "{{.Names}}" | head -1) 2>/dev/null || echo "Loki container not running"
 
 logs-grafana: ## Follow Grafana logs
-	@docker logs -f $$(docker ps --filter "name=grafana" --format "{{.Names}}" | head -1) 2>/dev/null || echo "Grafana container not running"
+	@$(CONTAINER_ENGINE) logs -f $$($(CONTAINER_ENGINE) ps --filter "name=grafana" --format "{{.Names}}" | head -1) 2>/dev/null || echo "Grafana container not running"
 
 # === Development ===
 
@@ -344,6 +360,48 @@ clean: ## Clean build artifacts
 	rm -rf build/ dist/ *.egg-info src/*.egg-info
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+
+# === Kind Cluster ===
+
+# Kind profile: dev (2-node) or test (3-node with criticality tiers)
+PROFILE ?= dev
+KIND_CLUSTER_NAME ?= wayfinder-$(PROFILE)
+KIND_SCRIPT := deploy/kind/scripts/create-cluster.sh
+
+kind-up: ## Create Kind cluster (PROFILE=dev|test, YES=1 to skip prompts)
+	@if [ "$(YES)" = "1" ]; then \
+		$(KIND_SCRIPT) --profile $(PROFILE) --yes; \
+	else \
+		$(KIND_SCRIPT) --profile $(PROFILE); \
+	fi
+
+kind-down: ## Delete Kind cluster
+	@$(KIND_SCRIPT) --delete
+
+kind-status: ## Show Kind cluster pod status
+	@echo "$(CYAN)=== Kind Cluster Status ===$(NC)"
+	@echo ""
+	@echo "Cluster: $(KIND_CLUSTER_NAME)"
+	@echo ""
+	@if kind get clusters 2>/dev/null | grep -q "^$(KIND_CLUSTER_NAME)$$"; then \
+		echo "Nodes:"; \
+		kubectl get nodes --context kind-$(KIND_CLUSTER_NAME) 2>/dev/null | sed 's/^/  /' || echo "  (kubectl not configured)"; \
+		echo ""; \
+		echo "Pods:"; \
+		kubectl get pods -n observability --context kind-$(KIND_CLUSTER_NAME) 2>/dev/null | sed 's/^/  /' || echo "  (no pods)"; \
+	else \
+		echo -e "$(YELLOW)Cluster '$(KIND_CLUSTER_NAME)' not found.$(NC)"; \
+		echo "Run 'make kind-up' to create it."; \
+	fi
+
+kind-seed: ## Seed installation metrics into Kind cluster
+	@echo "$(CYAN)=== Seeding Kind Cluster Metrics ===$(NC)"
+	@echo ""
+	@GRAFANA_URL=$(GRAFANA_URL) GRAFANA_USER=$(GRAFANA_USER) GRAFANA_PASSWORD=$(GRAFANA_PASSWORD) \
+		PYTHONPATH=./src python3 -m contextcore.cli install verify --endpoint $(OTLP_ENDPOINT)
+	@echo ""
+	@echo "$(GREEN)Metrics exported to Mimir via $(OTLP_ENDPOINT)$(NC)"
+	@echo "Dashboard: $(GRAFANA_URL)/d/contextcore-installation"
 
 # === Dashboards ===
 
@@ -382,8 +440,16 @@ help: ## Show this help
 	@echo "$(YELLOW)Development:$(NC)"
 	@grep -E '^(install|install-verify|test|lint|typecheck|build|clean):' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
 	@echo ""
+	@echo "$(YELLOW)Kind Cluster:$(NC)"
+	@grep -E '^kind-' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
+	@echo ""
 	@echo "$(YELLOW)Dashboards:$(NC)"
 	@grep -E '^dashboards-' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
+	@echo ""
+	@echo "$(YELLOW)Container Engine:$(NC)"
+	@echo "  CONTAINER_ENGINE  Container runtime (default: auto-detect docker or podman)"
+	@echo "  COMPOSE_CMD       Compose command (default: auto-detect)"
+	@echo "  Current:          $(CONTAINER_ENGINE) / $(COMPOSE_CMD)"
 	@echo ""
 	@echo "$(YELLOW)Environment Variables:$(NC)"
 	@echo "  GRAFANA_URL       Grafana URL (default: http://localhost:3000)"

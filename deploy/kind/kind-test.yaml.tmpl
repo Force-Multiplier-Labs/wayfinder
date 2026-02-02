@@ -1,0 +1,86 @@
+# Wayfinder Kind Cluster - Test Profile
+# 3-node setup: control-plane + platform worker (tainted) + workload worker
+# Template: __WAYFINDER_ROOT__ is resolved by create-cluster.sh at runtime
+#
+# Platform worker is tainted so only observability pods schedule there.
+# Workload worker accepts both critical and standard workloads.
+# For lightweight local dev, use kind-dev.yaml.tmpl (2-node)
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: wayfinder-test
+nodes:
+  # Control plane with port mappings for local access
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # Grafana
+      - containerPort: 30000
+        hostPort: 3000
+        protocol: TCP
+      # Loki
+      - containerPort: 30100
+        hostPort: 3100
+        protocol: TCP
+      # Mimir
+      - containerPort: 30009
+        hostPort: 9009
+        protocol: TCP
+      # Tempo
+      - containerPort: 30200
+        hostPort: 3200
+        protocol: TCP
+      # Alloy UI
+      - containerPort: 31234
+        hostPort: 12345
+        protocol: TCP
+      # OTLP gRPC
+      - containerPort: 30317
+        hostPort: 4317
+        protocol: TCP
+      # OTLP HTTP
+      - containerPort: 30318
+        hostPort: 4318
+        protocol: TCP
+    extraMounts:
+      # ContextCore Grafana plugins (Owl / Gookooko'oo)
+      - hostPath: __WAYFINDER_ROOT__/contextcore-owl/grafana/plugins
+        containerPath: /plugins/contextcore
+        readOnly: true
+
+  # Platform tier: Observability infrastructure
+  # Tainted to ensure only o11y workloads schedule here
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "contextcore.io/criticality=platform,contextcore.io/purpose=observability"
+          taints:
+            - key: "contextcore.io/dedicated"
+              value: "platform"
+              effect: "NoSchedule"
+    extraMounts:
+      - hostPath: __WAYFINDER_ROOT__/contextcore-owl/grafana/plugins
+        containerPath: /plugins/contextcore
+        readOnly: true
+
+  # Workload tier: Application workloads (critical + standard)
+  # Accepts all application workloads in test mode
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "contextcore.io/criticality=critical,contextcore.io/purpose=workload,contextcore.io/accepts-critical=true,contextcore.io/accepts-standard=true"
+    extraMounts:
+      - hostPath: __WAYFINDER_ROOT__/contextcore-owl/grafana/plugins
+        containerPath: /plugins/contextcore
+        readOnly: true
