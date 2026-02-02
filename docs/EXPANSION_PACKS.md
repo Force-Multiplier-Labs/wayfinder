@@ -148,7 +148,7 @@ server.run()
 | **Animal** | Fox |
 | **Anishinaabe** | Waagosh |
 | **Status** | Beta |
-| **Repository** | [contextcore-fox](https://github.com/contextcore/contextcore-fox) |
+| **Repository** | [contextcore-fox](https://github.com/Force-Multiplier-Labs/contextcore-fox) |
 | **License** | Equitable Use License v1.0 |
 | **Depends On** | contextcore-rabbit |
 
