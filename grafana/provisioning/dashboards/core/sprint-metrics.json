@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "ContextCore Sprint Metrics - Track velocity, throughput, and sprint performance",
+  "description": "Wayfinder Sprint Metrics - Track velocity, throughput, and sprint performance",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -780,7 +780,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "[CORE] ContextCore: Sprint Metrics",
+  "title": "[CORE] Wayfinder: Sprint Metrics",
   "uid": "cc-core-sprint-metrics",
   "version": 1,
   "weekStart": ""

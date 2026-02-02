@@ -1,7 +1,7 @@
 """
 Dashboard provisioner for Grafana.
 
-Handles provisioning ContextCore dashboards to Grafana via API.
+Handles provisioning Wayfinder dashboards to Grafana via API.
 Supports auto-detection of Grafana URL, idempotent provisioning,
 and auto-discovery of dashboards from extension folders.
 """
@@ -35,13 +35,13 @@ class DashboardConfig:
     uid: str
     file_name: str
     description: str
-    folder: str = "ContextCore"
+    folder: str = "Wayfinder"
     tags: list[str] = field(default_factory=lambda: ["contextcore"])
 
 
 class DashboardProvisioner:
     """
-    Provision ContextCore dashboards to Grafana.
+    Provision Wayfinder dashboards to Grafana.
 
     Supports:
     - Auto-discovery of dashboards from extension folders
@@ -231,7 +231,7 @@ class DashboardProvisioner:
                     "dashboard": dashboard_json,
                     "folderId": folder_id,
                     "overwrite": True,
-                    "message": f"Provisioned by ContextCore ({config.extension})",
+                    "message": f"Provisioned by Wayfinder ({config.extension})",
                 }
 
                 # Create/update dashboard
@@ -315,7 +315,7 @@ class DashboardProvisioner:
 
     def list_provisioned(self, extension: Optional[str] = None) -> List[dict]:
         """
-        List ContextCore dashboards currently in Grafana.
+        List Wayfinder dashboards currently in Grafana.
 
         Args:
             extension: Optional extension to filter by
@@ -378,7 +378,7 @@ class DashboardProvisioner:
         self, extension: Optional[str] = None
     ) -> List[Tuple[str, bool, str]]:
         """
-        Delete all ContextCore dashboards from Grafana.
+        Delete all Wayfinder dashboards from Grafana.
 
         Uses auto-discovery to find dashboards to delete.
 

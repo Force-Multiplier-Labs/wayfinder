@@ -4,7 +4,7 @@
   },
   "uid": "contextcore-tasks",
   "title": "Project Tasks",
-  "description": "View project tasks as OpenTelemetry spans from Tempo. Core ContextCore dashboard for task tracking and workflow history.",
+  "description": "View project tasks as OpenTelemetry spans from Tempo. Core Wayfinder dashboard for task tracking and workflow history.",
   "tags": [
     "contextcore",
     "core",
@@ -158,7 +158,7 @@
                     "options": {
                       "done": {
                         "color": "green",
-                        "text": "✓ Done"
+                        "text": "\u2713 Done"
                       }
                     }
                   },
@@ -167,7 +167,7 @@
                     "options": {
                       "in_progress": {
                         "color": "blue",
-                        "text": "▶ Active"
+                        "text": "\u25b6 Active"
                       }
                     }
                   },
@@ -176,7 +176,7 @@
                     "options": {
                       "blocked": {
                         "color": "red",
-                        "text": "⚠ Blocked"
+                        "text": "\u26a0 Blocked"
                       }
                     }
                   },
@@ -185,7 +185,7 @@
                     "options": {
                       "pending": {
                         "color": "yellow",
-                        "text": "◯ Pending"
+                        "text": "\u25ef Pending"
                       }
                     }
                   }
@@ -210,7 +210,7 @@
                     "type": "value",
                     "options": {
                       "epic": {
-                        "text": "📋 Epic"
+                        "text": "\ud83d\udccb Epic"
                       }
                     }
                   },
@@ -218,7 +218,7 @@
                     "type": "value",
                     "options": {
                       "story": {
-                        "text": "📖 Story"
+                        "text": "\ud83d\udcd6 Story"
                       }
                     }
                   },
@@ -226,7 +226,7 @@
                     "type": "value",
                     "options": {
                       "task": {
-                        "text": "✅ Task"
+                        "text": "\u2705 Task"
                       }
                     }
                   },
@@ -234,7 +234,7 @@
                     "type": "value",
                     "options": {
                       "bug": {
-                        "text": "🐛 Bug"
+                        "text": "\ud83d\udc1b Bug"
                       }
                     }
                   },
@@ -242,7 +242,7 @@
                     "type": "value",
                     "options": {
                       "feature": {
-                        "text": "✨ Feature"
+                        "text": "\u2728 Feature"
                       }
                     }
                   }
@@ -307,7 +307,9 @@
         ],
         "footer": {
           "show": true,
-          "reducer": ["count"],
+          "reducer": [
+            "count"
+          ],
           "countRows": true
         }
       },

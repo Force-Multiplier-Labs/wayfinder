@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "ContextCore Project Progress - Track epics, stories, and tasks as OpenTelemetry spans",
+  "description": "Wayfinder Project Progress - Track epics, stories, and tasks as OpenTelemetry spans",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -28,7 +28,7 @@
       "keepTime": false,
       "tags": [],
       "targetBlank": true,
-      "title": "ContextCore Docs",
+      "title": "Wayfinder Docs",
       "tooltip": "",
       "type": "link",
       "url": "https://github.com/contextcore/contextcore"
@@ -664,7 +664,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "[CORE] ContextCore: Project Progress",
+  "title": "[CORE] Wayfinder: Project Progress",
   "uid": "cc-core-project-progress",
   "version": 1,
   "weekStart": ""

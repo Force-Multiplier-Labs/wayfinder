@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "ContextCore Project-to-Operations - Correlate project context with runtime telemetry",
+  "description": "Wayfinder Project-to-Operations - Correlate project context with runtime telemetry",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -870,7 +870,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "[CORE] ContextCore: Project-to-Operations",
+  "title": "[CORE] Wayfinder: Project-to-Operations",
   "uid": "cc-core-project-operations",
   "version": 1,
   "weekStart": ""

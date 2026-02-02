@@ -1,15 +1,15 @@
-# ContextCore Dashboard Provisioning
+# Wayfinder Dashboard Provisioning
 # Multi-provider config: one provider per extension pack
 # Each extension gets its own folder in the Grafana UI
 
 apiVersion: 1
 
 providers:
-  # Core ContextCore dashboards
-  - name: 'ContextCore Core'
+  # Core Wayfinder dashboards
+  - name: 'Wayfinder Core'
     orgId: 1
-    folder: 'ContextCore'
-    folderUid: 'contextcore-core'
+    folder: 'Wayfinder'
+    folderUid: 'wayfinder-core'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
@@ -18,10 +18,10 @@ providers:
       path: /etc/grafana/provisioning/dashboards/core
 
   # Squirrel - Skills library dashboards
-  - name: 'ContextCore Squirrel'
+  - name: 'Wayfinder Squirrel'
     orgId: 1
-    folder: 'ContextCore / Squirrel'
-    folderUid: 'contextcore-squirrel'
+    folder: 'Wayfinder / Squirrel'
+    folderUid: 'wayfinder-squirrel'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
@@ -30,10 +30,10 @@ providers:
       path: /etc/grafana/provisioning/dashboards/squirrel
 
   # Rabbit - Alert automation dashboards
-  - name: 'ContextCore Rabbit'
+  - name: 'Wayfinder Rabbit'
     orgId: 1
-    folder: 'ContextCore / Rabbit'
-    folderUid: 'contextcore-rabbit'
+    folder: 'Wayfinder / Rabbit'
+    folderUid: 'wayfinder-rabbit'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
@@ -42,10 +42,10 @@ providers:
       path: /etc/grafana/provisioning/dashboards/rabbit
 
   # Beaver - LLM abstraction dashboards
-  - name: 'ContextCore Beaver'
+  - name: 'Wayfinder Beaver'
     orgId: 1
-    folder: 'ContextCore / Beaver'
-    folderUid: 'contextcore-beaver'
+    folder: 'Wayfinder / Beaver'
+    folderUid: 'wayfinder-beaver'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
@@ -54,10 +54,10 @@ providers:
       path: /etc/grafana/provisioning/dashboards/beaver
 
   # Fox - Context enrichment dashboards
-  - name: 'ContextCore Fox'
+  - name: 'Wayfinder Fox'
     orgId: 1
-    folder: 'ContextCore / Fox'
-    folderUid: 'contextcore-fox'
+    folder: 'Wayfinder / Fox'
+    folderUid: 'wayfinder-fox'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
@@ -66,10 +66,10 @@ providers:
       path: /etc/grafana/provisioning/dashboards/fox
 
   # Coyote - Multi-agent pipeline dashboards
-  - name: 'ContextCore Coyote'
+  - name: 'Wayfinder Coyote'
     orgId: 1
-    folder: 'ContextCore / Coyote'
-    folderUid: 'contextcore-coyote'
+    folder: 'Wayfinder / Coyote'
+    folderUid: 'wayfinder-coyote'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
@@ -78,10 +78,10 @@ providers:
       path: /etc/grafana/provisioning/dashboards/coyote
 
   # Owl - Grafana plugin dashboards
-  - name: 'ContextCore Owl'
+  - name: 'Wayfinder Owl'
     orgId: 1
-    folder: 'ContextCore / Owl'
-    folderUid: 'contextcore-owl'
+    folder: 'Wayfinder / Owl'
+    folderUid: 'wayfinder-owl'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
@@ -90,10 +90,10 @@ providers:
       path: /etc/grafana/provisioning/dashboards/owl
 
   # External - Third-party/community dashboards
-  - name: 'ContextCore External'
+  - name: 'Wayfinder External'
     orgId: 1
-    folder: 'ContextCore / External'
-    folderUid: 'contextcore-external'
+    folder: 'Wayfinder / External'
+    folderUid: 'wayfinder-external'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30

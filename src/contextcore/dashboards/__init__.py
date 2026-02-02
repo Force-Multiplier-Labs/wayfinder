@@ -1,8 +1,8 @@
 """
-Dashboard provisioning and discovery module for ContextCore.
+Dashboard provisioning and discovery module for Wayfinder.
 
 Provides Grafana dashboard provisioning and auto-discovery for all
-ContextCore extension packs (core, squirrel, rabbit, beaver, fox, coyote, owl).
+Wayfinder extension packs (core, squirrel, rabbit, beaver, fox, coyote, owl).
 
 Example usage:
     from contextcore.dashboards import DashboardProvisioner, discover_all_dashboards

@@ -1,7 +1,7 @@
 {
   "uid": "contextcore-fox-fox-alert-automation",
   "title": "[FOX] Fox Alert Automation",
-  "description": "ContextCore Fox (Waagosh) - Alert context enrichment, criticality routing, and action telemetry",
+  "description": "Wayfinder Fox (Waagosh) - Alert context enrichment, criticality routing, and action telemetry",
   "tags": [
     "contextcore",
     "fox",

@@ -37,51 +37,51 @@ __all__ = [
 # Matches the providers in grafana/provisioning/dashboards/dashboards.yaml
 EXTENSION_REGISTRY: Dict[str, Dict[str, str]] = {
     "core": {
-        "name": "ContextCore Core",
-        "folder": "ContextCore",
-        "folder_uid": "contextcore-core",
+        "name": "Wayfinder Core",
+        "folder": "Wayfinder",
+        "folder_uid": "wayfinder-core",
         "description": "Core project management dashboards",
     },
     "squirrel": {
         "name": "Squirrel (Skills)",
-        "folder": "ContextCore / Squirrel",
-        "folder_uid": "contextcore-squirrel",
+        "folder": "Wayfinder / Squirrel",
+        "folder_uid": "wayfinder-squirrel",
         "description": "Skills library and value capabilities dashboards",
     },
     "rabbit": {
         "name": "Rabbit (Alert Automation)",
-        "folder": "ContextCore / Rabbit",
-        "folder_uid": "contextcore-rabbit",
+        "folder": "Wayfinder / Rabbit",
+        "folder_uid": "wayfinder-rabbit",
         "description": "Workflow and alert automation dashboards",
     },
     "beaver": {
         "name": "Beaver (LLM Abstraction)",
-        "folder": "ContextCore / Beaver",
-        "folder_uid": "contextcore-beaver",
+        "folder": "Wayfinder / Beaver",
+        "folder_uid": "wayfinder-beaver",
         "description": "LLM provider and contractor progress dashboards",
     },
     "fox": {
         "name": "Fox (Context Enrichment)",
-        "folder": "ContextCore / Fox",
-        "folder_uid": "contextcore-fox",
+        "folder": "Wayfinder / Fox",
+        "folder_uid": "wayfinder-fox",
         "description": "Alert automation with context enrichment dashboards",
     },
     "coyote": {
         "name": "Coyote (Multi-Agent Pipeline)",
-        "folder": "ContextCore / Coyote",
-        "folder_uid": "contextcore-coyote",
+        "folder": "Wayfinder / Coyote",
+        "folder_uid": "wayfinder-coyote",
         "description": "Multi-agent incident resolution dashboards",
     },
     "owl": {
         "name": "Owl (Grafana Plugins)",
-        "folder": "ContextCore / Owl",
-        "folder_uid": "contextcore-owl",
+        "folder": "Wayfinder / Owl",
+        "folder_uid": "wayfinder-owl",
         "description": "Grafana plugin monitoring and configuration dashboards",
     },
     "external": {
         "name": "External",
-        "folder": "ContextCore / External",
-        "folder_uid": "contextcore-external",
+        "folder": "Wayfinder / External",
+        "folder_uid": "wayfinder-external",
         "description": "Third-party and community dashboards",
     },
 }
@@ -131,13 +131,13 @@ class DashboardConfig:
     @property
     def folder(self) -> str:
         """Get the Grafana folder name for this dashboard."""
-        return EXTENSION_REGISTRY.get(self.extension, {}).get("folder", "ContextCore")
+        return EXTENSION_REGISTRY.get(self.extension, {}).get("folder", "Wayfinder")
 
     @property
     def folder_uid(self) -> str:
         """Get the Grafana folder UID for this dashboard."""
         return EXTENSION_REGISTRY.get(self.extension, {}).get(
-            "folder_uid", "contextcore"
+            "folder_uid", "wayfinder"
         )
 
 
@@ -338,7 +338,7 @@ def list_extensions() -> List[Dict[str, Union[str, int]]]:
     Example:
         >>> extensions = list_extensions()
         >>> extensions[0]
-        {'name': 'ContextCore Core', 'extension': 'core', 'count': 5, ...}
+        {'name': 'Wayfinder Core', 'extension': 'core', 'count': 5, ...}
     """
     extension_stats = []
 

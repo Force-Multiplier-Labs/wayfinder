@@ -1,6 +1,6 @@
 # Dashboard Installation Guide
 
-ContextCore automatically provisions Grafana dashboards during installation. This guide covers installation options and troubleshooting.
+Wayfinder automatically provisions Grafana dashboards during installation. This guide covers installation options and troubleshooting.
 
 ## Prerequisites
 
@@ -80,7 +80,7 @@ GRAFANA_API_KEY=glsa_xxxxx
 GRAFANA_ORG_ID=1
 
 # Dashboard options
-CONTEXTCORE_DASHBOARD_FOLDER=ContextCore
+CONTEXTCORE_DASHBOARD_FOLDER=Wayfinder
 CONTEXTCORE_DASHBOARD_REFRESH=30s
 ```
 
@@ -113,8 +113,8 @@ contextcore dashboards list
 
 # Expected output:
 # UID                        Title                        Folder
-# contextcore-portfolio      Project Portfolio Overview   ContextCore
-# contextcore-project-details Project Details             ContextCore
+# contextcore-portfolio      Project Portfolio Overview   Wayfinder
+# contextcore-project-details Project Details             Wayfinder
 ```
 
 ### Health Check
@@ -142,7 +142,7 @@ contextcore dashboards health-check
 ### No Data in Panels
 
 1. Verify data sources are correctly named
-2. Ensure ContextCore tasks have been created:
+2. Ensure Wayfinder tasks have been created:
    ```bash
    contextcore task start --id TEST-1 --title "Test task"
    ```
@@ -178,7 +178,7 @@ contextcore dashboards provision --force
 ## Uninstallation
 
 ```bash
-# Remove ContextCore dashboards
+# Remove Wayfinder dashboards
 contextcore dashboards delete
 
 # Remove with confirmation

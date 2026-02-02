@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "ContextCore Installation Verification - Self-monitoring dashboard showing installation completeness and requirement status",
+  "description": "Wayfinder Installation Verification - Self-monitoring dashboard showing installation completeness and requirement status",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -788,7 +788,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "ContextCore Installation Status",
+  "title": "Wayfinder Installation Status",
   "uid": "contextcore-installation",
   "version": 1,
   "weekStart": ""

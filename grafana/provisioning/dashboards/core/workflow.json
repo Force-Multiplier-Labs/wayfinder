@@ -3,7 +3,7 @@
     "list": []
   },
   "uid": "contextcore-workflow",
-  "title": "[RABBIT] ContextCore Workflow Manager",
+  "title": "[RABBIT] Wayfinder Workflow Manager",
   "description": "View project tasks and workflow executions from Tempo traces",
   "tags": [
     "contextcore",
@@ -389,32 +389,47 @@
             {
               "type": "value",
               "options": {
-                "spec": {"text": "Spec Creation", "color": "blue"}
+                "spec": {
+                  "text": "Spec Creation",
+                  "color": "blue"
+                }
               }
             },
             {
               "type": "value",
               "options": {
-                "draft": {"text": "Drafting Code", "color": "yellow"}
+                "draft": {
+                  "text": "Drafting Code",
+                  "color": "yellow"
+                }
               }
             },
             {
               "type": "value",
               "options": {
-                "review": {"text": "Code Review", "color": "orange"}
+                "review": {
+                  "text": "Code Review",
+                  "color": "orange"
+                }
               }
             },
             {
               "type": "value",
               "options": {
-                "integration": {"text": "Integration", "color": "green"}
+                "integration": {
+                  "text": "Integration",
+                  "color": "green"
+                }
               }
             }
           ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "blue", "value": null}
+              {
+                "color": "blue",
+                "value": null
+              }
             ]
           },
           "noValue": "No Active Workflow"
@@ -423,7 +438,9 @@
       "options": {
         "reduceOptions": {
           "values": false,
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": ""
         },
         "orientation": "auto",
@@ -468,9 +485,18 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 25},
-              {"color": "green", "value": 75}
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 25
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
             ]
           },
           "noValue": "0"
@@ -479,7 +505,9 @@
       "options": {
         "reduceOptions": {
           "values": false,
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": ""
         },
         "showThresholdLabels": false,
@@ -521,7 +549,9 @@
       "options": {
         "reduceOptions": {
           "values": false,
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": ""
         },
         "orientation": "auto",

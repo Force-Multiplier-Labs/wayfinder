@@ -1,5 +1,5 @@
 # Grafana Dashboard Dependencies
-# This manifest declares all external dependencies required by ContextCore dashboards.
+# This manifest declares all external dependencies required by Wayfinder dashboards.
 # Validated at: pre-commit, CI build, runtime (contextcore install verify)
 #
 # See docs/DEPENDENCY_MANIFEST_PATTERN.md for the full pattern specification.

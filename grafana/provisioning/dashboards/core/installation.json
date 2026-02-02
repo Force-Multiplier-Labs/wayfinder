@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "ContextCore Installation Verification - Self-monitoring dashboard showing installation completeness and requirement status. Run 'contextcore install verify --endpoint localhost:4317' to populate data.",
+  "description": "Wayfinder Installation Verification - Self-monitoring dashboard showing installation completeness and requirement status. Run 'contextcore install verify --endpoint localhost:4317' to populate data.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -829,7 +829,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "[CORE] ContextCore Installation Status",
+  "title": "[CORE] Wayfinder Installation Status",
   "uid": "cc-core-installation-status",
   "version": 1,
   "weekStart": ""

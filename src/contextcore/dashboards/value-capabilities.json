@@ -28,7 +28,7 @@
       "keepTime": true,
       "tags": ["contextcore"],
       "targetBlank": true,
-      "title": "ContextCore Dashboards",
+      "title": "Wayfinder Dashboards",
       "tooltip": "",
       "type": "dashboards",
       "url": ""
