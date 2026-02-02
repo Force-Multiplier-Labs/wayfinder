@@ -33,13 +33,21 @@ logger = logging.getLogger(__name__)
 if sys.platform == "win32":
     import msvcrt
 
+    # msvcrt.locking() only supports exclusive locks (no shared/read lock mode).
+    # Available modes: LK_NBLCK (non-blocking), LK_LOCK (blocking), LK_UNLCK.
+    # The `exclusive` parameter is accepted for API compatibility with the Unix
+    # branch but both modes acquire an exclusive lock on Windows.
+    _WIN_LOCK_LEN = 1024 * 1024  # 1 MiB — must exceed any state file size
+
     def _lock_file(f: IO, exclusive: bool = True) -> None:
         """Lock file on Windows."""
-        msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK if exclusive else msvcrt.LK_NBRLCK, 1)
+        f.seek(0)
+        msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, _WIN_LOCK_LEN)
 
     def _unlock_file(f: IO) -> None:
         """Unlock file on Windows."""
-        msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+        f.seek(0)
+        msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, _WIN_LOCK_LEN)
 else:
     import fcntl
 
