@@ -105,7 +105,7 @@ Understanding what each component IS and IS NOT is critical for maintaining clea
 | **Animal** | Rabbit |
 | **Anishinaabe** | Waabooz |
 | **Status** | Beta |
-| **Repository** | [contextcore-rabbit](https://github.com/contextcore/contextcore-rabbit) |
+| **Repository** | [contextcore-rabbit](https://github.com/Force-Multiplier-Labs/contextcore-rabbit) |
 | **License** | Equitable Use License v1.0 |
 
 **Description**: Rabbit is a trigger mechanism that "wakes up" systems in response to alerts. It receives webhook payloads from monitoring systems (Grafana, Alertmanager), parses them into a unified format, and dispatches configured actions. Think of it as the alarm clock of the system—it doesn't manage the day, it just makes sure the right things wake up at the right time.
@@ -193,7 +193,7 @@ server.run()
 | **Animal** | Coyote |
 | **Anishinaabe** | Wiisagi-ma'iingan |
 | **Status** | Beta |
-| **Repository** | [contextcore-coyote](https://github.com/contextcore/contextcore-coyote) |
+| **Repository** | [contextcore-coyote](https://github.com/Force-Multiplier-Labs/contextcore-coyote) |
 | **License** | Equitable Use License v1.0 |
 
 **Description**: Coyote automates the debugging lifecycle through a multi-agent pipeline:
@@ -253,7 +253,7 @@ print(result.summary())
 | **Animal** | Beaver |
 | **Anishinaabe** | Amik |
 | **Status** | Beta |
-| **Repository** | [contextcore-beaver](https://github.com/contextcore/contextcore-beaver) |
+| **Repository** | [contextcore-beaver](https://github.com/Force-Multiplier-Labs/contextcore-beaver) |
 | **License** | Equitable Use License v1.0 |
 
 **Description**: Beaver is the LLM provider abstraction layer. It provides a unified interface for interacting with multiple LLM providers (OpenAI, Anthropic, local models) with built-in cost tracking, token accounting, and Wayfinder telemetry integration.
@@ -306,7 +306,7 @@ print(f"Tokens: {client.session_tokens}")
 | **Animal** | Owl |
 | **Anishinaabe** | Gookooko'oo |
 | **Status** | Internal (not user-facing) |
-| **Repository** | [contextcore-owl](https://github.com/contextcore/contextcore-owl) |
+| **Repository** | [contextcore-owl](https://github.com/Force-Multiplier-Labs/contextcore-owl) |
 | **License** | Equitable Use License v1.0 |
 | **Depends On** | contextcore-beaver (optional, for scaffold script) |
 
@@ -330,7 +330,7 @@ print(f"Tokens: {client.session_tokens}")
 **Installation**:
 ```bash
 # Clone and build
-git clone https://github.com/contextcore/contextcore-owl
+git clone https://github.com/Force-Multiplier-Labs/contextcore-owl
 cd contextcore-owl
 npm install
 npm run build
@@ -364,7 +364,7 @@ grafana:
 | **Animal** | Squirrel |
 | **Anishinaabe** | Ajidamoo |
 | **Status** | Beta |
-| **Repository** | [contextcore-squirrel](https://github.com/contextcore/contextcore-squirrel) |
+| **Repository** | [contextcore-squirrel](https://github.com/Force-Multiplier-Labs/contextcore-squirrel) |
 | **License** | Equitable Use License v1.0 |
 
 **Description**: Squirrel is the skills library for Wayfinder. It provides ready-to-use skills that can be loaded into Tempo for token-efficient agent discovery. Skills use progressive disclosure—agents load minimal manifests first, then retrieve specific capabilities as needed.
@@ -471,8 +471,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/contextcore/contextcore-{animal}"
-Documentation = "https://github.com/contextcore/contextcore-{animal}#readme"
+Homepage = "https://github.com/Force-Multiplier-Labs/contextcore-{animal}"
+Documentation = "https://github.com/Force-Multiplier-Labs/contextcore-{animal}#readme"
 
 [build-system]
 requires = ["hatchling"]

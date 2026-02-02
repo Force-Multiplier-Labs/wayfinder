@@ -35,7 +35,7 @@ open http://localhost:3000
 
 ## Tech Stack
 
-- **Language**: Python 3.9+
+- **Language**: Python 3.11+
 - **CRD Framework**: kopf (Kubernetes Operator Framework)
 - **Telemetry**: OpenTelemetry SDK, OTLP export
 - **Reference Backend**: Grafana (Tempo, Mimir, Loki)
