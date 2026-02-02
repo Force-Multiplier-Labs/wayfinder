@@ -22,7 +22,7 @@ Complete installation guide for the Wayfinder observability stack.
 | Tool | Version | Check Command | Install (macOS) | Install (Windows) |
 |------|---------|---------------|-----------------|-------------------|
 | Docker | 20.10+ | `docker --version` | `brew install --cask docker` | `winget install Docker.DockerDesktop` |
-| Python | 3.9+ | `python3 --version` (`python` on Windows) | `brew install python@3.11` | `winget install Python.Python.3.11` |
+| Python | 3.11+ | `python3 --version` (`python` on Windows) | `brew install python@3.11` | `winget install Python.Python.3.11` |
 | kubectl | 1.28+ | `kubectl version --client` | `brew install kubectl` | `winget install Kubernetes.kubectl` |
 | Kind | 0.20+ | `kind --version` | `brew install kind` | `winget install Kubernetes.kind` |
 

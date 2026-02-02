@@ -41,7 +41,7 @@ The separation enables ecosystem growth and clarifies that the metadata model ha
 
 ## Tech Stack
 
-- **Language**: Python 3.9+ (async-first design)
+- **Language**: Python 3.11+ (async-first design)
 - **Models**: Pydantic v2 (strict validation)
 - **CLI**: Click 8.1+
 - **Telemetry**: OpenTelemetry SDK, OTLP export
