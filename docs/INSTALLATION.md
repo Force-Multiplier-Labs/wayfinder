@@ -1,6 +1,6 @@
-# ContextCore Installation Guide
+# Wayfinder Installation Guide
 
-Complete installation guide for ContextCore observability stack.
+Complete installation guide for the Wayfinder observability stack.
 
 ## Quick Navigation
 
@@ -32,16 +32,16 @@ Complete installation guide for ContextCore observability stack.
 | Docker Compose | 4GB | 2 cores | 10GB |
 | Kind Cluster | 8GB | 4 cores | 20GB |
 
-### Install ContextCore CLI
+### Install Wayfinder CLI
+
+All commands below assume you are in the repository root directory.
 
 ```bash
-cd ~/Documents/dev/wayfinder
-
 # Create and activate virtual environment (required on macOS with Homebrew Python)
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install ContextCore
+# Install Wayfinder
 pip install -e ".[dev]"
 
 # Verify
@@ -50,7 +50,7 @@ contextcore --version
 
 **Note:** The virtual environment must be activated in each new terminal session:
 ```bash
-source ~/Documents/dev/wayfinder/.venv/bin/activate
+source .venv/bin/activate
 ```
 
 ---
@@ -71,8 +71,6 @@ source ~/Documents/dev/wayfinder/.venv/bin/activate
 ### Quick Start
 
 ```bash
-cd ~/Documents/dev/wayfinder
-
 # One command setup (runs doctor, starts stack, waits for ready, seeds metrics)
 make full-setup
 ```
@@ -87,8 +85,6 @@ make full-setup
 ### Step-by-Step Setup (Alternative)
 
 ```bash
-cd ~/Documents/dev/wayfinder
-
 # 1. Preflight checks
 make doctor
 
@@ -140,8 +136,6 @@ make destroy
 ### Quick Start
 
 ```bash
-cd ~/Documents/dev/wayfinder
-
 # One command setup (interactive — confirms defaults, then creates cluster)
 make kind-up
 
@@ -188,7 +182,7 @@ source .venv/bin/activate
 contextcore install verify --endpoint localhost:4317
 
 # Open the dashboard
-open http://localhost:3000/d/contextcore-installation
+open http://localhost:3000/d/cc-core-installation-status
 ```
 
 ### Step-by-Step Setup (Alternative)
@@ -198,8 +192,6 @@ If you prefer manual control or need to debug:
 #### 1. Create Kind Cluster
 
 ```bash
-cd ~/Documents/dev/wayfinder
-
 # Run the script directly with verbose output
 deploy/kind/scripts/create-cluster.sh --verbose
 
@@ -291,12 +283,11 @@ kubectl delete namespace observability
 
 ## Terminal User Interface (TUI)
 
-> **New in v0.1.0:** ContextCore includes an interactive TUI for guided installation and monitoring.
+> **New in v0.1.0:** Wayfinder includes an interactive TUI for guided installation and monitoring.
 
 ### Launch the TUI
 
 ```bash
-cd ~/Documents/dev/wayfinder
 source .venv/bin/activate
 
 # Launch the welcome screen
@@ -466,10 +457,10 @@ Open in browser:
 
 | Dashboard | URL |
 |-----------|-----|
-| Installation Status | http://localhost:3000/d/contextcore-installation |
-| Project Portfolio | http://localhost:3000/d/contextcore-portfolio |
+| Installation Status | http://localhost:3000/d/cc-core-installation-status |
+| Project Portfolio | http://localhost:3000/d/cc-core-portfolio-overview |
 
-Login: `admin` / `admin`
+Login: `admin` / `admin` (Docker Compose default). Kind clusters use the password set during deployment — see `GRAFANA_PASSWORD` in environment variables below.
 
 ---
 
@@ -630,7 +621,7 @@ After installation:
    ```
 
 2. **View in dashboards:**
-   - Open http://localhost:3000/d/contextcore-portfolio
+   - Open http://localhost:3000/d/cc-core-portfolio-overview
    - See your task appear in the Project Portfolio
 
 3. **Explore the CLI:**

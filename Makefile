@@ -166,8 +166,8 @@ smoke-test: ## Validate entire stack is working after deployment
 	curl -sf http://localhost:12345/ready >/dev/null 2>&1 && { echo "$(GREEN)   ✅ Alloy responding (OTLP on 4317/4318)$(NC)"; PASSED=$$((PASSED+1)); } || echo "$(RED)   ❌ Alloy not accessible$(NC)"; \
 	echo "6. Checking Grafana datasources..."; \
 	curl -sf $(GRAFANA_URL)/api/datasources -u $(GRAFANA_USER):$(GRAFANA_PASSWORD) 2>/dev/null | grep -q "tempo\|mimir\|loki" && { echo "$(GREEN)   ✅ Datasources configured$(NC)"; PASSED=$$((PASSED+1)); } || echo "$(YELLOW)   ⚠️  Datasources may need provisioning$(NC)"; \
-	echo "7. Checking ContextCore CLI..."; \
-	PYTHONPATH=./src python3 -c "from contextcore import TaskTracker; print('ok')" >/dev/null 2>&1 && { echo "$(GREEN)   ✅ ContextCore CLI available$(NC)"; PASSED=$$((PASSED+1)); } || echo "$(RED)   ❌ ContextCore CLI not installed$(NC)"; \
+	echo "7. Checking Wayfinder CLI..."; \
+	PYTHONPATH=./src python3 -c "from contextcore import TaskTracker; print('ok')" >/dev/null 2>&1 && { echo "$(GREEN)   ✅ Wayfinder CLI available$(NC)"; PASSED=$$((PASSED+1)); } || echo "$(RED)   ❌ Wayfinder CLI not installed$(NC)"; \
 	echo ""; \
 	echo "$(CYAN)=== Smoke Test Complete: $$PASSED/$$TOTAL passed ===$(NC)"
 
@@ -220,14 +220,14 @@ seed-metrics: ## Run installation verification to populate dashboard metrics
 		PYTHONPATH=./src python3 -m contextcore.cli install verify --endpoint $(OTLP_ENDPOINT)
 	@echo ""
 	@echo "$(GREEN)Metrics exported to Mimir via $(OTLP_ENDPOINT)$(NC)"
-	@echo "Dashboard data should now be available at: $(GRAFANA_URL)/d/contextcore-installation"
+	@echo "Dashboard data should now be available at: $(GRAFANA_URL)/d/cc-core-installation-status"
 
-install-verify: install seed-metrics ## Install ContextCore and populate dashboard metrics
+install-verify: install seed-metrics ## Install Wayfinder and populate dashboard metrics
 	@echo ""
 	@echo "$(GREEN)=== Installation Complete ===$(NC)"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  1. View Installation dashboard: $(GRAFANA_URL)/d/contextcore-installation"
+	@echo "  1. View Installation dashboard: $(GRAFANA_URL)/d/cc-core-installation-status"
 	@echo "  2. Run 'make smoke-test' to validate stack"
 	@echo "  3. Start tracking tasks with: contextcore task start --id TASK-1 --title 'My Task'"
 
@@ -238,8 +238,8 @@ full-setup: up wait-ready seed-metrics ## Complete setup: start stack, wait for 
 	@echo "Wayfinder observability stack is ready!"
 	@echo ""
 	@echo "Dashboards available at: $(GRAFANA_URL)"
-	@echo "  - Installation Status: $(GRAFANA_URL)/d/contextcore-installation"
-	@echo "  - Project Portfolio:   $(GRAFANA_URL)/d/contextcore-portfolio"
+	@echo "  - Installation Status: $(GRAFANA_URL)/d/cc-core-installation-status"
+	@echo "  - Project Portfolio:   $(GRAFANA_URL)/d/cc-core-portfolio-overview"
 	@echo ""
 	@echo "Quick commands:"
 	@echo "  make health       - Check component health"
@@ -341,7 +341,7 @@ logs-grafana: ## Follow Grafana logs
 
 # === Development ===
 
-install: ## Install ContextCore in development mode
+install: ## Install Wayfinder in development mode
 	pip3 install -e ".[dev]"
 
 test: ## Run tests
@@ -401,11 +401,11 @@ kind-seed: ## Seed installation metrics into Kind cluster
 		PYTHONPATH=./src python3 -m contextcore.cli install verify --endpoint $(OTLP_ENDPOINT)
 	@echo ""
 	@echo "$(GREEN)Metrics exported to Mimir via $(OTLP_ENDPOINT)$(NC)"
-	@echo "Dashboard: $(GRAFANA_URL)/d/contextcore-installation"
+	@echo "Dashboard: $(GRAFANA_URL)/d/cc-core-installation-status"
 
 # === Dashboards ===
 
-dashboards-provision: ## Provision ContextCore dashboards to Grafana
+dashboards-provision: ## Provision Wayfinder dashboards to Grafana
 	@PYTHONPATH=./src python3 -m contextcore.cli dashboards provision
 
 dashboards-list: ## List provisioned dashboards in Grafana
