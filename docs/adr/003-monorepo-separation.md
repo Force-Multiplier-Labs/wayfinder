@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-02-01
-**Author:** Neil Yashinsky
+**Author:** Force Multiplier Labs
 
 ---
 

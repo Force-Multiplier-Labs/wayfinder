@@ -7,8 +7,8 @@ Tasks as OTel spans, insights as knowledge, handoffs as coordination.
 
 ## Metadata
 
-- **Owner:** neilyashinsky
-- **Repository:** [https://github.com/neilyashinsky/ContextCore](https://github.com/neilyashinsky/ContextCore)
+- **Owner:** force-multiplier-labs
+- **Repository:** [https://github.com/Force-Multiplier-Labs/contextcore](https://github.com/Force-Multiplier-Labs/contextcore)
 - **Domain:** observability
 - **Tier:** sdk
 - **Audience:** agent

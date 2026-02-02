@@ -12,8 +12,8 @@ description: |
   Tasks as OTel spans, insights as knowledge, handoffs as coordination.
   A2A protocol interoperability for cross-framework agent communication.
 
-owner: neilyashinsky
-repository: https://github.com/neilyashinsky/ContextCore
+owner: force-multiplier-labs
+repository: https://github.com/Force-Multiplier-Labs/contextcore
 
 labels:
   domain: observability

@@ -13,8 +13,8 @@ description: |
   User-facing capabilities for ContextCore, organized by value delivered.
   Project management as observability—eliminate the PM data silo by treating tasks as telemetry.
 
-owner: neilyashinsky
-repository: https://github.com/neilyashinsky/ContextCore
+owner: force-multiplier-labs
+repository: https://github.com/Force-Multiplier-Labs/contextcore
 
 labels:
   domain: project-management
