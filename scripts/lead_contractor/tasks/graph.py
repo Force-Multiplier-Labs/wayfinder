@@ -12,7 +12,7 @@ Define the data models for a knowledge graph that represents ProjectContext rela
 enabling impact analysis and cross-project intelligence.
 
 ## Context
-- This is for the ContextCore project at /Users/neilyashinsky/Documents/dev/ContextCore
+- This is for the Wayfinder project (ContextCore reference implementation)
 - The module should be placed at src/contextcore/graph/schema.py
 - ContextCore uses Pydantic v2 for models, Python 3.9+
 - ProjectContext CRD has: project (id, epic), business (criticality, value, owner, costCenter),

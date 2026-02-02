@@ -112,7 +112,7 @@ class ScriptGeneratorScreen(Screen):
             with Horizontal(classes="form-row"):
                 yield Label("Project Directory:", classes="form-label")
                 yield Input(
-                    value=str(Path.home() / "Documents" / "dev" / "ContextCore"),
+                    value=".",
                     id="project-dir",
                     classes="form-input"
                 )
@@ -140,7 +140,7 @@ class ScriptGeneratorScreen(Screen):
             # Kind-specific options (hidden by default)
             with Horizontal(classes="form-row", id="kind-options"):
                 yield Label("Cluster Name:", classes="form-label")
-                yield Input(value="o11y-dev", id="cluster-name", classes="form-input")
+                yield Input(value="wayfinder-dev", id="cluster-name", classes="form-input")
 
         with Horizontal(classes="button-row"):
             yield Button("Generate Script", id="generate-btn", variant="primary")
@@ -244,11 +244,11 @@ class ScriptGeneratorScreen(Screen):
     def _clear_form(self) -> None:
         """Clear the form and preview."""
         # Reset inputs to defaults
-        self.query_one("#project-dir", Input).value = str(Path.home() / "Documents" / "dev" / "ContextCore")
+        self.query_one("#project-dir", Input).value = "."
         self.query_one("#venv-path", Input).value = ".venv"
         self.query_one("#grafana-url", Input).value = ""
         self.query_one("#otel-endpoint", Input).value = ""
-        self.query_one("#cluster-name", Input).value = "o11y-dev"
+        self.query_one("#cluster-name", Input).value = "wayfinder-dev"
 
         # Clear preview
         if self._script_preview:

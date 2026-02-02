@@ -23,8 +23,9 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-# Add startd8 SDK to path
-sys.path.insert(0, "/Users/neilyashinsky/Documents/dev/startd8-sdk/src")
+# Add startd8 SDK to path (install startd8-sdk or set STARTD8_SDK_PATH)
+_sdk_path = os.environ.get("STARTD8_SDK_PATH", os.path.expanduser("~/Documents/dev/startd8-sdk/src"))
+sys.path.insert(0, _sdk_path)
 
 from startd8.workflows.builtin.lead_contractor_workflow import LeadContractorWorkflow
 
@@ -37,7 +38,7 @@ Define the data models for a knowledge graph that represents ProjectContext rela
 enabling impact analysis and cross-project intelligence.
 
 ## Context
-- This is for the ContextCore project at /Users/neilyashinsky/Documents/dev/ContextCore
+- This is for the Wayfinder project (ContextCore reference implementation)
 - The module should be placed at src/contextcore/graph/schema.py
 - ContextCore uses Pydantic v2 for models, Python 3.9+
 - ProjectContext CRD has: project (id, epic), business (criticality, value, owner, costCenter),
@@ -1090,7 +1091,7 @@ def save_result(result: dict, output_dir: Path, is_typescript: bool = False):
 
 def main():
     """Run Lead Contractor workflow for Phase 3 features."""
-    output_dir = Path("/Users/neilyashinsky/Documents/dev/ContextCore/generated/phase3")
+    output_dir = Path(__file__).resolve().parent.parent / "generated" / "phase3"
 
     # Each feature tuple: (task, name, context, is_typescript)
     features = [

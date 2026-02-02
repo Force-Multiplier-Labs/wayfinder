@@ -6,35 +6,19 @@ This guide walks through a complete teardown and fresh installation of the Conte
 
 - Docker and Docker Compose installed
 - Python 3.9+ with ContextCore installed (`pip install -e ".[dev]"`)
-- All commands run from the **project root directory**:
-
-```bash
-cd /Users/neilyashinsky/Documents/dev/ContextCore
-```
+- All commands run from the **project root directory**
 
 ---
-
-## Environment Notice
-
-**Two environments exist until datasets are merged:**
-
-| Environment | Path | Grafana Password | Purpose |
-|-------------|------|------------------|---------|
-| **DEV** | `~/Documents/dev/ContextCore` | `admin` | Development, newer code |
-| **TEST** | `~/Documents/Deploy` | `adminadminadmin` | Testing, stable deployments |
-
-Both target the `observability` namespace in the `o11y-dev` Kind cluster. Use the Grafana password to identify which environment you're connected to.
 
 ---
 
 ## Phase 1: Teardown (Clean Slate)
 
-**Directory:** `ContextCore/` (project root)
+**Directory:** project root
 
 ```bash
 # Ensure you're in the project root
 pwd
-# Should show: /Users/neilyashinsky/Documents/dev/ContextCore
 
 # 1. Stop any running containers
 make down
@@ -52,7 +36,7 @@ docker ps -a | grep contextcore       # Should show nothing
 
 ## Phase 2: Fresh Install
 
-**Directory:** `ContextCore/` (project root)
+**Directory:** project root
 
 ### Option A: One-Command Setup (Recommended)
 
@@ -88,7 +72,7 @@ make seed-metrics
 
 ## Phase 3: Verification Checklist
 
-**Directory:** `ContextCore/` (project root)
+**Directory:** project root
 
 Run each check and verify expected results:
 
@@ -111,7 +95,7 @@ Login: `admin` / `admin`
 
 ## Phase 4: Manual Verification (Optional)
 
-**Directory:** `ContextCore/` (project root)
+**Directory:** project root
 
 ### Check metrics exist in Mimir
 
@@ -170,7 +154,7 @@ Expected output: `Found 25 requirements`
 
 ## Troubleshooting
 
-**Directory:** `ContextCore/` (project root)
+**Directory:** project root
 
 ### Dashboard shows no data after `full-setup`
 
@@ -245,8 +229,6 @@ Copy-paste ready sequence for a full reinstall:
 
 ```bash
 # Navigate to project root
-cd /Users/neilyashinsky/Documents/dev/ContextCore
-
 # Teardown
 make down
 make destroy  # Type 'yes' when prompted

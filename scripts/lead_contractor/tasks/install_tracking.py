@@ -26,7 +26,7 @@ Create a bash library `install-state.sh` that provides functions for managing
 installation state in a JSON file, enabling resume and repair capabilities.
 
 ## Context
-- This is for the ContextCore project at /Users/neilyashinsky/Documents/dev/ContextCore
+- This is for the Wayfinder project (ContextCore reference implementation)
 - The script should be placed at scripts/install-state.sh
 - State file location: ~/.contextcore/install-state.json
 - Must work with bash 4.0+ and require only jq as dependency
@@ -35,7 +35,7 @@ installation state in a JSON file, enabling resume and repair capabilities.
 ```json
 {
   "version": "1.0",
-  "cluster_name": "o11y-dev",
+  "cluster_name": "wayfinder-dev",
   "started_at": "2024-01-22T15:30:00Z",
   "updated_at": "2024-01-22T15:35:00Z",
   "steps": {
@@ -232,7 +232,7 @@ installation with full resume, repair, and status checking capabilities.
 - This is for the ContextCore project
 - The script should be placed at scripts/create-cluster.sh
 - Sources install-state.sh and step-executor.sh
-- Cluster name: o11y-dev
+- Cluster name: wayfinder-dev
 - K8s manifests: k8s/observability/
 
 ## CLI Interface
@@ -250,7 +250,7 @@ Options:
   --help, -h      Show this help message
 
 Environment:
-  CLUSTER_NAME    Cluster name (default: o11y-dev)
+  CLUSTER_NAME    Cluster name (default: wayfinder-dev)
   KUBECONFIG      kubectl config (default: ~/.kube/config)
 ```
 
@@ -424,7 +424,7 @@ emit_metric() {
 ```bash
 MIMIR_URL=${MIMIR_URL:-http://localhost:9009}
 METRICS_ENABLED=${METRICS_ENABLED:-auto}  # auto, true, false
-CLUSTER_NAME=${CLUSTER_NAME:-o11y-dev}
+CLUSTER_NAME=${CLUSTER_NAME:-wayfinder-dev}
 ```
 
 ## Implementation Requirements
@@ -661,7 +661,7 @@ Add if not exists:
   "name": "cluster",
   "type": "query",
   "query": "label_values(contextcore_install_step_status, cluster)",
-  "current": {"text": "o11y-dev", "value": "o11y-dev"},
+  "current": {"text": "wayfinder-dev", "value": "wayfinder-dev"},
   "refresh": 2
 }
 ```

@@ -15,7 +15,7 @@ Features:
 
 Usage:
     # Activate venv first
-    cd ~/Documents/dev/ContextCore
+    cd <wayfinder project root>
     source .venv/bin/activate
 
     # List all features

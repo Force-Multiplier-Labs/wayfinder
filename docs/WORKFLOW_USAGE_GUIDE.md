@@ -211,14 +211,9 @@ export GRAFANA_URL=http://localhost:3000
 export GRAFANA_PASSWORD=admin  # or adminadminadmin for TEST env
 ```
 
-### Two-Environment Setup
+### Environment
 
-| Environment | Path | Grafana Password |
-|-------------|------|------------------|
-| DEV | `~/Documents/dev/ContextCore` | `admin` |
-| TEST | `~/Documents/Deploy` | `adminadminadmin` |
-
-Always verify which environment you're in before making changes.
+All development uses the wayfinder project root. Default Grafana credentials: `admin` / `admin`.
 
 ## Troubleshooting Commands
 

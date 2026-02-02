@@ -119,13 +119,13 @@ These 4 small-effort, high-priority items could be implemented before building t
 
 | Document | Location | Purpose |
 |---|---|---|
-| **Workflow Base** | `/Users/neilyashinsky/Documents/dev/startd8-sdk/src/startd8/workflows/base.py` | Workflow protocol definition |
-| **Workflow Models** | `/Users/neilyashinsky/Documents/dev/startd8-sdk/src/startd8/workflows/models.py` | WorkflowResult, StepResult, WorkflowMetadata |
-| **Lead Contractor Models** | `/Users/neilyashinsky/Documents/dev/startd8-sdk/src/startd8/workflows/builtin/lead_contractor_models.py` | Pattern for phase-specific models |
-| **Lead Contractor Workflow** | `/Users/neilyashinsky/Documents/dev/startd8-sdk/src/startd8/workflows/builtin/lead_contractor_workflow.py` | Pattern for multi-phase workflow |
-| **Scaffold System** | `/Users/neilyashinsky/Documents/dev/startd8-sdk/src/startd8/workflows/scaffold.py` | Existing scaffolding (relevant to authoring benefits) |
-| **Registry** | `/Users/neilyashinsky/Documents/dev/startd8-sdk/src/startd8/workflows/registry.py` | Workflow discovery (relevant to discovery benefits) |
-| **Templates** | `/Users/neilyashinsky/Documents/dev/startd8-sdk/src/startd8/workflows/templates/` | 4 Jinja2 templates (basic, pipeline, multi_agent, async) |
+| **Workflow Base** | `startd8-sdk/src/startd8/workflows/base.py` | Workflow protocol definition |
+| **Workflow Models** | `startd8-sdk/src/startd8/workflows/models.py` | WorkflowResult, StepResult, WorkflowMetadata |
+| **Lead Contractor Models** | `startd8-sdk/src/startd8/workflows/builtin/lead_contractor_models.py` | Pattern for phase-specific models |
+| **Lead Contractor Workflow** | `startd8-sdk/src/startd8/workflows/builtin/lead_contractor_workflow.py` | Pattern for multi-phase workflow |
+| **Scaffold System** | `startd8-sdk/src/startd8/workflows/scaffold.py` | Existing scaffolding (relevant to authoring benefits) |
+| **Registry** | `startd8-sdk/src/startd8/workflows/registry.py` | Workflow discovery (relevant to discovery benefits) |
+| **Templates** | `startd8-sdk/src/startd8/workflows/templates/` | 4 Jinja2 templates (basic, pipeline, multi_agent, async) |
 
 ### Plan Section Quick Reference
 
@@ -160,7 +160,7 @@ These files remain uncommitted from other work streams:
 
 ### Environment Note
 
-The StartD8 SDK is at `/Users/neilyashinsky/Documents/dev/startd8-sdk/` (separate repo from ContextCore). Phase C+ work will require working in both repos.
+The StartD8 SDK is at `startd8-sdk/` (separate repo from ContextCore). Phase C+ work will require working in both repos.
 
 ---
 

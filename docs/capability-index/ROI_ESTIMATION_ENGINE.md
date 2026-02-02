@@ -267,7 +267,7 @@ When a benefit ships, update `by_delivery_status` -- move its cost from `gap` to
 All ROI calculations live inside the pain points manifest:
 
 ```
-/Users/neilyashinsky/Documents/dev/ContextCore/docs/capability-index/contextcore.pain_points.yaml
+./docs/capability-index/contextcore.pain_points.yaml
 
   Lines 37-103:    org_profiles (3 reference orgs)
   Lines 203-1700:  28 pain points, each with roi_estimate block

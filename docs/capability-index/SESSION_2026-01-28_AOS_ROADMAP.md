@@ -9,7 +9,7 @@
 
 ### 1. Created Dashboard Registry
 
-**File:** `/Users/neilyashinsky/Documents/ContextCore/DASHBOARDS.md`
+**File:** `DASHBOARDS.md`
 
 Catalogued 59+ Grafana dashboards across the system:
 - ContextCore core dashboards (7)
@@ -20,13 +20,13 @@ Catalogued 59+ Grafana dashboards across the system:
 
 ### 2. Created Mole Dashboard Restoration Guide
 
-**File:** `/Users/neilyashinsky/Documents/dev/contextcore-mole/docs/DASHBOARD_RESTORATION.md`
+**File:** `contextcore-mole/docs/DASHBOARD_RESTORATION.md`
 
 Documented how to use the mole subsystem to recover dashboards and their related telemetry data from Tempo trace exports.
 
 ### 3. Created Standards Alignment Document
 
-**File:** `/Users/neilyashinsky/Documents/dev/ContextCore/docs/STANDARDS_ALIGNMENT.md`
+**File:** `./docs/STANDARDS_ALIGNMENT.md`
 
 Mapped ContextCore's implementation against:
 - OpenTelemetry Semantic Conventions
@@ -178,13 +178,13 @@ The 5-phase workflow from `CONTEXTCORE_ROADMAP_PROMPT.md` was used because:
 ## Files Created/Modified
 
 ```
-/Users/neilyashinsky/Documents/ContextCore/
+wayfinder/
 └── DASHBOARDS.md                           # NEW - Dashboard registry
 
-/Users/neilyashinsky/Documents/dev/contextcore-mole/docs/
+contextcore-mole/docs/
 └── DASHBOARD_RESTORATION.md                # NEW - Mole restoration guide
 
-/Users/neilyashinsky/Documents/dev/ContextCore/docs/
+./docs/
 ├── STANDARDS_ALIGNMENT.md                  # NEW - Standards mapping
 └── capability-index/
     ├── contextcore.benefits.yaml           # UPDATED v1.1.0

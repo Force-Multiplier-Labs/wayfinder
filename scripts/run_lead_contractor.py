@@ -12,8 +12,9 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-# Add startd8 SDK to path
-sys.path.insert(0, "/Users/neilyashinsky/Documents/dev/startd8-sdk/src")
+# Add startd8 SDK to path (install startd8-sdk or set STARTD8_SDK_PATH)
+_sdk_path = os.environ.get("STARTD8_SDK_PATH", os.path.expanduser("~/Documents/dev/startd8-sdk/src"))
+sys.path.insert(0, _sdk_path)
 
 from startd8.workflows.builtin.lead_contractor_workflow import LeadContractorWorkflow
 
@@ -26,7 +27,7 @@ Generate load tests (k6) and chaos tests (chaos-mesh) directly from ProjectConte
 eliminating manual test specification.
 
 ## Context
-- This is for the ContextCore project at /Users/neilyashinsky/Documents/dev/ContextCore
+- This is for the Wayfinder project (ContextCore reference implementation)
 - The module should be placed at src/contextcore/generators/slo_tests.py
 - ContextCore uses Pydantic v2 for models, Click for CLI
 - ProjectContext has spec fields: requirements (latencyP99, latencyP50, throughput, availability, errorBudget),
@@ -255,7 +256,7 @@ def save_result(result: dict, output_dir: Path):
 
 def main():
     """Run Lead Contractor workflow for all Phase 2 features."""
-    output_dir = Path("/Users/neilyashinsky/Documents/dev/ContextCore/generated")
+    output_dir = Path(__file__).resolve().parent.parent / "generated"
 
     features = [
         (FEATURE_2_1_TASK, "Feature_2_1_SLO_Tests"),

@@ -147,13 +147,13 @@ Next time I create a benefits manifest for a different project, the pain points 
 
 | File | Path |
 |---|---|
-| Pain points manifest | `/Users/neilyashinsky/Documents/dev/ContextCore/docs/capability-index/contextcore.pain_points.yaml` |
-| Harbor tour HTML | `/Users/neilyashinsky/Documents/dev/ContextCore/docs/capability-index/pain-points-harbor-tour.html` |
-| Usage guide | `/Users/neilyashinsky/Documents/dev/ContextCore/docs/capability-index/PAIN_POINTS_GUIDE.md` |
-| Benefits manifest | `/Users/neilyashinsky/Documents/dev/ContextCore/docs/capability-index/contextcore.benefits.yaml` |
-| User capability index | `/Users/neilyashinsky/Documents/dev/ContextCore/docs/capability-index/contextcore.user.yaml` |
-| Agent capability index | `/Users/neilyashinsky/Documents/dev/ContextCore/docs/capability-index/contextcore.agent.yaml` |
-| KM lessons (patterns) | `/Users/neilyashinsky/Documents/craft/Lessons_Learned/knowledge_management/lessons/04-organization-indexing.md` |
+| Pain points manifest | `./docs/capability-index/contextcore.pain_points.yaml` |
+| Harbor tour HTML | `./docs/capability-index/pain-points-harbor-tour.html` |
+| Usage guide | `./docs/capability-index/PAIN_POINTS_GUIDE.md` |
+| Benefits manifest | `./docs/capability-index/contextcore.benefits.yaml` |
+| User capability index | `./docs/capability-index/contextcore.user.yaml` |
+| Agent capability index | `./docs/capability-index/contextcore.agent.yaml` |
+| KM lessons (patterns) | `knowledge_management/lessons/04-organization-indexing.md (external)` |
 
 ## The Real ROI
 

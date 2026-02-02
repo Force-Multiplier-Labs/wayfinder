@@ -92,7 +92,7 @@ Before running the script, verify:
 The script is now robust and will handle errors gracefully:
 
 ```bash
-cd ~/Documents/dev/ContextCore
+cd <wayfinder project root>
 source .venv/bin/activate
 
 # Run all features (will continue even if one fails)

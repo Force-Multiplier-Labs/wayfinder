@@ -32,8 +32,8 @@ Looking at the review feedback, I see the main issue is with invalid panel types
           "definition": "label_values(contextcore_install_step_status, cluster)",
           "query": "label_values(contextcore_install_step_status, cluster)",
           "current": {
-            "text": "o11y-dev",
-            "value": "o11y-dev"
+            "text": "wayfinder-dev",
+            "value": "wayfinder-dev"
           },
           "refresh": 2,
           "includeAll": false,

@@ -57,7 +57,7 @@ Transform the ContextCore installation process from a one-shot script into a **r
 ```json
 {
   "version": "1.0",
-  "cluster_name": "o11y-dev",
+  "cluster_name": "wayfinder-dev",
   "started_at": "2024-01-22T15:30:00Z",
   "updated_at": "2024-01-22T15:35:00Z",
   "steps": {
@@ -98,7 +98,7 @@ Transform the ContextCore installation process from a one-shot script into a **r
 | Step ID | Description | Idempotency Check | Recovery Action |
 |---------|-------------|-------------------|-----------------|
 | `preflight` | Check Docker, kind, kubectl | Always re-run (fast) | Install missing tools |
-| `cluster_create` | Create Kind cluster | `kind get clusters \| grep o11y-dev` | Skip if exists |
+| `cluster_create` | Create Kind cluster | `kind get clusters \| grep wayfinder-dev` | Skip if exists |
 | `manifests_apply` | Apply k8s manifests | Check ConfigMaps exist | Re-apply (idempotent) |
 | `pods_ready` | Wait for pods Running | `kubectl get pods` status | Wait/restart pods |
 | `services_verify` | Check ports accessible | `nc -z localhost PORT` | Diagnose networking |
@@ -160,7 +160,7 @@ Add new panels to Installation Status dashboard:
 
 ### Phase 1: State File Infrastructure
 
-**File**: `~/Documents/Deploy/scripts/install-state.sh` (sourced by create-cluster.sh)
+**File**: `deploy/kind/scripts/install-state.sh` (sourced by create-cluster.sh)
 
 ```bash
 #!/bin/bash

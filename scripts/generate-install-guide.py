@@ -133,7 +133,7 @@ def detect_environment(project_root: Path) -> EnvironmentInfo:
                         if host_port:
                             env.ports[host_port] = container_port
         except Exception:
-            env.kind_cluster_name = "o11y-dev"  # Default
+            env.kind_cluster_name = "wayfinder-dev"  # Default
 
     # Check if Kind cluster is running
     if env.kind_cluster_name:

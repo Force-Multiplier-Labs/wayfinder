@@ -5,11 +5,11 @@ Run Lead Contractor Workflow for ContextCore TUI Implementation.
 This script uses the startd8 SDK's Lead Contractor workflow to implement
 the Terminal User Interface (TUI) for ContextCore installation and management.
 
-Working Directory: ~/Documents/dev/ContextCore
+Working Directory: .
 
 Usage:
     # Activate venv first
-    cd ~/Documents/dev/ContextCore
+    cd .
     source .venv/bin/activate
 
     # Run all features
@@ -24,7 +24,7 @@ Usage:
     python3 scripts/run_lead_contractor_tui.py 6   # CLI Integration
 
 Output:
-    Generated code will be saved to: ~/Documents/dev/ContextCore/generated/tui/
+    Generated code will be saved to: ./generated/tui/
 """
 
 import sys
@@ -84,7 +84,7 @@ Build the main Textual application class that serves as the foundation for the T
 with screen routing, theming, and global key bindings.
 
 ## Context
-- This is for ContextCore at /Users/neilyashinsky/Documents/dev/ContextCore
+- This is for ContextCore at the wayfinder project root
 - File location: src/contextcore/tui/app.py
 - Uses Textual framework (textual>=0.47.0)
 - Should work with Python 3.9+
@@ -304,7 +304,7 @@ For Docker Compose:
 - OTLP Endpoint (default: localhost:4317)
 
 For Kind Cluster:
-- Cluster name (default: o11y-dev)
+- Cluster name (default: wayfinder-dev)
 - Namespace (default: observability)
 
 For Custom:
@@ -1235,22 +1235,22 @@ def main():
     print("NEXT STEPS")
     print(f"{'='*70}")
     print("""
-All commands should be run from: ~/Documents/dev/ContextCore
+All commands should be run from: .
 
 1. Review generated code:
-   cd ~/Documents/dev/ContextCore
+   cd .
    ls -la generated/tui/
 
 2. Create the TUI module structure:
-   cd ~/Documents/dev/ContextCore
+   cd .
    mkdir -p src/contextcore/tui/{screens,widgets,utils,styles}
 
 3. Copy generated files to the appropriate locations:
-   cd ~/Documents/dev/ContextCore
+   cd .
    # Copy files from generated/tui/ to src/contextcore/tui/
 
 4. Activate virtual environment and add Textual dependency:
-   cd ~/Documents/dev/ContextCore
+   cd .
    source .venv/bin/activate
    pip3 install textual>=0.47.0
 
@@ -1260,7 +1260,7 @@ All commands should be run from: ~/Documents/dev/ContextCore
    main.add_command(tui)
 
 6. Test the TUI:
-   cd ~/Documents/dev/ContextCore
+   cd .
    source .venv/bin/activate
    contextcore tui launch
 """)

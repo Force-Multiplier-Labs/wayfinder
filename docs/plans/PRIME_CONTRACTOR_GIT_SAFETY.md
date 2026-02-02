@@ -216,7 +216,7 @@ We will use the Prime Contractor workflow itself to implement these features inc
 
 ```bash
 # Add features in dependency order
-cd ~/Documents/dev/ContextCore
+cd <wayfinder project root>
 
 python3 scripts/prime_contractor/cli.py add "Git Status Check" \
   --description "Add check_git_status() method to PrimeContractorWorkflow. Returns (is_clean, dirty_files). Call at start of run() and print warning if dirty." \

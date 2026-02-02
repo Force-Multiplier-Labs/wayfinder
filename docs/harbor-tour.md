@@ -9,7 +9,7 @@ This is your self-guided tour for exploring what's here and understanding why it
 ## Quick Orientation
 
 ```
-You Are Here: ~/Documents/dev/ContextCore
+You Are Here: wayfinder/
 ├── Your new observability stack awaits
 ├── A TUI wizard to get you running
 └── Zero status reports, forever

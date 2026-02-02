@@ -129,7 +129,7 @@ class AutoInstaller:
         # Create cluster
         success, stdout, stderr = self.run_command([
             "kind", "create", "cluster",
-            "--name", "o11y-dev"
+            "--name", "wayfinder-dev"
         ])
 
         if not success:

@@ -8,7 +8,7 @@ A structured workflow for adding capabilities to the ContextCore roadmap using b
 
 **Project**: ContextCore
 **Mission**: Project management as observability—eliminate the PM data silo by treating tasks as telemetry.
-**Repository**: `/Users/neilyashinsky/Documents/dev/ContextCore`
+**Repository**: Wayfinder (this repo)
 
 **Key Insight**: You already have observability infrastructure (Grafana, Tempo, Loki). ContextCore lets you use it for project tracking without new tools.
 
