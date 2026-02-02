@@ -90,9 +90,9 @@ all = [
 contextcore = "contextcore.cli:main"
 
 [project.urls]
-Documentation = "https://github.com/forcemultiplier-labs/wayfinder#readme"
-Issues = "https://github.com/forcemultiplier-labs/wayfinder/issues"
-Source = "https://github.com/forcemultiplier-labs/wayfinder"
+Documentation = "https://github.com/Force-Multiplier-Labs/wayfinder#readme"
+Issues = "https://github.com/Force-Multiplier-Labs/wayfinder/issues"
+Source = "https://github.com/Force-Multiplier-Labs/wayfinder"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/contextcore"]

@@ -397,6 +397,6 @@ Emit dependency status as part of installation verification:
 
 ## Related Documents
 
-- [Semantic Conventions](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/semantic-conventions.md) - Telemetry attribute naming
+- [Semantic Conventions](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/semantic-conventions.md) - Telemetry attribute naming
 - [Installation Verification](../src/contextcore/install/README.md) - Runtime verification
 - [CLAUDE.md](../CLAUDE.md) - Project conventions

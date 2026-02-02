@@ -96,4 +96,4 @@ See [OTEL_GENAI_ADOPTION_PLAN.md](OTEL_GENAI_ADOPTION_PLAN.md) for the execution
 ## 5. References
 
 - [OTel GenAI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/)
-- [ContextCore Agent Semantic Conventions](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/agent-semantic-conventions.md)
+- [ContextCore Agent Semantic Conventions](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/agent-semantic-conventions.md)

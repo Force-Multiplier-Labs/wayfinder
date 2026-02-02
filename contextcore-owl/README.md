@@ -223,4 +223,4 @@ Equitable Use License v1.0
 - [Wayfinder Documentation](https://github.com/contextcore/contextcore)
 - [Grafana Plugin Development](https://grafana.com/developers/plugin-tools/)
 - [Wayfinder Expansion Packs](../docs/EXPANSION_PACKS.md)
-- [Naming Convention](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/NAMING_CONVENTION.md)
+- [Naming Convention](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/NAMING_CONVENTION.md)

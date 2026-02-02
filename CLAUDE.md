@@ -32,7 +32,7 @@ Use `contextcore terminology lookup <term>` for full definitions.
 
 ### History: Separation from ContextCore Monorepo
 
-This repo was extracted from the original `ContextCore` monorepo (at `~/Documents/dev/ContextCore`) which combined both the spec and the implementation. Per [ADR-002](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/adr/002-naming-wayfinder.md):
+This repo was extracted from the original `ContextCore` monorepo (at `~/Documents/dev/ContextCore`) which combined both the spec and the implementation. Per [ADR-002](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/adr/002-naming-wayfinder.md):
 
 - **ContextCore** = the standard/specification (schemas, semantic conventions, protocols) — now in `contextcore-spec` repo
 - **Wayfinder** = Force Multiplier Labs' reference implementation — this repo
@@ -382,8 +382,8 @@ All domain types are in `src/contextcore/contracts/types.py`:
 
 | ADR | Decision | Confidence |
 |-----|----------|------------|
-| [001](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/adr/001-tasks-as-spans.md) | Model tasks as OpenTelemetry spans | 0.95 |
-| [002](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/adr/002-naming-wayfinder.md) | Separate naming: ContextCore (standard) vs Wayfinder (implementation) | Accepted |
+| [001](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/adr/001-tasks-as-spans.md) | Model tasks as OpenTelemetry spans | 0.95 |
+| [002](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/adr/002-naming-wayfinder.md) | Separate naming: ContextCore (standard) vs Wayfinder (implementation) | Accepted |
 
 ## Must Do
 
@@ -488,6 +488,6 @@ Deploys: Grafana, Tempo, Mimir, Loki, Alloy (OTLP collector).
 - [docs/EXPANSION_PACKS.md](docs/EXPANSION_PACKS.md) — Design boundaries for each pack
 - [docs/INSTALLATION.md](docs/INSTALLATION.md) — Setup guide
 - [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) — Known limitations
-- [docs/semantic-conventions.md](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/semantic-conventions.md) — Full attribute reference (spec)
-- [docs/agent-communication-protocol.md](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/agent-communication-protocol.md) — Agent integration (spec)
-- [docs/adr/](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/adr/) — Architecture decision records (spec)
+- [docs/semantic-conventions.md](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/semantic-conventions.md) — Full attribute reference (spec)
+- [docs/agent-communication-protocol.md](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/agent-communication-protocol.md) — Agent integration (spec)
+- [docs/adr/](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/adr/) — Architecture decision records (spec)

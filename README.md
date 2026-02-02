@@ -1,6 +1,6 @@
 # Wayfinder
 
-**Wayfinder** is the reference implementation of the [ContextCore](https://github.com/forcemultiplier-labs/contextcore-spec) metadata standard — a project management observability framework that models tasks as OpenTelemetry spans.
+**Wayfinder** is the reference implementation of the [ContextCore](https://github.com/Force-Multiplier-Labs/contextcore-spec) metadata standard — a project management observability framework that models tasks as OpenTelemetry spans.
 
 It eliminates manual status reporting by deriving project health from existing artifact metadata (commits, PRs, CI results) and exports via OTLP to any compatible backend.
 
@@ -57,14 +57,14 @@ Animal-named packages using Anishinaabe (Ojibwe) names honoring the indigenous p
 
 ## The ContextCore Standard
 
-This implementation is built on the **ContextCore specification** — a vendor-agnostic metadata standard that defines how business context is structured and exchanged. The spec lives in a [separate repository](https://github.com/forcemultiplier-labs/contextcore-spec) and includes:
+This implementation is built on the **ContextCore specification** — a vendor-agnostic metadata standard that defines how business context is structured and exchanged. The spec lives in a [separate repository](https://github.com/Force-Multiplier-Labs/contextcore-spec) and includes:
 
 - CRD schemas (`ProjectContext`)
 - Semantic conventions (attribute vocabulary)
 - Agent communication protocol
 - Terminology definitions
 
-See [ADR-002](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/adr/002-naming-wayfinder.md) for the naming decision.
+See [ADR-002](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/adr/002-naming-wayfinder.md) for the naming decision.
 
 ## License
 

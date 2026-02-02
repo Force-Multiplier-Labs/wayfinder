@@ -189,4 +189,4 @@ contextcore dashboards delete --yes
 
 - [PROJECT_PORTFOLIO_OVERVIEW.md](PROJECT_PORTFOLIO_OVERVIEW.md) - Portfolio dashboard specification
 - [PROJECT_DETAILS.md](PROJECT_DETAILS.md) - Project details dashboard specification
-- [../semantic-conventions.md](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/semantic-conventions.md) - Query conventions used by dashboards
+- [../semantic-conventions.md](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/semantic-conventions.md) - Query conventions used by dashboards

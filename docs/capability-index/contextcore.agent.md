@@ -443,7 +443,7 @@ Documented pivots to prevent re-attempting failed approaches:
 
 ## Global Evidence
 
-- **doc**: [`docs/semantic-conventions.md`](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/semantic-conventions.md) - Attribute definitions for insight.*, handoff.*, agent.*
+- **doc**: [`docs/semantic-conventions.md`](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/semantic-conventions.md) - Attribute definitions for insight.*, handoff.*, agent.*
 - **doc**: `inbox/OTEL_ALIGNED_MATURITY_MODEL.md` - Maturity level definitions and transition criteria
 
 ## Changelog

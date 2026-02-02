@@ -424,7 +424,7 @@ Create a Grafana dashboard to monitor code generation health:
 - [ ] Add verification span with completeness check
 - [ ] Create Grafana dashboard for monitoring
 - [ ] Add TraceQL queries to CLAUDE.md
-- [ ] Document in [agent-communication-protocol.md](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/agent-communication-protocol.md)
+- [ ] Document in [agent-communication-protocol.md](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/agent-communication-protocol.md)
 
 ---
 

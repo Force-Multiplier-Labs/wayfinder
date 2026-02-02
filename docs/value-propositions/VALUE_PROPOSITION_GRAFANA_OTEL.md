@@ -380,7 +380,7 @@ Your task is now a span. Welcome to project observability.
 - `sprint.id`, `sprint.name`, `sprint.goal`
 - `project.id`, `project.epic`
 
-Check the [semantic conventions doc](https://github.com/forcemultiplier-labs/contextcore-spec/blob/main/docs/semantic-conventions.md) and contribute what's missing.
+Check the [semantic conventions doc](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/semantic-conventions.md) and contribute what's missing.
 
 ### For Platform Engineers
 
