@@ -68,10 +68,10 @@ kubectl -n observability rollout restart deployment/grafana
 # View Grafana at http://localhost:3000 (admin/admin)
 ```
 
-**Kind cluster mounts** (defined in `/Users/neilyashinsky/Documents/Deploy/kind-cluster.yaml`):
-- Host: `contextcore-grafana/grafana/plugins/*` → Container: `/plugins/contextcore/*`
+**Kind cluster mounts** (defined in `deploy/kind/kind-dev.yaml.tmpl`):
+- Host: `contextcore-owl/grafana/plugins` → Container: `/plugins/contextcore`
 - Grafana deployment uses hostPath volumes to mount from `/plugins/contextcore/*`
-- **Note**: Kind config still references `contextcore-grafana/` (legacy name before rename to `contextcore-owl`)
+- The `__WAYFINDER_ROOT__` placeholder is resolved by `deploy/kind/scripts/create-cluster.sh` at runtime
 
 ### Known Issue: Docker Desktop File Sync
 
@@ -104,10 +104,10 @@ docker cp grafana/plugins/PLUGIN_NAME/module.js NODE:/plugins/contextcore/PLUGIN
 
 # Example for workflow panel on worker2:
 docker cp grafana/plugins/contextcore-workflow-panel/module.js \
-  o11y-dev-worker2:/plugins/contextcore/contextcore-workflow-panel/module.js
+  wayfinder-dev-worker2:/plugins/contextcore/contextcore-workflow-panel/module.js
 
 # Copy to ALL nodes to prevent issues on pod reschedule
-for node in o11y-dev-control-plane o11y-dev-worker o11y-dev-worker2; do
+for node in wayfinder-dev-control-plane wayfinder-dev-worker wayfinder-dev-worker2; do
   docker cp grafana/plugins/contextcore-workflow-panel/module.js \
     $node:/plugins/contextcore/contextcore-workflow-panel/module.js 2>/dev/null || true
 done
@@ -131,7 +131,7 @@ cp -r ../../grafana/plugins/contextcore-workflow-panel/* \
   ../../../contextcore-grafana/grafana/plugins/contextcore-workflow-panel/
 
 # 4. Sync to Kind nodes (workaround for Docker Desktop file sync)
-for node in o11y-dev-control-plane o11y-dev-worker o11y-dev-worker2; do
+for node in wayfinder-dev-control-plane wayfinder-dev-worker wayfinder-dev-worker2; do
   docker cp ../../grafana/plugins/contextcore-workflow-panel/module.js \
     $node:/plugins/contextcore/contextcore-workflow-panel/module.js 2>/dev/null || true
 done

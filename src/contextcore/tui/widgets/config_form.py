@@ -55,11 +55,11 @@ class ConfigurationForm(Widget):
         elif self.deployment_method == "kind":
             with Vertical(classes="config-form"):
                 yield Label("Cluster Name:")
-                yield Input(value="o11y-dev", id="cluster_name")
+                yield Input(value="wayfinder-dev", id="cluster_name")
                 yield Label("Namespace:")
                 yield Input(value="observability", id="namespace")
                 yield Label("Deploy Directory:")
-                yield Input(value="~/Documents/Deploy", id="deploy_dir")
+                yield Input(value="./deploy/kind", id="deploy_dir")
         else:
             with Vertical(classes="config-form"):
                 yield Label("Custom OTLP Endpoint:")

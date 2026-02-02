@@ -158,7 +158,7 @@ echo "  - OTLP Endpoint: $OTEL_EXPORTER_OTLP_ENDPOINT"
 
 
 def render_docker_compose_script(
-    project_dir: str = "~/Documents/dev/ContextCore",
+    project_dir: str = ".",
     venv_path: str = ".venv",
     grafana_url: Optional[str] = None,
     otel_endpoint: Optional[str] = None,
@@ -191,10 +191,10 @@ def render_docker_compose_script(
 
 
 def render_kind_script(
-    project_dir: str = "~/Documents/dev/ContextCore",
-    deploy_dir: str = "~/Documents/Deploy",
+    project_dir: str = ".",
+    deploy_dir: str = "./deploy/kind",
     venv_path: str = ".venv",
-    cluster_name: str = "o11y-dev",
+    cluster_name: str = "wayfinder-dev",
     grafana_url: Optional[str] = None,
     otel_endpoint: Optional[str] = None,
 ) -> str:
@@ -230,7 +230,7 @@ def render_kind_script(
 
 
 def render_custom_script(
-    project_dir: str = "~/Documents/dev/ContextCore",
+    project_dir: str = ".",
     venv_path: str = ".venv",
     grafana_url: Optional[str] = None,
     otel_endpoint: Optional[str] = None,

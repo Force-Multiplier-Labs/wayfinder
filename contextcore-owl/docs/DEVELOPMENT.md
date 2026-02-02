@@ -30,22 +30,23 @@ open http://localhost:3000
 
 ## Kind Cluster Deployment
 
-Plugins are deployed via Kind host mounts defined in `/Users/neilyashinsky/Documents/Deploy/kind-cluster.yaml`:
+Plugins are deployed via Kind host mounts defined in the Kind config templates
+(`deploy/kind/kind-dev.yaml.tmpl` and `deploy/kind/kind-test.yaml.tmpl`):
 
 ```yaml
 extraMounts:
-  - hostPath: .../contextcore-owl/grafana/plugins/contextcore-chat-panel
-    containerPath: /plugins/contextcore/contextcore-chat-panel
-  # ... other plugins
+  - hostPath: __WAYFINDER_ROOT__/contextcore-owl/grafana/plugins
+    containerPath: /plugins/contextcore
+    readOnly: true
 ```
 
+The `__WAYFINDER_ROOT__` placeholder is resolved at runtime by `create-cluster.sh`.
 The Kubernetes Grafana deployment (`k8s/observability/deployments.yaml`) uses hostPath volumes
 to mount these into `/var/lib/grafana/plugins/`.
 
-If Kind cluster doesn't have the mounts yet, recreate it:
+If the Kind cluster doesn't have the mounts yet, recreate it:
 ```bash
-cd /Users/neilyashinsky/Documents/Deploy
-./scripts/create-cluster.sh --delete && ./scripts/create-cluster.sh
+make kind-down && make kind-up
 ```
 
 ## Project Structure
