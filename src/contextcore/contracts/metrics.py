@@ -274,10 +274,10 @@ def validate_metric_name(name: str, prefix: str = "") -> List[str]:
     if prefix and not name.startswith(prefix):
         errors.append(f"Metric '{name}' should start with prefix '{prefix}'")
 
-    # Check valid characters (lowercase, numbers, underscores)
-    if not re.match(r"^[a-z][a-z0-9_]*$", name):
+    # Check valid characters (lowercase, numbers, underscores, dots)
+    if not re.match(r"^[a-z][a-z0-9_.]*$", name):
         errors.append(
-            f"Metric '{name}' must be lowercase with underscores, starting with a letter"
+            f"Metric '{name}' must be lowercase with underscores/dots, starting with a letter"
         )
 
     # Check against known metric names
@@ -286,6 +286,77 @@ def validate_metric_name(name: str, prefix: str = "") -> List[str]:
     if suffix not in known_suffixes:
         # Warning, not error - allow custom metrics
         pass
+
+    return errors
+
+
+def validate_recording_rule_name(name: str) -> List[str]:
+    """
+    Validate a recording rule name against kubernetes-mixin convention.
+
+    Pattern: <aggregation_level>:<base_metric>:<aggregation_function>
+    Example: project:contextcore_task_percent_complete:max_over_time5m
+
+    Args:
+        name: The recording rule name to validate
+
+    Returns:
+        List of validation error messages (empty if valid)
+    """
+    errors = []
+
+    parts = name.split(":")
+    if len(parts) != 3:
+        errors.append(
+            f"Recording rule '{name}' must have exactly 3 colon-separated parts "
+            f"(level:metric:aggregation), got {len(parts)}"
+        )
+        return errors
+
+    level, metric, aggregation = parts
+
+    if not re.match(r"^[a-z][a-z0-9_]*$", level):
+        errors.append(
+            f"Aggregation level '{level}' must be lowercase with underscores"
+        )
+
+    if not re.match(r"^[a-z][a-z0-9_]*$", metric):
+        errors.append(
+            f"Base metric '{metric}' must be lowercase with underscores"
+        )
+
+    if not re.match(r"^[a-z][a-z0-9_]*$", aggregation):
+        errors.append(
+            f"Aggregation function '{aggregation}' must be lowercase with underscores"
+        )
+
+    return errors
+
+
+def validate_alert_rule_name(name: str) -> List[str]:
+    """
+    Validate an alert rule name against kubernetes-mixin convention.
+
+    Pattern: ContextCore[Resource][Issue] (CamelCase)
+    Example: ContextCoreExporterFailure
+
+    Args:
+        name: The alert rule name to validate
+
+    Returns:
+        List of validation error messages (empty if valid)
+    """
+    errors = []
+
+    if not re.match(r"^[A-Z][a-zA-Z0-9]*$", name):
+        errors.append(
+            f"Alert rule '{name}' must be CamelCase starting with uppercase"
+        )
+
+    if not name.startswith("ContextCore"):
+        errors.append(
+            f"Alert rule '{name}' should start with 'ContextCore'"
+        )
 
     return errors
 

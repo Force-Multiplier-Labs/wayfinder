@@ -44,6 +44,8 @@ from contextcore.contracts.metrics import (
     ProjectSchema,
     validate_labels,
     validate_metric_name,
+    validate_recording_rule_name,
+    validate_alert_rule_name,
     GENAI_TOKEN_USAGE_BUCKETS,
     GENAI_DURATION_BUCKETS,
 )
@@ -120,6 +122,8 @@ __all__ = [
     "ProjectSchema",
     "validate_labels",
     "validate_metric_name",
+    "validate_recording_rule_name",
+    "validate_alert_rule_name",
     # GenAI metric constants
     "GENAI_TOKEN_USAGE_BUCKETS",
     "GENAI_DURATION_BUCKETS",
