@@ -43,6 +43,7 @@ ruler:
   enable_api: true
   evaluation_interval: 1m
   rule_path: /data/mimir/rules-tmp
+  alertmanager_url: http://alertmanager:9093/alertmanager
 
 ruler_storage:
   backend: filesystem

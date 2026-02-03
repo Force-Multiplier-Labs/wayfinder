@@ -1,0 +1,49 @@
+# Alertmanager configuration for ContextCore observability stack.
+#
+# Routes:
+#   1. ContextCore alerts (ContextCore*) -> fox-enrichment receiver
+#      Fox enriches alerts with ProjectContext before dispatching actions.
+#   2. Everything else -> default receiver (log only)
+#
+# Rabbit webhook format: POST /trigger with action + payload.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'project_id']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    # Route ContextCore alerts through Fox enrichment
+    - match_re:
+        alertname: 'ContextCore.*'
+      receiver: 'fox-enrichment'
+      group_wait: 10s
+      group_interval: 1m
+      continue: false
+
+receivers:
+  - name: 'default'
+    webhook_configs:
+      - url: 'http://host.docker.internal:8080/trigger'
+        send_resolved: true
+        http_config:
+          basic_auth: null
+
+  - name: 'fox-enrichment'
+    webhook_configs:
+      - url: 'http://host.docker.internal:8080/trigger'
+        send_resolved: true
+        http_config:
+          basic_auth: null
+
+# Inhibition rules: critical alerts suppress warning alerts for the same resource
+inhibit_rules:
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: ['alertname', 'project_id']
