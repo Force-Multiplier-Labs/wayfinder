@@ -48,6 +48,7 @@ class FoxTracer:
         criticality: str,
         source: str,
         extra_attrs: Optional[Dict[str, str]] = None,
+        start_time: Optional[int] = None,
     ) -> trace.Span:
         """Start a fox.alert.received span."""
         attrs: Dict[str, str] = {
@@ -57,7 +58,9 @@ class FoxTracer:
         }
         if extra_attrs:
             attrs.update(extra_attrs)
-        return self._tracer.start_span("fox.alert.received", attributes=attrs)
+        return self._tracer.start_span(
+            "fox.alert.received", attributes=attrs, start_time=start_time
+        )
 
     def context_enrich(
         self,
@@ -66,6 +69,7 @@ class FoxTracer:
         criticality: str,
         business_owner: str,
         extra_attrs: Optional[Dict[str, str]] = None,
+        start_time: Optional[int] = None,
     ) -> trace.Span:
         """Start a fox.context.enrich span."""
         attrs: Dict[str, str] = {
@@ -76,7 +80,9 @@ class FoxTracer:
         }
         if extra_attrs:
             attrs.update(extra_attrs)
-        return self._tracer.start_span("fox.context.enrich", attributes=attrs)
+        return self._tracer.start_span(
+            "fox.context.enrich", attributes=attrs, start_time=start_time
+        )
 
     def action(
         self,
@@ -84,6 +90,7 @@ class FoxTracer:
         alert_name: str,
         project_id: str,
         extra_attrs: Optional[Dict[str, str]] = None,
+        start_time: Optional[int] = None,
     ) -> trace.Span:
         """Start a fox.action.<name> span."""
         attrs: Dict[str, str] = {
@@ -94,7 +101,7 @@ class FoxTracer:
         if extra_attrs:
             attrs.update(extra_attrs)
         return self._tracer.start_span(
-            f"fox.action.{action_name}", attributes=attrs
+            f"fox.action.{action_name}", attributes=attrs, start_time=start_time
         )
 
     def shutdown(self) -> None:
