@@ -5,9 +5,9 @@
     'installation.json': (import 'dashboards/core/installation.libsonnet'),
     'project-progress.json': (import 'dashboards/core/project_progress.libsonnet'),
     'sprint-metrics.json': (import 'dashboards/core/sprint_metrics.libsonnet'),
+    'project-operations.json': (import 'dashboards/core/project_operations.libsonnet'),
     // Additional dashboards to be migrated:
-    // 'sprint-metrics.json': (import 'dashboards/core/sprint_metrics.libsonnet'),
-    // 'project-operations.json': (import 'dashboards/core/project_operations.libsonnet'),
+    // 'project-tasks.json': (import 'dashboards/core/project_tasks.libsonnet'),
     // 'project-tasks.json': (import 'dashboards/core/project_tasks.libsonnet'),
     // 'workflow.json': (import 'dashboards/core/workflow.libsonnet'),
     // 'code-generation-health.json': (import 'dashboards/core/code_generation_health.libsonnet'),
