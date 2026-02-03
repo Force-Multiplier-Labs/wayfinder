@@ -260,8 +260,10 @@ class HandoffManager:
         handoff_id = f"handoff-{uuid.uuid4().hex[:12]}"
 
         # Start span for handoff creation
+        _operation_name = "handoff.request"
+        _span_name = f"{_operation_name} {self.model}" if self.model else _operation_name
         with self.tracer.start_as_current_span(
-            "handoff.request",
+            _span_name,
             kind=SpanKind.PRODUCER,
         ) as span:
             # Prepare arguments JSON

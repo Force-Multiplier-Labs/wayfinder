@@ -42,6 +42,8 @@ from contextcore.contracts.metrics import (
     ProjectSchema,
     validate_labels,
     validate_metric_name,
+    GENAI_TOKEN_USAGE_BUCKETS,
+    GENAI_DURATION_BUCKETS,
 )
 from contextcore.contracts.queries import (
     PromQLBuilder,
@@ -114,6 +116,9 @@ __all__ = [
     "ProjectSchema",
     "validate_labels",
     "validate_metric_name",
+    # GenAI metric constants
+    "GENAI_TOKEN_USAGE_BUCKETS",
+    "GENAI_DURATION_BUCKETS",
     # Queries
     "PromQLBuilder",
     "LogQLBuilder",

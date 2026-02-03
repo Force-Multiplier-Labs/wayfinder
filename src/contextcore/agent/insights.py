@@ -61,6 +61,21 @@ class Evidence:
 
 
 @dataclass
+class GenAIMessage:
+    """A message in a GenAI conversation (input or output)."""
+    role: str  # "user", "system", "assistant", "tool"
+    content: str | None = None
+
+
+def _is_content_logging_enabled() -> bool:
+    """Check if GenAI content event logging is explicitly enabled."""
+    import os
+    return os.environ.get(
+        "CONTEXTCORE_GENAI_CONTENT_LOGGING", ""
+    ).lower() in ("1", "true", "yes")
+
+
+@dataclass
 class Insight:
     """Agent-generated insight."""
     id: str
@@ -155,6 +170,8 @@ class InsightEmitter:
         response_model: str | None = None,
         response_id: str | None = None,
         finish_reasons: list[str] | None = None,
+        input_messages: list[GenAIMessage] | None = None,
+        output_messages: list[GenAIMessage] | None = None,
     ) -> Insight:
         """
         Emit an insight as an OTel span.
@@ -207,8 +224,10 @@ class InsightEmitter:
                     model = svc  # Use full service name as proxy for model
 
         _span_kind = SpanKind.CLIENT if (provider or model) else SpanKind.INTERNAL
+        _operation_name = f"insight.{insight_type.value}"
+        _span_name = f"{_operation_name} {model}" if model else _operation_name
         with self.tracer.start_as_current_span(
-            f"insight.{insight_type.value}",
+            _span_name,
             kind=_span_kind,
         ) as span:
             # Build attributes dict for mapping
@@ -287,6 +306,29 @@ class InsightEmitter:
                         **({"evidence.query": ev.query} if ev.query else {}),
                     }
                 )
+
+            # GenAI input/output events (OTel convention)
+            # Content only emitted when CONTEXTCORE_GENAI_CONTENT_LOGGING is enabled
+            if _is_content_logging_enabled():
+                if input_messages:
+                    for msg in input_messages:
+                        event_attrs: dict[str, str] = {"gen_ai.message.role": msg.role}
+                        if msg.content is not None:
+                            event_attrs["gen_ai.message.content"] = msg.content
+                        span.add_event("gen_ai.user.message", attributes=event_attrs)
+
+                if output_messages:
+                    for msg in output_messages:
+                        event_attrs: dict[str, str] = {"gen_ai.message.role": msg.role}
+                        if msg.content is not None:
+                            event_attrs["gen_ai.message.content"] = msg.content
+                        span.add_event("gen_ai.choice", attributes=event_attrs)
+            else:
+                # Without content logging, still record message counts
+                if input_messages:
+                    span.set_attribute("gen_ai.input_message_count", len(input_messages))
+                if output_messages:
+                    span.set_attribute("gen_ai.output_message_count", len(output_messages))
 
             span.set_status(Status(StatusCode.OK))
 
