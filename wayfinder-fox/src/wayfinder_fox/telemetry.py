@@ -36,7 +36,39 @@ class FoxTracer:
                 self._provider.add_span_processor(
                     BatchSpanProcessor(span_exporter)
                 )
+            else:
+                # Auto-configure OTLP exporter from environment if available
+                self._provider.add_span_processor(
+                    BatchSpanProcessor(self._default_exporter())
+                )
         self._tracer = self._provider.get_tracer("wayfinder-fox")
+
+    @staticmethod
+    def _default_exporter():
+        """Try to create an OTLP exporter from environment, fall back to no-op."""
+        try:
+            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+                OTLPSpanExporter,
+            )
+
+            return OTLPSpanExporter()  # Reads OTEL_EXPORTER_OTLP_ENDPOINT from env
+        except ImportError:
+            import logging
+
+            logging.getLogger(__name__).debug(
+                "OTLP exporter not available; spans will not be exported. "
+                "Install opentelemetry-exporter-otlp-proto-grpc for production use."
+            )
+            from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
+
+            class _NoOpExporter(SpanExporter):
+                def export(self, spans):
+                    return SpanExportResult.SUCCESS
+
+                def shutdown(self):
+                    pass
+
+            return _NoOpExporter()
 
     @property
     def tracer(self) -> trace.Tracer:
