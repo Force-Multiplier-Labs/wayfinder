@@ -148,14 +148,18 @@ def parse_python_file(source_path: Path) -> ParsedPythonFile:
             # Other constants
             result.constants.append(node)
 
-        # TYPE_CHECKING blocks
+        # If blocks: TYPE_CHECKING or __main__ guard
         elif isinstance(node, ast.If):
-            test = node.test
-            if (isinstance(test, ast.Name) and test.id == 'TYPE_CHECKING') or \
-               (isinstance(test, ast.Attribute) and test.attr == 'TYPE_CHECKING'):
+            if _is_main_guard(node):
+                pass  # Exclude __main__ blocks from merge
+            elif _is_type_checking(node):
                 result.type_checking_imports.append(node)
             else:
                 result.other_statements.append(node)
+
+        # Module-level bare calls (example/demo code like print(), AgentCard())
+        elif isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+            pass  # Exclude module-level calls from merge
 
         # Everything else
         else:
@@ -178,6 +182,24 @@ def _clean_markdown_blocks(content: str) -> str:
         lines = lines[:-1]
 
     return '\n'.join(lines)
+
+
+def _is_main_guard(node: ast.If) -> bool:
+    """Check if an ast.If node is an ``if __name__ == "__main__":`` guard."""
+    test = node.test
+    return (isinstance(test, ast.Compare) and
+            isinstance(test.left, ast.Name) and test.left.id == '__name__' and
+            len(test.ops) == 1 and isinstance(test.ops[0], ast.Eq) and
+            len(test.comparators) == 1 and
+            isinstance(test.comparators[0], ast.Constant) and
+            test.comparators[0].value == '__main__')
+
+
+def _is_type_checking(node: ast.If) -> bool:
+    """Check if an ast.If node is a ``TYPE_CHECKING`` block."""
+    test = node.test
+    return ((isinstance(test, ast.Name) and test.id == 'TYPE_CHECKING') or
+            (isinstance(test, ast.Attribute) and test.attr == 'TYPE_CHECKING'))
 
 
 def detect_class_dependencies(cls: ast.ClassDef, all_classes: Set[str]) -> Set[str]:
@@ -539,14 +561,22 @@ def merge_parsed_files(files: List[ParsedPythonFile]) -> MergeResult:
     for func_name in sorted(all_functions.keys()):
         body.append(all_functions[func_name])
 
-    # Add other statements
-    body.extend(all_other)
+    # Exclude uncategorized statements (example code, bare expressions)
+    if all_other:
+        warnings.append(f"Excluded {len(all_other)} uncategorized statement(s) from merge output")
 
     # Add __all__ at the end if we have exports
     if all_exports or all_classes or all_functions:
-        final_exports = all_exports or set()
-        final_exports.update(all_classes.keys())
-        final_exports.update(all_functions.keys())
+        # If the first file (target) has explicit __all__, preserve it as baseline
+        if files and files[0].all_export is not None:
+            final_exports = set(files[0].all_export)
+            for parsed in files[1:]:
+                if parsed.all_export:
+                    final_exports.update(parsed.all_export)
+        else:
+            # Auto-generate from public classes and functions
+            final_exports = {n for n in all_classes if not n.startswith('_')}
+            final_exports.update(n for n in all_functions if not n.startswith('_'))
 
         all_node = ast.Assign(
             targets=[ast.Name(id='__all__', ctx=ast.Store())],

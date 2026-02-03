@@ -34,6 +34,7 @@ from scripts.lead_contractor.ast_merge import (
     detect_class_dependencies,
     merge_python_files,
     merge_from_strings,
+    _is_main_guard,
 )
 
 
@@ -755,8 +756,9 @@ class TestRegressionCases:
         parsed = parse_python_file(file1)
         result = merge_parsed_files([parsed])
 
-        # The __main__ block should be in other_statements
-        # but won't execute when imported
+        # The __main__ block must NOT appear in the merged output
+        assert '__name__' not in result.content
+        assert '__main__' not in result.content
 
     def test_multiline_string_not_broken(self, tmp_path):
         """
@@ -902,3 +904,171 @@ class TestIntegration:
 
         assert 'class Valid' in result.content
         assert any('syntax error' in w.lower() for w in result.warnings)
+
+
+class TestExampleCodeFiltering:
+    """Tests for filtering example/demo code from merge output."""
+
+    def test_main_guard_excluded(self, tmp_path):
+        """Parse file with if __name__ == "__main__" and verify it's excluded."""
+        source = tmp_path / "test.py"
+        source.write_text(dedent('''
+            class MyClass:
+                def method(self):
+                    pass
+
+            if __name__ == "__main__":
+                obj = MyClass()
+                obj.method()
+                print("done")
+        '''))
+
+        parsed = parse_python_file(source)
+        result = merge_parsed_files([parsed])
+
+        # __main__ guard must not appear in output
+        assert '__name__' not in result.content
+        assert '__main__' not in result.content
+        # The class should still be present
+        assert 'class MyClass' in result.content
+
+    def test_module_level_call_excluded(self, tmp_path):
+        """Parse file with bare module-level calls and verify they're excluded."""
+        source = tmp_path / "test.py"
+        source.write_text(dedent('''
+            class Widget:
+                pass
+
+            def create_widget():
+                return Widget()
+
+            print("hello")
+        '''))
+
+        parsed = parse_python_file(source)
+        result = merge_parsed_files([parsed])
+
+        # Bare print() call must not appear in output
+        assert "print('hello')" not in result.content
+        assert 'print("hello")' not in result.content
+        # Class and function should still be present
+        assert 'class Widget' in result.content
+        assert 'create_widget' in result.content
+
+    def test_all_preserves_target_exports(self, tmp_path):
+        """Target has explicit __all__; generated file adds _helper. _helper must not be in __all__."""
+        target = tmp_path / "target.py"
+        target.write_text(dedent('''
+            __all__ = ["Part", "PartType"]
+
+            class Part:
+                pass
+
+            class PartType:
+                pass
+        '''))
+
+        generated = tmp_path / "generated.py"
+        generated.write_text(dedent('''
+            class Part:
+                pass
+
+            def _helper():
+                pass
+        '''))
+
+        parsed_target = parse_python_file(target)
+        parsed_gen = parse_python_file(generated)
+        result = merge_parsed_files([parsed_target, parsed_gen])
+
+        # Parse the __all__ from output
+        tree = ast.parse(result.content)
+        all_values = None
+        for node in tree.body:
+            if (isinstance(node, ast.Assign) and
+                len(node.targets) == 1 and
+                isinstance(node.targets[0], ast.Name) and
+                node.targets[0].id == '__all__'):
+                if isinstance(node.value, ast.List):
+                    all_values = [elt.value for elt in node.value.elts
+                                  if isinstance(elt, ast.Constant)]
+
+        assert all_values is not None, "__all__ not found in output"
+        assert '_helper' not in all_values
+        assert 'Part' in all_values
+        assert 'PartType' in all_values
+
+    def test_all_adds_new_public_names(self, tmp_path):
+        """Target has explicit __all__ = ["Part"]; generated adds class NewModel. NewModel should be added."""
+        target = tmp_path / "target.py"
+        target.write_text(dedent('''
+            __all__ = ["Part"]
+
+            class Part:
+                pass
+        '''))
+
+        generated = tmp_path / "generated.py"
+        generated.write_text(dedent('''
+            __all__ = ["NewModel"]
+
+            class NewModel:
+                pass
+        '''))
+
+        parsed_target = parse_python_file(target)
+        parsed_gen = parse_python_file(generated)
+        result = merge_parsed_files([parsed_target, parsed_gen])
+
+        # Parse the __all__ from output
+        tree = ast.parse(result.content)
+        all_values = None
+        for node in tree.body:
+            if (isinstance(node, ast.Assign) and
+                len(node.targets) == 1 and
+                isinstance(node.targets[0], ast.Name) and
+                node.targets[0].id == '__all__'):
+                if isinstance(node.value, ast.List):
+                    all_values = [elt.value for elt in node.value.elts
+                                  if isinstance(elt, ast.Constant)]
+
+        assert all_values is not None, "__all__ not found in output"
+        assert 'Part' in all_values
+        assert 'NewModel' in all_values
+
+    def test_auto_all_excludes_private(self, tmp_path):
+        """When no explicit __all__, auto-generated one excludes private names."""
+        source = tmp_path / "test.py"
+        source.write_text(dedent('''
+            class PublicClass:
+                pass
+
+            class _PrivateClass:
+                pass
+
+            def public_func():
+                pass
+
+            def _private_func():
+                pass
+        '''))
+
+        parsed = parse_python_file(source)
+        result = merge_parsed_files([parsed])
+
+        tree = ast.parse(result.content)
+        all_values = None
+        for node in tree.body:
+            if (isinstance(node, ast.Assign) and
+                len(node.targets) == 1 and
+                isinstance(node.targets[0], ast.Name) and
+                node.targets[0].id == '__all__'):
+                if isinstance(node.value, ast.List):
+                    all_values = [elt.value for elt in node.value.elts
+                                  if isinstance(elt, ast.Constant)]
+
+        assert all_values is not None, "__all__ not found in output"
+        assert 'PublicClass' in all_values
+        assert 'public_func' in all_values
+        assert '_PrivateClass' not in all_values
+        assert '_private_func' not in all_values

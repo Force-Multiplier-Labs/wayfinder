@@ -457,7 +457,7 @@ def merge_files_intelligently(
     5. Combine docstrings (use first non-empty)
     6. Generate __all__ list
 
-    Falls back to legacy text-based merge if AST parsing fails.
+    Returns empty string with error message if AST parsing fails.
     """
     import os
 
@@ -465,7 +465,9 @@ def merge_files_intelligently(
     use_ast_merge = os.environ.get('CONTEXTCORE_AST_MERGE', 'true').lower() == 'true'
 
     if not use_ast_merge:
-        return _merge_files_legacy(target_path, source_files)
+        print(f"  ERROR: Legacy merge disabled — it corrupts files.")
+        print(f"  Set CONTEXTCORE_AST_MERGE=true (default) to use AST merge.")
+        return ""
 
     try:
         from scripts.lead_contractor.ast_merge import (
@@ -510,11 +512,13 @@ def merge_files_intelligently(
         return result.content
 
     except ImportError as e:
-        print(f"  Warning: AST merge module not available ({e}), using legacy merge")
-        return _merge_files_legacy(target_path, source_files)
+        print(f"  ERROR: AST merge module not available ({e})")
+        print(f"  Legacy merge disabled — it corrupts files. Fix the import error.")
+        return ""
     except Exception as e:
-        print(f"  Warning: AST merge failed ({e}), falling back to legacy merge")
-        return _merge_files_legacy(target_path, source_files)
+        print(f"  ERROR: AST merge failed ({e})")
+        print(f"  Legacy merge disabled — it corrupts files. Fix the AST error.")
+        return ""
 
 
 def _merge_files_legacy(
@@ -522,14 +526,14 @@ def _merge_files_legacy(
     source_files: List[Dict]
 ) -> str:
     """
-    Legacy text-based merge (preserved for fallback).
+    DEPRECATED: Legacy text-based merge — no longer called.
 
-    WARNING: This function can corrupt Python files by:
+    WARNING: This function corrupts Python files by:
     - Separating decorators from their classes
     - Breaking multi-line strings
     - Incorrectly identifying class boundaries
 
-    Use only as fallback when AST merge is unavailable.
+    Kept for reference only. Will be removed in a future cleanup.
     """
     imports = set()
     classes = {}

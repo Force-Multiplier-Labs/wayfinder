@@ -15,287 +15,64 @@ from scripts.lead_contractor.integrate_backlog import (
     scan_backlog, generate_integration_plan, clean_markdown_code_blocks
 )
 
-def merge_parts_files(sources: List[Dict]) -> str:
+def _merge_python_sources(sources: List[Dict], label: str = "files") -> str:
     """
-    Merge multiple parts-related files into a single parts.py file.
+    Shared AST merge for all Python source types.
 
     Uses AST-based merging to properly handle:
     - Decorators attached to classes (@dataclass)
     - Class dependency ordering (MessageRole before Message)
     - Multi-line strings and docstrings
     - Import deduplication with __future__ first
+
+    Legacy text-based fallback is disabled — it corrupts files.
     """
     try:
-        from scripts.lead_contractor.ast_merge import (
-            parse_python_file,
-            merge_parsed_files,
-        )
-
-        parsed_files = []
-        for src in sources:
-            src_path = Path(src['source'])
-            if not src_path.exists():
-                continue
-            try:
-                parsed = parse_python_file(src_path)
-                parsed_files.append(parsed)
-            except SyntaxError as e:
-                print(f"  Warning: Skipping {src_path.name} due to syntax error: {e}")
-                continue
-
-        if not parsed_files:
-            return ""
-
-        result = merge_parsed_files(parsed_files)
-
-        for warning in result.warnings:
-            print(f"  Warning: {warning}")
-
-        return result.content
-
+        from scripts.lead_contractor.ast_merge import parse_python_file, merge_parsed_files
     except ImportError as e:
-        print(f"  Warning: AST merge not available ({e}), using legacy merge")
-        return _merge_parts_files_legacy(sources)
-    except Exception as e:
-        print(f"  Warning: AST merge failed ({e}), using legacy merge")
-        return _merge_parts_files_legacy(sources)
+        print(f"  ERROR: AST merge module not available ({e})")
+        print(f"  Legacy merge disabled — it corrupts files. Fix the import error.")
+        return ""
 
-
-def _merge_parts_files_legacy(sources: List[Dict]) -> str:
-    """
-    Legacy text-based merge for parts files (fallback only).
-
-    WARNING: This function can corrupt Python files. Use AST merge instead.
-    """
-    imports = set()
-    classes = {}
-    functions = {}
-    docstring = None
-
-    # Process each source file
+    parsed_files = []
     for src in sources:
         src_path = Path(src['source'])
         if not src_path.exists():
             continue
+        try:
+            parsed_files.append(parse_python_file(src_path))
+        except SyntaxError as e:
+            print(f"  Warning: Skipping {src_path.name} due to syntax error: {e}")
 
-        with open(src_path, 'r', encoding='utf-8') as f:
-            content = clean_markdown_code_blocks(f.read())
+    if not parsed_files:
+        return ""
 
-        lines = content.split('\n')
+    try:
+        result = merge_parsed_files(parsed_files)
+    except Exception as e:
+        print(f"  ERROR: AST merge failed for {label} ({e})")
+        print(f"  Legacy merge disabled — it corrupts files. Fix the AST error.")
+        return ""
 
-        # Extract docstring
-        if not docstring and content.strip().startswith('"""'):
-            doc_end = content.find('"""', 3)
-            if doc_end > 0:
-                docstring = content[3:doc_end].strip()
+    for warning in result.warnings:
+        print(f"  Warning: {warning}")
 
-        # Extract imports
-        for line in lines:
-            line = line.strip()
-            if line.startswith('import ') or line.startswith('from '):
-                imports.add(line)
+    return result.content
 
-        # Extract classes and functions (simple heuristic)
-        in_class = None
-        in_function = None
-        class_lines = []
-        function_lines = []
 
-        for i, line in enumerate(lines):
-            stripped = line.strip()
+def merge_parts_files(sources: List[Dict]) -> str:
+    """Merge multiple parts-related files into a single parts.py file."""
+    return _merge_python_sources(sources, label="parts")
 
-            # Class definition
-            if stripped.startswith('class '):
-                # Save previous class/function if any
-                if in_class:
-                    classes[in_class] = '\n'.join(class_lines)
-                if in_function:
-                    functions[in_function] = '\n'.join(function_lines)
-
-                # Start new class
-                class_name = stripped.split('(')[0].split(':')[0].replace('class ', '').strip()
-                in_class = class_name
-                class_lines = [line]
-                in_function = None
-                function_lines = []
-
-            # Function definition
-            elif stripped.startswith('def ') and not in_class:
-                if in_function:
-                    functions[in_function] = '\n'.join(function_lines)
-
-                func_name = stripped.split('(')[0].replace('def ', '').strip()
-                in_function = func_name
-                function_lines = [line]
-
-            # Continue collecting lines
-            elif in_class:
-                class_lines.append(line)
-                if stripped and not stripped.startswith(' ') and not stripped.startswith('\t'):
-                    if not stripped.startswith('@') and not stripped.startswith('class '):
-                        # End of class
-                        classes[in_class] = '\n'.join(class_lines)
-                        in_class = None
-                        class_lines = []
-
-            elif in_function:
-                function_lines.append(line)
-                if stripped and not stripped.startswith(' ') and not stripped.startswith('\t'):
-                    if not stripped.startswith('@') and not stripped.startswith('def '):
-                        # End of function
-                        functions[in_function] = '\n'.join(function_lines)
-                        in_function = None
-                        function_lines = []
-
-        # Save last class/function
-        if in_class:
-            classes[in_class] = '\n'.join(class_lines)
-        if in_function:
-            functions[in_function] = '\n'.join(function_lines)
-
-    # Build merged content
-    result = []
-
-    # Docstring
-    if docstring:
-        result.append(f'"""{docstring}"""')
-    else:
-        result.append('"""ContextCore Data Models - A2A-compatible with ContextCore extensions."""')
-
-    result.append('')
-
-    # Imports (sorted)
-    sorted_imports = sorted(imports)
-    for imp in sorted_imports:
-        result.append(imp)
-
-    result.append('')
-
-    # Classes in order: PartType, Part, MessageRole, Message, Artifact
-    class_order = ['PartType', 'Part', 'MessageRole', 'Message', 'Artifact']
-    for class_name in class_order:
-        if class_name in classes:
-            result.append(classes[class_name])
-            result.append('')
-
-    # Other classes
-    for class_name, class_content in sorted(classes.items()):
-        if class_name not in class_order:
-            result.append(class_content)
-            result.append('')
-
-    # Functions
-    for func_name, func_content in sorted(functions.items()):
-        result.append(func_content)
-        result.append('')
-
-    return '\n'.join(result)
 
 def merge_otel_genai_files(sources: List[Dict]) -> str:
-    """
-    Merge OTel GenAI files using AST-based merge.
+    """Merge OTel GenAI files using AST-based merge."""
+    return _merge_python_sources(sources, label="otel_genai")
 
-    For OTel GenAI files, we use full AST merge to combine all implementations
-    since they may contain complementary classes and functions.
-    """
-    try:
-        from scripts.lead_contractor.ast_merge import (
-            parse_python_file,
-            merge_parsed_files,
-        )
-
-        parsed_files = []
-        for src in sources:
-            src_path = Path(src['source'])
-            if not src_path.exists():
-                continue
-            try:
-                parsed = parse_python_file(src_path)
-                parsed_files.append(parsed)
-            except SyntaxError as e:
-                print(f"  Warning: Skipping {src_path.name} due to syntax error: {e}")
-                continue
-
-        if not parsed_files:
-            return ""
-
-        result = merge_parsed_files(parsed_files)
-
-        for warning in result.warnings:
-            print(f"  Warning: {warning}")
-
-        return result.content
-
-    except (ImportError, Exception) as e:
-        print(f"  Warning: AST merge failed ({e}), using priority selection")
-        # Fallback: prioritize Foundation_DualEmit
-        for src in sources:
-            if 'dual' in src['feature'].lower() or 'emit' in src['feature'].lower():
-                src_path = Path(src['source'])
-                if src_path.exists():
-                    with open(src_path, 'r', encoding='utf-8') as f:
-                        return clean_markdown_code_blocks(f.read())
-
-        # Fallback: use first available file
-        for src in sources:
-            src_path = Path(src['source'])
-            if src_path.exists():
-                with open(src_path, 'r', encoding='utf-8') as f:
-                    return clean_markdown_code_blocks(f.read())
-
-        return ""
 
 def merge_handoff_files(sources: List[Dict]) -> str:
-    """
-    Merge handoff files using AST-based merge.
-
-    Handoff files often contain complementary classes (HandoffResult, HandoffStorage,
-    etc.) that should be merged together.
-    """
-    try:
-        from scripts.lead_contractor.ast_merge import (
-            parse_python_file,
-            merge_parsed_files,
-        )
-
-        parsed_files = []
-        for src in sources:
-            src_path = Path(src['source'])
-            if not src_path.exists():
-                continue
-            try:
-                parsed = parse_python_file(src_path)
-                parsed_files.append(parsed)
-            except SyntaxError as e:
-                print(f"  Warning: Skipping {src_path.name} due to syntax error: {e}")
-                continue
-
-        if not parsed_files:
-            return ""
-
-        result = merge_parsed_files(parsed_files)
-
-        for warning in result.warnings:
-            print(f"  Warning: {warning}")
-
-        return result.content
-
-    except (ImportError, Exception) as e:
-        print(f"  Warning: AST merge failed ({e}), using largest file")
-        # Fallback: use the larger/more complete file
-        files_content = []
-        for src in sources:
-            src_path = Path(src['source'])
-            if src_path.exists():
-                with open(src_path, 'r', encoding='utf-8') as f:
-                    content = clean_markdown_code_blocks(f.read())
-                    files_content.append((src['feature'], len(content), content))
-
-        if files_content:
-            files_content.sort(key=lambda x: x[1], reverse=True)
-            return files_content[0][2]
-
-        return ""
+    """Merge handoff files using AST-based merge."""
+    return _merge_python_sources(sources, label="handoff")
 
 def merge_installtracking_statefile_files(sources: List[Dict]) -> str:
     """
