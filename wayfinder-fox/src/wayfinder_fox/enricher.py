@@ -11,7 +11,7 @@ ProjectContextEnricher - enriches alerts with business context.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from opentelemetry import trace
 
@@ -55,12 +55,18 @@ class ProjectContextEnricher:
         self._reader = reader
         self._tracer = tracer
 
-    def enrich(self, alert: Alert) -> EnrichedAlert:
+    def enrich(self, alert: Alert) -> Tuple[EnrichedAlert, trace.Span]:
         """
         Enrich an alert with ProjectContext.
 
         Looks up project by namespace label, then project_id label,
         then falls back to YAML.
+
+        Returns a (EnrichedAlert, Span) tuple.  The span is **not** ended;
+        the caller is responsible for ending it (typically via
+        ``trace.use_span(span, end_on_exit=True)``).  This allows the
+        caller to nest child spans (e.g. fox.action.*) under the enrich
+        span before it is closed.
         """
         namespace = alert.labels.get("namespace")
         project_id = alert.labels.get("project_id", alert.labels.get("project", ""))
@@ -91,6 +97,5 @@ class ProjectContextEnricher:
             criticality=enriched.criticality,
             business_owner=enriched.business_owner,
         )
-        span.end()
 
-        return enriched
+        return enriched, span

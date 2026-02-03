@@ -16,6 +16,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 
+from opentelemetry import trace
+
 from contextcore_rabbit.action import (
     Action,
     ActionResult,
@@ -129,19 +131,19 @@ class FoxEnrichAction(Action):
             source=source,
         )
 
-        # 1. fox.alert.received
+        # 1. fox.alert.received — root span for the entire pipeline
         received_span = self._tracer.alert_received(
             alert_name=alert.name,
             criticality=labels.get("severity", "medium"),
             source=source,
         )
-        received_span.end()
+        with trace.use_span(received_span, end_on_exit=True):
+            # 2. fox.context.enrich — child of received
+            enriched, enrich_span = self._enricher.enrich(alert)
 
-        # 2. fox.context.enrich
-        enriched = self._enricher.enrich(alert)
-
-        # 3. Route and dispatch sub-actions
-        dispatched_actions = self._router.dispatch(enriched)
+            with trace.use_span(enrich_span, end_on_exit=True):
+                # 3. Route and dispatch sub-actions — grandchildren of enrich
+                dispatched_actions = self._router.dispatch(enriched)
 
         return {
             "alert_name": alert.name,

@@ -20,7 +20,8 @@ def test_enrich_with_context(
     )
     enricher = ProjectContextEnricher(reader=reader, tracer=fox_tracer)
 
-    result = enricher.enrich(sample_alert)
+    result, span = enricher.enrich(sample_alert)
+    span.end()
 
     assert result.enriched is True
     assert result.project_id == "checkout-service"
@@ -47,7 +48,8 @@ def test_enrich_without_context(
     reader = MockProjectContextReader(contexts={})
     enricher = ProjectContextEnricher(reader=reader, tracer=fox_tracer)
 
-    result = enricher.enrich(sample_alert)
+    result, span = enricher.enrich(sample_alert)
+    span.end()
 
     assert result.enriched is False
     assert result.project_id == "checkout-service"  # from alert labels
@@ -64,7 +66,8 @@ def test_enrich_emits_span_even_without_context(
     reader = MockProjectContextReader(contexts={})
     enricher = ProjectContextEnricher(reader=reader, tracer=fox_tracer)
 
-    enricher.enrich(alert)
+    _, span = enricher.enrich(alert)
+    span.end()
     fox_tracer.shutdown()
 
     assert len(collecting_exporter.spans) == 1

@@ -183,3 +183,50 @@ class TestFoxEnrichActionExecution:
         assert "fox.context.enrich" in span_names
         # High criticality routes to context_notify
         assert "fox.action.context_notify" in span_names
+
+    def test_span_parent_child_hierarchy(self):
+        """Verify trace hierarchy: received -> enrich -> action spans."""
+        ctx = ProjectContext(
+            project_id="test-project",
+            criticality="critical",
+            owner="test-team",
+        )
+        action, exporter = self._make_action(
+            contexts={"test-project": ctx}
+        )
+
+        payload = {
+            "alert_name": "HierarchyTest",
+            "labels": {
+                "project_id": "test-project",
+                "severity": "critical",
+            },
+        }
+
+        action.execute(payload, {})
+
+        # Build lookup by span name
+        spans_by_name = {s.name: s for s in exporter.spans}
+        received = spans_by_name["fox.alert.received"]
+        enrich = spans_by_name["fox.context.enrich"]
+
+        # All spans share the same trace_id
+        trace_id = received.context.trace_id
+        assert enrich.context.trace_id == trace_id
+
+        # fox.alert.received is the root (no parent)
+        assert received.parent is None
+
+        # fox.context.enrich is a child of fox.alert.received
+        assert enrich.parent is not None
+        assert enrich.parent.span_id == received.context.span_id
+
+        # fox.action.* spans are grandchildren of enrich
+        action_spans = [
+            s for s in exporter.spans if s.name.startswith("fox.action.")
+        ]
+        assert len(action_spans) >= 1
+        for action_span in action_spans:
+            assert action_span.context.trace_id == trace_id
+            assert action_span.parent is not None
+            assert action_span.parent.span_id == enrich.context.span_id
