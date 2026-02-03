@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip("contextcore_rabbit", reason="contextcore-rabbit not installed")
+
 from wayfinder_fox.kubernetes import ProjectContext
 
 from conftest import make_fox_enrich_action

@@ -87,8 +87,11 @@ def fox_config() -> FoxConfig:
 
 
 def make_fox_enrich_action(contexts=None):
-    """Create a FoxEnrichAction with mocked dependencies for testing."""
-    from wayfinder_fox.actions.fox_enrich import FoxEnrichAction
+    """Create a FoxEnrichAction with mocked dependencies for testing.
+
+    Requires contextcore-rabbit: install with pip install wayfinder-fox[rabbit]
+    """
+    from wayfinder_fox.actions.fox_enrich import FoxEnrichAction  # requires rabbit
     from wayfinder_fox.enricher import ProjectContextEnricher
     from wayfinder_fox.router import CriticalityRouter
 

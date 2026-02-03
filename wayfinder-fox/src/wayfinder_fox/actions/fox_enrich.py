@@ -18,12 +18,18 @@ from typing import Any, Dict, Optional
 
 from opentelemetry import trace
 
-from contextcore_rabbit.action import (
-    Action,
-    ActionResult,
-    ActionStatus,
-    action_registry,
-)
+try:
+    from contextcore_rabbit.action import (
+        Action,
+        ActionResult,
+        ActionStatus,
+        action_registry,
+    )
+except ImportError:
+    raise ImportError(
+        "contextcore-rabbit is required for Rabbit integration. "
+        "Install with: pip install wayfinder-fox[rabbit]"
+    )
 
 from wayfinder_fox.config import FoxConfig
 from wayfinder_fox.enricher import Alert, EnrichedAlert, ProjectContextEnricher
