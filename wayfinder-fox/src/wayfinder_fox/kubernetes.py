@@ -109,12 +109,14 @@ class ProjectContextReader:
         """Look up ProjectContext from Kubernetes CRD."""
         try:
             from kubernetes import client, config
+        except ImportError:
+            logger.debug("kubernetes package not installed")
+            return None
 
+        try:
             config.load_incluster_config()
         except Exception:
             try:
-                from kubernetes import client, config
-
                 config.load_kube_config()
             except Exception:
                 logger.debug("Kubernetes not available for ProjectContext lookup")
