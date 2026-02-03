@@ -1,0 +1,1 @@
+"\"groups\":\n- \"interval\": \"1m\"\n  \"name\": \"contextcore_mimir_precompute\"\n  \"rules\":\n  - \"expr\": \"max by (project_id, sprint_id) (contextcore_sprint_planned_points)\"\n    \"record\": \"project_sprint:contextcore_sprint_planned_points:last\""

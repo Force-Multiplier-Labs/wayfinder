@@ -32,9 +32,30 @@ generate: ## Generate all artifacts from Jsonnet
 	@$(JSONNET) -J vendor -e 'std.manifestYamlDoc((import "mixin.libsonnet").prometheusAlerts)' > $(ALERTS_DIR)/alerts.yaml
 	@echo "Done. Output in $(GENERATED_DIR)/"
 
-test: ## Run golden file smoke test
+test: ## Run golden file smoke test and diff against snapshots
 	@echo "Running smoke test..."
 	@$(JSONNET) -J vendor tests/smoke_test.jsonnet > /dev/null && echo "OK: All outputs compile" || (echo "FAIL: Compilation error" && exit 1)
+	@echo "Running golden file tests..."
+	@mkdir -p $(GENERATED_DIR)/dashboards $(GENERATED_DIR)/rules $(GENERATED_DIR)/alerts
+	@$(JSONNET) -J vendor -e '(import "mixin.libsonnet").grafanaDashboards' | \
+		python3 -c "import sys,json; data=json.load(sys.stdin); [open('$(GENERATED_DIR)/'+k,'w').write(json.dumps(v,indent=2)+'\n') for k,v in data.items()]"
+	@$(JSONNET) -J vendor -e 'std.manifestYamlDoc((import "mixin.libsonnet").lokiRules)' > $(GENERATED_DIR)/rules/loki-rules.yaml
+	@$(JSONNET) -J vendor -e 'std.manifestYamlDoc((import "mixin.libsonnet").mimirRules)' > $(GENERATED_DIR)/rules/mimir-rules.yaml
+	@$(JSONNET) -J vendor -e 'std.manifestYamlDoc((import "mixin.libsonnet").prometheusAlerts)' > $(GENERATED_DIR)/alerts/alerts.yaml
+	@FAIL=0; \
+	for f in tests/golden/*; do \
+		name=$$(basename $$f); \
+		gen=$$(find $(GENERATED_DIR) -name "$$name" -type f 2>/dev/null | head -1); \
+		if [ -z "$$gen" ]; then echo "FAIL: $$name not generated"; FAIL=1; continue; fi; \
+		if ! diff -q "$$f" "$$gen" > /dev/null 2>&1; then \
+			echo "FAIL: $$name differs from golden file"; \
+			diff --unified "$$f" "$$gen" | head -30; \
+			FAIL=1; \
+		else \
+			echo "OK: $$name matches"; \
+		fi; \
+	done; \
+	[ $$FAIL -eq 0 ] && echo "All golden file tests passed" || (echo "Golden file tests FAILED" && exit 1)
 
 lint: ## Check Jsonnet formatting
 	@echo "Checking formatting..."
