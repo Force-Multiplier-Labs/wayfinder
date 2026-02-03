@@ -1,0 +1,11 @@
+# ContextCore Mimir Recording Rules
+# Convention: <aggregation_level>:<base_metric>:<aggregation_function>
+# See: docs/semantic-conventions.md (Recording Rule Naming Convention)
+
+groups:
+  - name: contextcore_mimir_precompute
+    interval: 1m
+    rules:
+      # Planned points per sprint (from OTel metric emitted by TaskTracker)
+      - record: "project_sprint:contextcore_sprint_planned_points:last"
+        expr: max by (project_id, sprint_id) (contextcore_sprint_planned_points)

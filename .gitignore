@@ -121,5 +121,10 @@ contextcore-owl/plugins-new/*/node_modules/
 contextcore-owl/plugins/*/node_modules/
 *.LICENSE.txt
 
+# Jsonnet mixin
+wayfinder-mixin/vendor/
+wayfinder-mixin/generated/
+wayfinder-mixin/jsonnetfile.lock.json
+
 # Legacy directory remnants
 contextcore-grafana/

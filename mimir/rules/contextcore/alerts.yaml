@@ -1,0 +1,19 @@
+# ContextCore Mimir Alert Rules
+# Convention: ContextCore[Resource][Issue]
+# See: docs/semantic-conventions.md (Alert Naming Convention)
+
+groups:
+  - name: contextcore_mimir_alerts
+    rules:
+      - alert: ContextCoreInsightLatencyHigh
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(contextcore_insight_query_duration_milliseconds_bucket[5m])) by (le)
+          ) > 500
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Insight query latency > 500ms P99"
+          description: "Agent insight queries are exceeding the 500ms P99 latency budget."
+          runbook_url: "docs/OPERATIONAL_RUNBOOK.md#insight-latency"

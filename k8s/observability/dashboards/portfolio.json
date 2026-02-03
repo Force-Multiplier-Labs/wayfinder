@@ -138,7 +138,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "count(avg by (project_id) (task_percent_complete{task_type=~\"story|epic\"}) > 60 unless count by (project_id) (task_status{status=\"blocked\"}) > 0)",
+          "expr": "count(avg by (project_id) (project:contextcore_task_percent_complete:max_over_time5m{task_type=~\"story|epic\"}) > 60 unless count by (project_id) (project:contextcore_task_count:count_by_status{to_status=\"blocked\"}) > 0)",
           "refId": "A"
         }
       ],
@@ -197,7 +197,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "count(avg by (project_id) (task_percent_complete{task_type=~\"story|epic\"}) < 40 or count by (project_id) (task_status{status=\"blocked\"}) > 0)",
+          "expr": "count(avg by (project_id) (project:contextcore_task_percent_complete:max_over_time5m{task_type=~\"story|epic\"}) < 40 or count by (project_id) (project:contextcore_task_count:count_by_status{to_status=\"blocked\"}) > 0)",
           "refId": "A"
         }
       ],
@@ -506,7 +506,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "avg by (project_id) (task_percent_complete{task_type=~\"story|epic\"})",
+          "expr": "avg by (project_id) (project:contextcore_task_percent_complete:max_over_time5m{task_type=~\"story|epic\"})",
           "legendFormat": "{{project_id}}",
           "refId": "A"
         }
@@ -764,7 +764,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "sum by (project_id, status) (task_count_by_status)",
+          "expr": "sum by (project_id, status) (project:contextcore_task_count:count_by_status)",
           "legendFormat": "{{status}}",
           "refId": "A"
         }
@@ -987,13 +987,13 @@
           "type": "prometheus",
           "uid": "mimir"
         },
-        "definition": "label_values(task_percent_complete, project_id)",
+        "definition": "label_values(project:contextcore_task_percent_complete:max_over_time5m, project_id)",
         "hide": 0,
         "includeAll": true,
         "multi": true,
         "name": "project",
         "options": [],
-        "query": "label_values(task_percent_complete, project_id)",
+        "query": "label_values(project:contextcore_task_percent_complete:max_over_time5m, project_id)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,

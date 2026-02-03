@@ -18,7 +18,9 @@
         storage-status storage-clean logs-tempo logs-mimir logs-loki logs-grafana \
         test lint typecheck build install clean dashboards-provision dashboards-list \
         seed-metrics full-setup wait-ready install-verify \
-        kind-up kind-down kind-status kind-seed
+        kind-up kind-down kind-status kind-seed \
+        rules-validate rules-status \
+        jsonnet-generate jsonnet-test jsonnet-lint
 
 # Container engine detection (Docker or Podman — override with CONTAINER_ENGINE=podman)
 CONTAINER_ENGINE ?= $(shell which docker >/dev/null 2>&1 && echo docker || (which podman >/dev/null 2>&1 && echo podman || echo docker))
@@ -230,7 +232,7 @@ install-verify: install seed-metrics ## Install Wayfinder and populate dashboard
 	@echo "  2. Run 'make smoke-test' to validate stack"
 	@echo "  3. Start tracking tasks with: contextcore task start --id TASK-1 --title 'My Task'"
 
-full-setup: up wait-ready seed-metrics ## Complete setup: start stack, wait for ready, seed metrics
+full-setup: up wait-ready rules-validate seed-metrics ## Complete setup: start stack, wait for ready, validate rules, seed metrics
 	@echo ""
 	@echo "$(GREEN)=== Full Setup Complete ===$(NC)"
 	@echo ""
@@ -402,6 +404,48 @@ kind-seed: ## Seed installation metrics into Kind cluster
 	@echo "$(GREEN)Metrics exported to Mimir via $(OTLP_ENDPOINT)$(NC)"
 	@echo "Dashboard: $(GRAFANA_URL)/d/cc-core-installation-status"
 
+# === Recording Rules ===
+
+rules-validate: ## Validate recording and alert rule files exist and are well-formed YAML
+	@echo "$(CYAN)=== Validating Recording Rules ===$(NC)"
+	@echo ""
+	@PASSED=0; TOTAL=4; \
+	echo "Loki recording rules:"; \
+	if [ -f "loki/rules/fake/contextcore-rules.yaml" ]; then \
+		python3 -c "import yaml; yaml.safe_load(open('loki/rules/fake/contextcore-rules.yaml'))" 2>/dev/null && { echo "$(GREEN)  ✅ contextcore-rules.yaml valid$(NC)"; PASSED=$$((PASSED+1)); } || echo "$(RED)  ❌ contextcore-rules.yaml invalid YAML$(NC)"; \
+	else \
+		echo "$(RED)  ❌ contextcore-rules.yaml not found$(NC)"; \
+	fi; \
+	echo "Loki alert rules:"; \
+	if [ -f "loki/rules/fake/contextcore-alerts.yaml" ]; then \
+		python3 -c "import yaml; yaml.safe_load(open('loki/rules/fake/contextcore-alerts.yaml'))" 2>/dev/null && { echo "$(GREEN)  ✅ contextcore-alerts.yaml valid$(NC)"; PASSED=$$((PASSED+1)); } || echo "$(RED)  ❌ contextcore-alerts.yaml invalid YAML$(NC)"; \
+	else \
+		echo "$(RED)  ❌ contextcore-alerts.yaml not found$(NC)"; \
+	fi; \
+	echo "Mimir recording rules:"; \
+	if [ -f "mimir/rules/contextcore/rules.yaml" ]; then \
+		python3 -c "import yaml; yaml.safe_load(open('mimir/rules/contextcore/rules.yaml'))" 2>/dev/null && { echo "$(GREEN)  ✅ mimir rules.yaml valid$(NC)"; PASSED=$$((PASSED+1)); } || echo "$(RED)  ❌ mimir rules.yaml invalid YAML$(NC)"; \
+	else \
+		echo "$(RED)  ❌ mimir rules.yaml not found$(NC)"; \
+	fi; \
+	echo "Mimir alert rules:"; \
+	if [ -f "mimir/rules/contextcore/alerts.yaml" ]; then \
+		python3 -c "import yaml; yaml.safe_load(open('mimir/rules/contextcore/alerts.yaml'))" 2>/dev/null && { echo "$(GREEN)  ✅ mimir alerts.yaml valid$(NC)"; PASSED=$$((PASSED+1)); } || echo "$(RED)  ❌ mimir alerts.yaml invalid YAML$(NC)"; \
+	else \
+		echo "$(RED)  ❌ mimir alerts.yaml not found$(NC)"; \
+	fi; \
+	echo ""; \
+	echo "$(CYAN)=== Rules Validation: $$PASSED/$$TOTAL passed ===$(NC)"
+
+rules-status: ## Show status of active recording and alert rules
+	@echo "$(CYAN)=== Recording Rules Status ===$(NC)"
+	@echo ""
+	@echo "Loki rules:"
+	@curl -sf http://localhost:3100/loki/api/v1/rules 2>/dev/null | python3 -c "import sys,json; data=json.load(sys.stdin); [print(f'  {g[\"name\"]}: {len(g.get(\"rules\",[]))} rules') for g in data.get('data',{}).get('groups',[])]" 2>/dev/null || echo "  $(YELLOW)⚠️  Loki not accessible or no rules loaded$(NC)"
+	@echo ""
+	@echo "Mimir rules:"
+	@curl -sf http://localhost:9009/prometheus/api/v1/rules 2>/dev/null | python3 -c "import sys,json; data=json.load(sys.stdin); [print(f'  {g[\"name\"]}: {len(g.get(\"rules\",[]))} rules') for g in data.get('data',{}).get('groups',[])]" 2>/dev/null || echo "  $(YELLOW)⚠️  Mimir not accessible or no rules loaded$(NC)"
+
 # === Dashboards ===
 
 dashboards-provision: ## Provision Wayfinder dashboards to Grafana
@@ -409,6 +453,22 @@ dashboards-provision: ## Provision Wayfinder dashboards to Grafana
 
 dashboards-list: ## List provisioned dashboards in Grafana
 	@PYTHONPATH=./src python3 -m contextcore.cli dashboards list
+
+# === Jsonnet Mixin ===
+
+jsonnet-generate: ## Generate dashboards, rules, and alerts from Jsonnet
+	$(MAKE) -C wayfinder-mixin generate
+	@echo "Copying generated artifacts to deployment locations..."
+	@cp wayfinder-mixin/generated/dashboards/*.json grafana/provisioning/dashboards/core/ 2>/dev/null || true
+	@cp wayfinder-mixin/generated/rules/loki-rules.yaml loki/rules/fake/contextcore-rules.yaml 2>/dev/null || true
+	@cp wayfinder-mixin/generated/rules/mimir-rules.yaml mimir/rules/contextcore/rules.yaml 2>/dev/null || true
+	@echo "$(GREEN)Jsonnet artifacts deployed$(NC)"
+
+jsonnet-test: ## Run Jsonnet mixin tests
+	$(MAKE) -C wayfinder-mixin test
+
+jsonnet-lint: ## Check Jsonnet formatting
+	$(MAKE) -C wayfinder-mixin lint
 
 # === Help ===
 
@@ -442,8 +502,14 @@ help: ## Show this help
 	@echo "$(YELLOW)Kind Cluster:$(NC)"
 	@grep -E '^kind-' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
 	@echo ""
+	@echo "$(YELLOW)Recording Rules:$(NC)"
+	@grep -E '^rules-' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
+	@echo ""
 	@echo "$(YELLOW)Dashboards:$(NC)"
 	@grep -E '^dashboards-' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
+	@echo ""
+	@echo "$(YELLOW)Jsonnet Mixin:$(NC)"
+	@grep -E '^jsonnet-' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
 	@echo ""
 	@echo "$(YELLOW)Container Engine:$(NC)"
 	@echo "  CONTAINER_ENGINE  Container runtime (default: auto-detect docker or podman)"

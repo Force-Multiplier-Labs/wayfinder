@@ -37,6 +37,8 @@ Example:
 
 from contextcore.contracts.metrics import (
     MetricName,
+    RecordingRuleName,
+    AlertRuleName,
     LabelName,
     EventType,
     ProjectSchema,
@@ -111,6 +113,8 @@ from contextcore.contracts.timeouts import (
 __all__ = [
     # Metrics
     "MetricName",
+    "RecordingRuleName",
+    "AlertRuleName",
     "LabelName",
     "EventType",
     "ProjectSchema",

@@ -39,6 +39,11 @@ ingester:
       store: inmemory
     replication_factor: 1
 
+ruler:
+  enable_api: true
+  evaluation_interval: 1m
+  rule_path: /data/mimir/rules-tmp
+
 ruler_storage:
   backend: filesystem
   filesystem:

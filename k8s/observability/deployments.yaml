@@ -32,6 +32,8 @@ spec:
               mountPath: /etc/mimir
             - name: data
               mountPath: /data
+            - name: rules
+              mountPath: /data/mimir/rules
           resources:
             limits:
               cpu: 500m
@@ -55,6 +57,10 @@ spec:
         - name: config
           configMap:
             name: mimir-config
+        - name: rules
+          configMap:
+            name: mimir-rules
+            optional: true
         - name: data
           emptyDir: {}
 ---
@@ -141,6 +147,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /loki
+            - name: rules
+              mountPath: /loki/rules
           resources:
             limits:
               cpu: 500m
@@ -157,6 +165,10 @@ spec:
       volumes:
         - name: data
           emptyDir: {}
+        - name: rules
+          configMap:
+            name: loki-rules
+            optional: true
 ---
 # Alloy Deployment (OTLP Collector)
 apiVersion: apps/v1

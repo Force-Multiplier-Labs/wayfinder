@@ -154,6 +154,144 @@ data:
       }
     }
 ---
+# Loki Recording Rules
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-rules
+  namespace: observability
+data:
+  contextcore-rules.yaml: |
+    groups:
+      - name: contextcore_task_progress
+        interval: 1m
+        rules:
+          - record: "project:contextcore_task_percent_complete:max_over_time5m"
+            expr: |
+              max by (project_id, task_id, task_type, sprint_id) (
+                max_over_time(
+                  {service="contextcore"} | json
+                  | event = "task.progress_updated"
+                  | unwrap percent_complete [5m]
+                )
+              )
+            labels:
+              source: loki
+          - record: "project_sprint:contextcore_task_percent_complete:avg"
+            expr: |
+              avg by (project_id, sprint_id) (
+                project:contextcore_task_percent_complete:max_over_time5m{sprint_id!=""}
+              )
+            labels:
+              source: derived
+          - record: "project_sprint:contextcore_task_completed:count"
+            expr: |
+              count by (project_id, sprint_id) (
+                project:contextcore_task_percent_complete:max_over_time5m == 100
+              )
+            labels:
+              source: derived
+          - record: "project_task:contextcore_task_progress:rate1h"
+            expr: |
+              sum by (project_id, task_id) (
+                rate(
+                  {service="contextcore"} | json
+                  | event = "task.progress_updated"
+                  | unwrap percent_complete [1h]
+                )
+              )
+            labels:
+              source: loki
+      - name: contextcore_task_status
+        interval: 1m
+        rules:
+          - record: "project:contextcore_task_count:count_by_status"
+            expr: |
+              count by (project_id, to_status) (
+                last_over_time(
+                  {service="contextcore"} | json
+                  | event = "task.status_changed" [5m]
+                )
+              )
+            labels:
+              source: loki
+  contextcore-alerts.yaml: |
+    groups:
+      - name: contextcore_alerts
+        rules:
+          - alert: ContextCoreExporterFailure
+            expr: |
+              count_over_time(
+                {service="contextcore"} | json
+                | severity_text = "ERROR"
+                | body =~ ".*OTLP.*export.*fail.*|.*exporter.*error.*" [5m]
+              ) > 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "OTLP exporter failure detected"
+              runbook_url: "docs/OPERATIONAL_RUNBOOK.md#otlp-exporter-failure"
+          - alert: ContextCoreSpanStateLoss
+            expr: |
+              count_over_time(
+                {service="contextcore"} | json
+                | severity_text = "ERROR"
+                | body =~ ".*state.*persist.*fail.*|.*span.*state.*lost.*" [5m]
+              ) > 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Span state persistence failure"
+              runbook_url: "docs/OPERATIONAL_RUNBOOK.md#span-state-loss"
+      - name: contextcore_task_alerts
+        rules:
+          - alert: ContextCoreTaskStalled
+            expr: |
+              (time() - max by (project_id, task_id) (
+                timestamp(count_over_time(
+                  {service="contextcore"} | json
+                  | event = "task.status_changed" [24h]
+                ) > 0)
+              )) > 86400
+            for: 1h
+            labels:
+              severity: warning
+            annotations:
+              summary: "Task {{ $labels.task_id }} stalled > 24h"
+              runbook_url: "docs/OPERATIONAL_RUNBOOK.md#task-stalled"
+---
+# Mimir Recording Rules
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mimir-rules
+  namespace: observability
+data:
+  rules.yaml: |
+    groups:
+      - name: contextcore_mimir_precompute
+        interval: 1m
+        rules:
+          - record: "project_sprint:contextcore_sprint_planned_points:last"
+            expr: max by (project_id, sprint_id) (contextcore_sprint_planned_points)
+  alerts.yaml: |
+    groups:
+      - name: contextcore_mimir_alerts
+        rules:
+          - alert: ContextCoreInsightLatencyHigh
+            expr: |
+              histogram_quantile(0.99,
+                sum(rate(contextcore_insight_query_duration_milliseconds_bucket[5m])) by (le)
+              ) > 500
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Insight query latency > 500ms P99"
+              runbook_url: "docs/OPERATIONAL_RUNBOOK.md#insight-latency"
+---
 # Grafana Datasources
 apiVersion: v1
 kind: ConfigMap

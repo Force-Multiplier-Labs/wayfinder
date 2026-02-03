@@ -1,0 +1,54 @@
+# ContextCore Loki Alert Rules
+# Convention: ContextCore[Resource][Issue]
+# See: docs/semantic-conventions.md (Alert Naming Convention)
+
+groups:
+  - name: contextcore_alerts
+    rules:
+      - alert: ContextCoreExporterFailure
+        expr: |
+          count_over_time(
+            {service="contextcore"} | json
+            | severity_text = "ERROR"
+            | body =~ ".*OTLP.*export.*fail.*|.*exporter.*error.*" [5m]
+          ) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OTLP exporter failure detected"
+          description: "ContextCore OTLP export errors in last 5m. Health reporting impacted."
+          runbook_url: "docs/OPERATIONAL_RUNBOOK.md#otlp-exporter-failure"
+
+      - alert: ContextCoreSpanStateLoss
+        expr: |
+          count_over_time(
+            {service="contextcore"} | json
+            | severity_text = "ERROR"
+            | body =~ ".*state.*persist.*fail.*|.*span.*state.*lost.*" [5m]
+          ) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Span state persistence failure"
+          description: "In-flight spans may be lost on restart."
+          runbook_url: "docs/OPERATIONAL_RUNBOOK.md#span-state-loss"
+
+  - name: contextcore_task_alerts
+    rules:
+      - alert: ContextCoreTaskStalled
+        expr: |
+          (time() - max by (project_id, task_id) (
+            timestamp(count_over_time(
+              {service="contextcore"} | json
+              | event = "task.status_changed" [24h]
+            ) > 0)
+          )) > 86400
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Task {{ $labels.task_id }} stalled > 24h"
+          description: "Task {{ $labels.task_id }} in project {{ $labels.project_id }} has had no status change for over 24 hours."
+          runbook_url: "docs/OPERATIONAL_RUNBOOK.md#task-stalled"

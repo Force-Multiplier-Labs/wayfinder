@@ -66,6 +66,35 @@ spec:
         - fox-alert-automation.json
 
   # ==========================================================================
+  # RECORDING RULES
+  # Recording rules that must be deployed for dashboards to function
+  # ==========================================================================
+  recordingRules:
+    - name: "project:contextcore_task_percent_complete:max_over_time5m"
+      source: loki
+      ruleFile: "loki/rules/fake/contextcore-rules.yaml"
+      required: true
+      reason: "Task progress metric derived from structured logs"
+      usedBy:
+        - portfolio.json
+
+    - name: "project:contextcore_task_count:count_by_status"
+      source: loki
+      ruleFile: "loki/rules/fake/contextcore-rules.yaml"
+      required: true
+      reason: "Task count by status derived from structured logs"
+      usedBy:
+        - portfolio.json
+
+    - name: "project_sprint:contextcore_sprint_planned_points:last"
+      source: mimir
+      ruleFile: "mimir/rules/contextcore/rules.yaml"
+      required: false
+      reason: "Sprint planned points from OTel metrics"
+      usedBy:
+        - portfolio.json
+
+  # ==========================================================================
   # EXTERNAL SERVICES
   # No external services required - all data comes from telemetry
   # ==========================================================================

@@ -88,6 +88,45 @@ GENAI_DURATION_BUCKETS = [
 ]
 
 
+class RecordingRuleName(str, Enum):
+    """
+    Canonical recording rule names following kubernetes-mixin convention.
+
+    Pattern: <aggregation_level>:<base_metric>:<aggregation_function>
+
+    The contextcore_ prefix avoids collisions with other systems.
+    Colons separate the three components (valid in Prometheus metric names).
+    """
+
+    # Loki recording rules (derived from logs)
+    TASK_PERCENT_COMPLETE = "project:contextcore_task_percent_complete:max_over_time5m"
+    SPRINT_AVG_PROGRESS = "project_sprint:contextcore_task_percent_complete:avg"
+    TASK_COMPLETED_COUNT = "project_sprint:contextcore_task_completed:count"
+    TASK_PROGRESS_RATE = "project_task:contextcore_task_progress:rate1h"
+    TASK_COUNT_BY_STATUS = "project:contextcore_task_count:count_by_status"
+
+    # Mimir recording rules (derived from OTel metrics)
+    SPRINT_PLANNED_POINTS = "project_sprint:contextcore_sprint_planned_points:last"
+
+
+class AlertRuleName(str, Enum):
+    """
+    Canonical alert rule names following kubernetes-mixin convention.
+
+    Pattern: ContextCore[Resource][Issue]
+
+    Severity taxonomy:
+    - critical: pages on-call immediately
+    - warning: next-business-day work queue
+    - info: troubleshooting enrichment
+    """
+
+    EXPORTER_FAILURE = "ContextCoreExporterFailure"
+    SPAN_STATE_LOSS = "ContextCoreSpanStateLoss"
+    INSIGHT_LATENCY_HIGH = "ContextCoreInsightLatencyHigh"
+    TASK_STALLED = "ContextCoreTaskStalled"
+
+
 class LabelName(str, Enum):
     """
     Canonical label names for telemetry.
