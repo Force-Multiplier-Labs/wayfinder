@@ -38,7 +38,8 @@ DEMO_PROJECTS = [
 ACTIONS_BY_CRITICALITY = {
     "critical": ["claude", "context_notify"],
     "high": ["context_notify"],
-    "warning": ["log"],
+    "medium": ["log"],
+    "low": ["log"],
 }
 
 
