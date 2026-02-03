@@ -5,7 +5,7 @@ This document catalogs known issues in the ContextCore codebase and their soluti
 ## Table of Contents
 
 - [Workflow Trigger Shows "0/N Steps"](#workflow-trigger-shows-0n-steps)
-- [Prime Contractor Merge Corrupts Python Files](#prime-contractor-merge-corrupts-python-files)
+- [Prime Contractor Merge Corrupts Python Files](#prime-contractor-merge-corrupts-python-files) *(resolved)*
 - [Module Import Errors](#module-import-errors) *(resolved)*
 - [Example Code Executed at Import Time](#example-code-executed-at-import-time) *(resolved)*
 - [Missing Module Files](#missing-module-files) *(resolved)*
@@ -64,53 +64,24 @@ queue.save_state()
 
 ## Prime Contractor Merge Corrupts Python Files
 
+> **RESOLVED (2026-02-02):** The AST merge pipeline now handles all four root causes. `__main__` guards and bare module-level calls are filtered during parsing, `__all__` preserves the target file's explicit exports, the legacy text-based merge fallback is disabled (returns empty string with error instead of corrupting files), and the three duplicate merge functions in `merge_conflicts.py` are consolidated into a single shared helper. 47 tests pass including 5 new regression tests. Kept for historical reference.
+
 **Symptom:** After running `python3 scripts/prime_contractor/cli.py run --import-backlog`, target Python files become syntactically invalid with:
 - Imports scattered throughout the file
 - Class definitions mixed with example code
 - Missing decorators (@dataclass, @classmethod)
 - Code outside class bodies
 
-**Root Cause:** The `merge_files_intelligently()` function in `scripts/lead_contractor/integrate_backlog.py` incorrectly merges Python files by:
-1. Extracting functions/classes without preserving structure
-2. Mixing docstrings, imports, and code incorrectly
-3. Including example code from generated files
+**Root Cause:** Four gaps in the AST merge pipeline:
+1. `parse_python_file()` sent `if __name__ == "__main__":` blocks and bare module-level calls into `other_statements`, which `merge_parsed_files()` blindly appended to output
+2. `merge_parsed_files()` always regenerated `__all__` from all merged names, overwriting the target file's intentional subset (exporting private helpers)
+3. `integrate_backlog.py` and `merge_conflicts.py` fell back to the legacy text-based merge on any exception, which produced the corrupted output
+4. Three duplicate merge functions in `merge_conflicts.py` each independently repeated the same try/except/parse/merge pattern
 
-**Affected Files:**
-- `src/contextcore/agent/parts.py` (most common)
-- Any file targeted by multiple generated features
-
-**Fix:**
-
-Option 1: Restore from git and mark features complete
-```bash
-# Restore the file
-git checkout src/contextcore/agent/parts.py
-
-# Mark affected features as complete
-python3 -c "
-from scripts.prime_contractor.feature_queue import FeatureQueue, FeatureStatus
-queue = FeatureQueue()
-for fid in ['parts_messagemodel', 'parts_partmodel', 'parts_artifactmodel', 'parts_modelspackage']:
-    if fid in queue.features:
-        queue.features[fid].status = FeatureStatus.COMPLETE
-        queue.features[fid].error_message = 'Manually completed - merge function broken'
-queue.save_state()
-"
-```
-
-Option 2: Use generated source directly
-```bash
-# Copy clean generated file to target
-cp generated/phase3/a2a/parts/parts_partmodel_code.py src/contextcore/agent/part.py
-
-# Remove example code at end of file (lines after __all__)
-```
-
-**Long-term Fix:** The `merge_files_intelligently()` function needs to be rewritten to:
-1. Parse Python AST properly
-2. Preserve class/function structure
-3. Exclude example code sections
-4. Handle imports correctly
+**Fix applied (commit 8ea61ce):**
+- `ast_merge.py`: Added `_is_main_guard()` and `_is_type_checking()` helpers; parser now filters `__main__` guards and bare `ast.Expr(ast.Call)` nodes; `merge_parsed_files()` excludes `other_statements` from output with a warning; `__all__` logic preserves first file's explicit exports and excludes `_private` names from auto-generated exports
+- `integrate_backlog.py`: Feature flag fallback and exception handlers return `""` with error messages instead of calling `_merge_files_legacy()`; legacy function marked deprecated
+- `merge_conflicts.py`: `merge_parts_files()`, `merge_otel_genai_files()`, `merge_handoff_files()` consolidated into shared `_merge_python_sources()` with no legacy fallback
 
 ---
 
@@ -317,7 +288,7 @@ FeatureQueue().print_status()
 
 1. **Before running Prime Contractor:** Check that target files have no uncommitted changes
 2. **After merge failures:** Always restore from git before retrying
-3. **For multi-feature targets:** Consider integrating manually instead of using merge
+3. **AST merge protections:** The AST merge pipeline now filters example code, preserves `__all__`, and refuses to fall back to legacy text-based merge
 4. **Test imports:** Run module health check after any integration
 
 ---
