@@ -84,3 +84,24 @@ def sample_context() -> ProjectContext:
 @pytest.fixture
 def fox_config() -> FoxConfig:
     return FoxConfig()
+
+
+def make_fox_enrich_action(contexts=None):
+    """Create a FoxEnrichAction with mocked dependencies for testing."""
+    from wayfinder_fox.actions.fox_enrich import FoxEnrichAction
+    from wayfinder_fox.enricher import ProjectContextEnricher
+    from wayfinder_fox.router import CriticalityRouter
+
+    exporter = CollectingExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = FoxTracer(tracer_provider=provider)
+    reader = MockProjectContextReader(contexts=contexts)
+
+    action = FoxEnrichAction.__new__(FoxEnrichAction)
+    action.name = "fox_enrich"
+    action._tracer = tracer
+    action._reader = reader
+    action._enricher = ProjectContextEnricher(reader=reader, tracer=tracer)
+    action._router = CriticalityRouter(tracer=tracer)
+    return action, exporter
