@@ -83,12 +83,12 @@ def knowledge_emit(path: str, skill_id: Optional[str], endpoint: str, dry_run: b
     from opentelemetry import trace
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from contextcore.exporter_factory import create_span_exporter
     from opentelemetry.sdk.resources import Resource
 
     resource = Resource.create({"service.name": "contextcore-knowledge", "service.version": "1.0.0"})
     provider = TracerProvider(resource=resource)
-    exporter = OTLPSpanExporter(endpoint=endpoint, insecure=True)
+    exporter = create_span_exporter(endpoint=endpoint)
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
 

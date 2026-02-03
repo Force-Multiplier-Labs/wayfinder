@@ -1676,7 +1676,7 @@ def skill_emit(path: str, endpoint: str):
     from opentelemetry import trace
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from contextcore.exporter_factory import create_span_exporter
     from opentelemetry.sdk.resources import Resource
 
     # Configure OTel
@@ -1686,7 +1686,7 @@ def skill_emit(path: str, endpoint: str):
     })
 
     provider = TracerProvider(resource=resource)
-    exporter = OTLPSpanExporter(endpoint=endpoint, insecure=True)
+    exporter = create_span_exporter(endpoint=endpoint)
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
 
@@ -2329,7 +2329,7 @@ def knowledge_emit(
     from opentelemetry import trace
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from contextcore.exporter_factory import create_span_exporter
     from opentelemetry.sdk.resources import Resource
 
     # Configure OTel
@@ -2339,7 +2339,7 @@ def knowledge_emit(
     })
 
     provider = TracerProvider(resource=resource)
-    exporter = OTLPSpanExporter(endpoint=endpoint, insecure=True)
+    exporter = create_span_exporter(endpoint=endpoint)
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
 
@@ -2994,10 +2994,10 @@ def value_emit(
         from opentelemetry import trace
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        from contextcore.exporter_factory import create_span_exporter
 
         provider = TracerProvider()
-        exporter = OTLPSpanExporter(endpoint=endpoint, insecure=True)
+        exporter = create_span_exporter(endpoint=endpoint)
         provider.add_span_processor(BatchSpanProcessor(exporter))
         trace.set_tracer_provider(provider)
 

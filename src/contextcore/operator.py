@@ -144,11 +144,9 @@ class OperatorTracer:
     def _setup_exporter(self) -> None:
         """Configure OTLP exporter."""
         try:
-            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-                OTLPSpanExporter,
-            )
+            from contextcore.exporter_factory import create_span_exporter
 
-            exporter = OTLPSpanExporter(endpoint=self.endpoint, insecure=True)
+            exporter = create_span_exporter(endpoint=self.endpoint)
             self._provider.add_span_processor(BatchSpanProcessor(exporter))
             logger.info(
                 "OTLP exporter configured",

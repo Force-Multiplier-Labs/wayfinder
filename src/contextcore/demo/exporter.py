@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional
 
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from contextcore.exporter_factory import create_span_exporter
 
 logger = logging.getLogger(__name__)
 
@@ -292,10 +292,7 @@ def load_to_tempo(
         logger.info(f"Loaded {len(span_dicts)} span definitions from {spans_file}")
 
         # Create exporter
-        exporter = OTLPSpanExporter(
-            endpoint=endpoint,
-            insecure=insecure,
-        )
+        exporter = create_span_exporter(endpoint=endpoint, insecure=insecure)
 
         # Export spans in batches
         # Note: For JSON-loaded spans, we need to reconstruct them
@@ -311,10 +308,7 @@ def load_to_tempo(
 
     elif spans:
         # Direct span export
-        exporter = OTLPSpanExporter(
-            endpoint=endpoint,
-            insecure=insecure,
-        )
+        exporter = create_span_exporter(endpoint=endpoint, insecure=insecure)
 
         result = exporter.export(spans)
         exporter.shutdown()
@@ -348,10 +342,7 @@ class BatchOTLPExporter:
         self.endpoint = endpoint
         self.insecure = insecure
         self.batch_size = batch_size
-        self._exporter = OTLPSpanExporter(
-            endpoint=endpoint,
-            insecure=insecure,
-        )
+        self._exporter = create_span_exporter(endpoint=endpoint, insecure=insecure)
 
     def export_span_dicts(self, span_dicts: List[Dict[str, Any]]) -> SpanExportResult:
         """

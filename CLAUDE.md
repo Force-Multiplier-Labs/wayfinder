@@ -50,6 +50,7 @@ The separation enables ecosystem growth and clarifies that the metadata model ha
 - **HTTP**: httpx (async), aiohttp
 - **TUI**: Textual >= 0.47.0
 - **Reference Backend**: Grafana (Tempo, Mimir, Loki) with Alloy collector
+- **Templating**: Jinja2 >= 3.1.0 (runbook/SLO test generation)
 - **Build**: Hatchling
 
 ## Repository Layout
@@ -70,7 +71,7 @@ wayfinder/
 │   ├── operator.py             # Kopf K8s operator (1070 LOC)
 │   ├── crd_helpers.py          # CRD utility functions
 │   ├── cli_legacy.py           # Legacy CLI (being replaced by modular cli/)
-│   ├── cli/                    # Modular CLI commands (24 files)
+│   ├── cli/                    # Modular CLI commands
 │   │   ├── __init__.py         # Click group entry point
 │   │   ├── task.py             # task start/update/block/complete/list
 │   │   ├── sprint.py           # sprint start/update/complete
@@ -153,19 +154,31 @@ wayfinder/
 │   │   ├── generator.py        # HistoricalTaskTracker
 │   │   ├── exporter.py         # Dual-emit to Tempo/Loki
 │   │   └── project_data.py     # Microservices-demo POC data
+│   ├── api/                    # Unified API facade (insights, handoffs, skills)
+│   ├── dashboards/             # Dashboard provisioning and auto-discovery
+│   ├── discovery/              # Agent discovery (agent cards, endpoints, clients)
+│   ├── generators/             # Runbook and SLO test generation
+│   ├── graph/                  # Knowledge graph (builder, schema, queries, impact analysis)
+│   ├── integrations/           # External tools (GitHub review, OpenAPI, contract drift)
+│   ├── learning/               # Agent learning loop (lessons, retrieval, continuous improvement)
+│   ├── ops/                    # Operations (doctor, health, smoke test, backup/restore)
+│   ├── storage/                # Pluggable storage backends (file, Kubernetes)
+│   ├── value/                  # Value capability modeling (parser, emitter, personas)
 │   └── install/                # Installation verification (self-monitoring)
 │       ├── verifier.py         # InstallationVerifier
 │       ├── requirements.py     # Check requirements
 │       ├── installtracking_*.py  # Installation tracking components
 │       ├── mimir_query.py      # Mimir metric queries
 │       └── debug_display.py    # Debug output formatting
-├── tests/                      # Test suite (13 test files + conftest.py)
+├── tests/                      # Test suite (12 test files + conftest.py)
 ├── grafana/provisioning/       # 13 auto-provisioned Grafana dashboards
 │   ├── dashboards/
 │   │   ├── core/               # portfolio, sprint-metrics, installation, etc.
 │   │   ├── fox/                # fox-alert-automation
 │   │   ├── squirrel/           # skills-browser, value-capabilities
 │   │   ├── beaver/             # beaver-lead-contractor-progress
+│   │   ├── coyote/             # (reserved for coyote incident dashboards)
+│   │   ├── owl/                # (reserved for owl plugin dashboards)
 │   │   └── external/           # agent-trigger
 │   └── datasources/            # Tempo, Mimir, Loki configs
 ├── k8s/observability/          # Kubernetes manifests (Grafana, Tempo, Mimir, Loki, Alloy)
@@ -179,12 +192,14 @@ wayfinder/
 ├── terminology/                # Wayfinder terminology definitions (Squirrel pattern)
 │   ├── MANIFEST.yaml           # Entry point (~200 tokens)
 │   └── definitions/            # Full term definitions
-├── docs/                       # Implementation documentation (49+ files)
+├── docs/                       # Implementation documentation (68+ files)
 │   ├── EXPANSION_PACKS.md      # Design boundaries for each pack
 │   ├── INSTALLATION.md         # Setup guide
 │   ├── KNOWN_ISSUES.md         # Known limitations
 │   ├── blueprint-*.md          # Implementation blueprints (7 files)
-│   ├── capability-index/       # Capability documentation (18 files)
+│   ├── capability-index/       # Capability documentation, roadmap, pain points (16 files)
+│   ├── plans/                  # Implementation plans
+│   ├── value-propositions/     # Value proposition documents
 │   ├── adr/                    # Architecture decision records
 │   └── dashboards/             # Dashboard specifications
 └── .contextcore.yaml           # Project metadata (CRD instance)
@@ -424,6 +439,8 @@ Animal-named packages using Anishinaabe (Ojibwe) names honoring the indigenous p
 | **contextcore-squirrel** | Squirrel | Ajidamoo | Skills library for token-efficient agent discovery | beta |
 | **contextcore-owl** | Owl | Gookooko'oo | Grafana plugins (**internal**, not user-facing) | internal |
 
+> **Note:** `contextcore-rabbit` and `contextcore-owl` have been extracted to their own repos under the Force-Multiplier-Labs org. Dashboard JSON for these packs remains in this repo for provisioning.
+
 ### Dependency Graph
 
 ```
@@ -460,6 +477,12 @@ Key test files:
 - `tests/test_models.py` — Pydantic model validation
 - `tests/test_detector.py` — ResourceDetector K8s annotation extraction
 - `tests/test_contracts.py` — Contract/type validation
+- `tests/test_ast_merge.py` — AST merge correctness
+- `tests/test_code_generation.py` — Code generation utilities
+- `tests/test_knowledge_parser.py` — Markdown-to-telemetry parser
+- `tests/test_phase1_features.py` — Phase 1 feature integration
+- `tests/test_rbac.py` — RBAC policy enforcement
+- `tests/test_value.py` — Value capability models
 
 ## OTel GenAI Semantic Conventions
 

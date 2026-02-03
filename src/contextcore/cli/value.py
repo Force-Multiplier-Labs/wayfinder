@@ -68,10 +68,10 @@ def value_emit(path: str, skill_id: Optional[str], endpoint: str, dry_run: bool,
         from opentelemetry import trace
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        from contextcore.exporter_factory import create_span_exporter
 
         provider = TracerProvider()
-        exporter = OTLPSpanExporter(endpoint=endpoint, insecure=True)
+        exporter = create_span_exporter(endpoint=endpoint)
         provider.add_span_processor(BatchSpanProcessor(exporter))
         trace.set_tracer_provider(provider)
 

@@ -28,8 +28,7 @@ def _configure_otel_providers(endpoint: str) -> bool:
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-        from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+        from contextcore.exporter_factory import create_span_exporter, create_metric_exporter
 
         # Create resource
         resource = Resource.create({
@@ -39,12 +38,12 @@ def _configure_otel_providers(endpoint: str) -> bool:
 
         # Configure TracerProvider with OTLP exporter
         tracer_provider = TracerProvider(resource=resource)
-        span_exporter = OTLPSpanExporter(endpoint=endpoint, insecure=True)
+        span_exporter = create_span_exporter(endpoint=endpoint)
         tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))
         trace.set_tracer_provider(tracer_provider)
 
         # Configure MeterProvider with OTLP exporter
-        metric_exporter = OTLPMetricExporter(endpoint=endpoint, insecure=True)
+        metric_exporter = create_metric_exporter(endpoint=endpoint)
         metric_reader = PeriodicExportingMetricReader(
             metric_exporter,
             export_interval_millis=5000,  # Export every 5 seconds
