@@ -142,7 +142,12 @@ class TaskTracker:
         }
         resource = Resource.create(resource_attrs)
 
-        self._provider = TracerProvider(resource=resource)
+        # Configure W3C propagators (TraceContext + Baggage) before provider setup
+        from contextcore.propagation import configure_propagator
+        configure_propagator()
+
+        from contextcore.sampler_factory import create_sampler
+        self._provider = TracerProvider(sampler=create_sampler(), resource=resource)
         self._export_mode = EXPORT_MODE_NONE
 
         if exporter:

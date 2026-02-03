@@ -56,6 +56,10 @@ class A2AServer:
         self.port = port
         self._app = None
 
+        # Configure W3C propagators (TraceContext + Baggage) for A2A
+        from contextcore.propagation import configure_propagator
+        configure_propagator()
+
     def create_flask_app(self) -> Flask:
         """Create Flask application with A2A endpoints."""
         if not HAS_FLASK:
@@ -108,6 +112,9 @@ class A2AServer:
                 "agent_id": self.agent_card.agent_id,
                 "framework": "flask"
             })
+
+        from contextcore.agent.a2a_middleware import add_flask_trace_middleware
+        add_flask_trace_middleware(app)
 
         self._app = app
         return app
@@ -165,6 +172,9 @@ class A2AServer:
                 "agent_id": self.agent_card.agent_id,
                 "framework": "fastapi"
             }
+
+        from contextcore.agent.a2a_middleware import TraceContextMiddleware
+        app.add_middleware(TraceContextMiddleware)
 
         self._app = app
         return app
