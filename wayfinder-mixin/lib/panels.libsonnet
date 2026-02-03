@@ -198,8 +198,8 @@
     },
   },
 
-  // Stat panel for TraceQL queries (count-based)
-  traceqlStat(title, query, datasource={ type: 'tempo', uid: '${tempo_datasource}' }, limit=1000, thresholds=[]):: {
+  // Stat panel for TraceQL queries (count-based by default)
+  traceqlStat(title, query, datasource={ type: 'tempo', uid: '${tempo_datasource}' }, limit=1000, thresholds=[], calcs=['count'], graphMode='none', unit=''):: {
     title: title,
     type: 'stat',
     datasource: datasource,
@@ -220,15 +220,16 @@
             { color: 'green', value: null },
           ],
         },
+        [if unit != '' then 'unit']: unit,
       },
       overrides: [],
     },
     options: {
       colorMode: 'value',
-      graphMode: 'none',
+      graphMode: graphMode,
       justifyMode: 'auto',
       orientation: 'auto',
-      reduceOptions: { calcs: ['count'], fields: '', values: false },
+      reduceOptions: { calcs: calcs, fields: '', values: false },
       textMode: 'auto',
     },
     pluginVersion: '10.2.0',
@@ -271,6 +272,97 @@
         show: false,
       },
       showHeader: true,
+    },
+    pluginVersion: '10.2.0',
+  },
+
+  // Timeseries panel for TraceQL queries
+  traceqlTimeseries(title, targets, datasource={ type: 'tempo', uid: '${tempo_datasource}' }, unit='', drawStyle='line', fillOpacity=10, lineInterpolation='linear', lineWidth=1):: {
+    title: title,
+    type: 'timeseries',
+    datasource: datasource,
+    targets: targets,
+    fieldConfig: {
+      defaults: {
+        color: { mode: 'palette-classic' },
+        custom: {
+          axisBorderShow: false,
+          axisCenteredZero: false,
+          axisColorMode: 'text',
+          axisLabel: '',
+          axisPlacement: 'auto',
+          barAlignment: 0,
+          drawStyle: drawStyle,
+          fillOpacity: fillOpacity,
+          gradientMode: 'none',
+          hideFrom: { legend: false, tooltip: false, viz: false },
+          insertNulls: false,
+          lineInterpolation: lineInterpolation,
+          lineWidth: lineWidth,
+          pointSize: 5,
+          scaleDistribution: { type: 'linear' },
+          showPoints: 'auto',
+          spanNulls: false,
+          stacking: { group: 'A', mode: 'none' },
+          thresholdsStyle: { mode: 'off' },
+        },
+        mappings: [],
+        thresholds: {
+          mode: 'absolute',
+          steps: [{ color: 'green', value: null }],
+        },
+        [if unit != '' then 'unit']: unit,
+      },
+      overrides: [],
+    },
+    options: {
+      legend: {
+        calcs: ['mean', 'max'],
+        displayMode: 'table',
+        placement: 'bottom',
+        showLegend: true,
+      },
+      tooltip: { mode: 'multi', sort: 'none' },
+    },
+    pluginVersion: '10.2.0',
+  },
+
+  // Gauge panel for TraceQL queries
+  traceqlGauge(title, query, datasource={ type: 'tempo', uid: '${tempo_datasource}' }, limit=100, unit='none', min=0, max=100, thresholds=[]):: {
+    title: title,
+    type: 'gauge',
+    datasource: datasource,
+    targets: [{
+      datasource: datasource,
+      limit: limit,
+      query: query,
+      queryType: 'traceql',
+      refId: 'A',
+    }],
+    fieldConfig: {
+      defaults: {
+        color: { mode: 'thresholds' },
+        mappings: [],
+        max: max,
+        min: min,
+        thresholds: {
+          mode: 'absolute',
+          steps: if std.length(thresholds) > 0 then thresholds else [
+            { color: 'green', value: null },
+          ],
+        },
+        unit: unit,
+      },
+      overrides: [],
+    },
+    options: {
+      minVizHeight: 75,
+      minVizWidth: 75,
+      orientation: 'auto',
+      reduceOptions: { calcs: ['count'], fields: '', values: false },
+      showThresholdLabels: false,
+      showThresholdMarkers: true,
+      sizing: 'auto',
     },
     pluginVersion: '10.2.0',
   },
