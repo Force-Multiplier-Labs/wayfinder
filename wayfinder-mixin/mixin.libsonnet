@@ -21,7 +21,7 @@
     // External dashboards
     // 'agent-trigger.json': (import 'dashboards/external/agent_trigger.libsonnet'),
     // Portfolio (highest complexity, migrate last)
-    // 'portfolio.json': (import 'dashboards/core/portfolio.libsonnet'),
+    'portfolio.json': (import 'dashboards/core/portfolio.libsonnet'),
   },
 
   prometheusAlerts+:: {
