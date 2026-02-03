@@ -14,7 +14,7 @@
     // Fox dashboards
     // 'fox-alert-automation.json': (import 'dashboards/fox/fox_alert_automation.libsonnet'),
     // Beaver dashboards
-    // 'beaver-lead-contractor.json': (import 'dashboards/beaver/lead_contractor.libsonnet'),
+    'beaver-lead-contractor.json': (import 'dashboards/beaver/lead_contractor.libsonnet'),
     // Squirrel dashboards
     // 'skills-browser.json': (import 'dashboards/squirrel/skills_browser.libsonnet'),
     // 'value-capabilities.json': (import 'dashboards/squirrel/value_capabilities.libsonnet'),
