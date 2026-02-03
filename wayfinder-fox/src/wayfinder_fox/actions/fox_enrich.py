@@ -87,27 +87,55 @@ class FoxEnrichAction(Action):
         alerts = payload.get("alerts")
 
         if alerts is not None:
-            # Alertmanager webhook: process each alert
+            # Alertmanager webhook: process each alert, tolerating per-alert failures
             results = []
+            failures = 0
             for alert_data in alerts:
-                result = self._process_alert(alert_data, context)
-                results.append(result)
+                try:
+                    result = self._process_alert(alert_data, context)
+                    results.append(result)
+                except Exception as e:
+                    logger.exception(
+                        "Failed to process alert: %s",
+                        alert_data.get("labels", {}).get("alertname", "unknown"),
+                    )
+                    failures += 1
+                    results.append({
+                        "error": str(e),
+                        "alert_name": alert_data.get("labels", {}).get(
+                            "alertname", "unknown"
+                        ),
+                    })
 
+            status = ActionStatus.SUCCESS if failures == 0 else ActionStatus.FAILED
             return ActionResult(
-                status=ActionStatus.SUCCESS,
+                status=status,
                 action_name=self.name,
-                message=f"Processed {len(results)} alerts",
-                data={"alerts_processed": len(results), "results": results},
+                message=f"Processed {len(results)} alerts ({failures} failures)",
+                data={
+                    "alerts_processed": len(results),
+                    "failures": failures,
+                    "results": results,
+                },
             )
         else:
             # Direct trigger: single alert
-            result = self._process_alert(payload, context)
-            return ActionResult(
-                status=ActionStatus.SUCCESS,
-                action_name=self.name,
-                message=f"Enriched alert: {result.get('alert_name', 'unknown')}",
-                data=result,
-            )
+            try:
+                result = self._process_alert(payload, context)
+                return ActionResult(
+                    status=ActionStatus.SUCCESS,
+                    action_name=self.name,
+                    message=f"Enriched alert: {result.get('alert_name', 'unknown')}",
+                    data=result,
+                )
+            except Exception as e:
+                logger.exception("Failed to process alert")
+                return ActionResult(
+                    status=ActionStatus.FAILED,
+                    action_name=self.name,
+                    message=f"Failed to enrich alert: {e}",
+                    data={"error": str(e)},
+                )
 
     def _process_alert(
         self, alert_data: Dict[str, Any], context: Dict[str, Any]
