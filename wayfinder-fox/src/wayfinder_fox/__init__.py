@@ -13,12 +13,14 @@ Span contract (matching fox-alert-automation.json dashboard):
 from wayfinder_fox.enricher import ProjectContextEnricher, EnrichedAlert
 from wayfinder_fox.router import CriticalityRouter
 from wayfinder_fox.telemetry import FoxTracer
+from wayfinder_fox.actions.fox_enrich import FoxEnrichAction
 
 __all__ = [
     "ProjectContextEnricher",
     "EnrichedAlert",
     "CriticalityRouter",
     "FoxTracer",
+    "FoxEnrichAction",
 ]
 
 __version__ = "0.1.0"
