@@ -4,6 +4,35 @@ kind: Namespace
 metadata:
   name: observability
 ---
+# RBAC for Fox: read ProjectContext CRDs for context enrichment
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fox-projectcontext-reader
+rules:
+  - apiGroups: ["contextcore.io"]
+    resources: ["projectcontexts"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: fox-projectcontext-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fox-projectcontext-reader
+subjects:
+  - kind: ServiceAccount
+    name: rabbit-fox
+    namespace: observability
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rabbit-fox
+  namespace: observability
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,6 +50,7 @@ spec:
       labels:
         app: rabbit
     spec:
+      serviceAccountName: rabbit-fox
       containers:
         - name: rabbit
           image: contextcore-rabbit:latest
@@ -49,6 +79,25 @@ spec:
               port: 8080
             initialDelaySeconds: 3
             periodSeconds: 5
+        - name: fox
+          image: wayfinder-fox:latest
+          imagePullPolicy: Never  # Use local image
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: FOX_USE_KUBERNETES
+              value: "true"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://alloy.observability:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "wayfinder-fox"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "250m"
 ---
 apiVersion: v1
 kind: Service
