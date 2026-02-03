@@ -167,7 +167,7 @@ The top two (redundant effort + blind spots) account for 45% of total enterprise
 | Partial | $280K | 11% |
 | Gap | $835K | 33% |
 
-Cross-referenced with `contextcore.benefits.yaml` delivery_status. As benefits ship, costs move from gap to delivered.
+Cross-referenced with `wayfinder.benefits.yaml` delivery_status. As benefits ship, costs move from gap to delivered.
 
 #### D. Gap ROI Ranking
 
@@ -267,7 +267,7 @@ When a benefit ships, update `by_delivery_status` -- move its cost from `gap` to
 All ROI calculations live inside the pain points manifest:
 
 ```
-./docs/capability-index/contextcore.pain_points.yaml
+./docs/capability-index/wayfinder.pain_points.yaml
 
   Lines 37-103:    org_profiles (3 reference orgs)
   Lines 203-1700:  28 pain points, each with roi_estimate block
@@ -278,8 +278,8 @@ All ROI calculations live inside the pain points manifest:
 Supporting files:
 - `PAIN_POINTS_GUIDE.md` -- usage guide with estimation methodology section
 - `pain-points-harbor-tour.html` -- visual ROI tables, persona cards, gap ranking
-- `contextcore.user.yaml` -- `contextcore.value.roi_estimation` capability entry
-- `contextcore.agent.yaml` -- `contextcore.value.query_pain_points` and `query_gap_ranking`
+- `wayfinder.user.yaml` -- `contextcore.value.roi_estimation` capability entry
+- `wayfinder.agent.yaml` -- `contextcore.value.query_pain_points` and `query_gap_ranking`
 
 ---
 

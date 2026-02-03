@@ -2,14 +2,14 @@
 
 ## What Was Built
 
-`contextcore.pain_points.yaml` is a companion manifest to `contextcore.benefits.yaml`. While the benefits manifest captures **what ContextCore delivers**, the pain points manifest captures **who hurts, how, and how much** before those benefits exist.
+`wayfinder.pain_points.yaml` is a companion manifest to `wayfinder.benefits.yaml`. While the benefits manifest captures **what ContextCore delivers**, the pain points manifest captures **who hurts, how, and how much** before those benefits exist.
 
 ### Files
 
 | File | Purpose |
 |------|---------|
-| `contextcore.pain_points.yaml` | Pain points, frictions, costs, and ROI estimates by persona |
-| `contextcore.benefits.yaml` | User benefits that drive capability creation |
+| `wayfinder.pain_points.yaml` | Pain points, frictions, costs, and ROI estimates by persona |
+| `wayfinder.benefits.yaml` | User benefits that drive capability creation |
 | `PAIN_POINTS_GUIDE.md` | This file |
 
 ### Relationship

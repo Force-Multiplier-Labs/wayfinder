@@ -1,4 +1,4 @@
-# ContextCore Agent Capabilities
+# Wayfinder Agent Capabilities
 
 **Version:** 1.0.0 | **Generated:** 2026-01-28 13:55
 

@@ -1,4 +1,4 @@
-# ContextCore Benefits Manifest
+# Wayfinder Benefits Manifest
 # Version: 1.2.0
 # Created: 2026-01-28
 # Updated: 2026-01-29
@@ -6,8 +6,8 @@
 # PURPOSE: First-class user benefits that drive capability creation.
 # Benefits with delivery_status: "gap" represent roadmap opportunities.
 
-manifest_id: contextcore.benefits
-name: ContextCore User Benefits
+manifest_id: wayfinder.benefits
+name: Wayfinder User Benefits
 version: "1.2.0"
 description: |
   User benefits for ContextCore, articulated independently of implementation.

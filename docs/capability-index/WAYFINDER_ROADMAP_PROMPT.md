@@ -1,4 +1,4 @@
-# ContextCore Capability Roadmap Prompt
+# Wayfinder Capability Roadmap Prompt
 
 A structured workflow for adding capabilities to the ContextCore roadmap using benefit-driven design.
 
@@ -19,9 +19,9 @@ A structured workflow for adding capabilities to the ContextCore roadmap using b
 ### Capability Manifests
 | Manifest | Audience | Capabilities | Path |
 |----------|----------|--------------|------|
-| `contextcore.agent.yaml` | AI Agents | 8 | `docs/capability-index/` |
-| `contextcore.user.yaml` | Users/GTM | 16 | `docs/capability-index/` |
-| `contextcore.benefits.yaml` | Planning | 8 benefits | `docs/capability-index/` |
+| `wayfinder.agent.yaml` | AI Agents | 8 | `docs/capability-index/` |
+| `wayfinder.user.yaml` | Users/GTM | 16 | `docs/capability-index/` |
+| `wayfinder.benefits.yaml` | Planning | 8 benefits | `docs/capability-index/` |
 
 ### Defined Personas
 | Persona | Primary Value | Key Pain Point |
@@ -120,9 +120,9 @@ GUIDELINES:
 You are a capability analyst evaluating gaps in ContextCore.
 
 INPUTS:
-- Benefits manifest: docs/capability-index/contextcore.benefits.yaml
-- User capabilities: docs/capability-index/contextcore.user.yaml
-- Agent capabilities: docs/capability-index/contextcore.agent.yaml
+- Benefits manifest: docs/capability-index/wayfinder.benefits.yaml
+- User capabilities: docs/capability-index/wayfinder.user.yaml
+- Agent capabilities: docs/capability-index/wayfinder.agent.yaml
 
 EXISTING INFRASTRUCTURE:
 - Tempo: Trace storage (tasks as spans)
@@ -287,7 +287,7 @@ You are a capability architect for ContextCore.
 
 INPUTS:
 - Functional requirements from Phase 3
-- Existing capabilities in contextcore.user.yaml and contextcore.agent.yaml
+- Existing capabilities in wayfinder.user.yaml and wayfinder.agent.yaml
 - Capability schema at capability-index/schema/capability.schema.yaml
 
 CONTEXTCORE CAPABILITY PATTERNS:
@@ -303,8 +303,8 @@ CONTEXTCORE CAPABILITY PATTERNS:
 - `generate`: Content generation (report generation)
 
 **Audience Split**:
-- Agent capabilities → contextcore.agent.yaml (technical, terse)
-- User capabilities → contextcore.user.yaml (value-focused)
+- Agent capabilities → wayfinder.agent.yaml (technical, terse)
+- User capabilities → wayfinder.user.yaml (value-focused)
 
 TASK:
 Design capabilities to implement the functional requirements.
@@ -393,17 +393,17 @@ NEW CAPABILITIES: [From Phase 4]
 
 FILES TO UPDATE:
 
-1. **contextcore.benefits.yaml**
+1. **wayfinder.benefits.yaml**
    - Update delivery_status for addressed benefits
    - Add delivered_by capability links
    - Update delivery timestamps
 
-2. **contextcore.user.yaml** (for user-facing capabilities)
+2. **wayfinder.user.yaml** (for user-facing capabilities)
    - Add new capabilities in appropriate category section
    - Update manifest version
    - Add changelog entry
 
-3. **contextcore.agent.yaml** (for agent-facing capabilities)
+3. **wayfinder.agent.yaml** (for agent-facing capabilities)
    - Add new capabilities
    - Update manifest version
    - Add changelog entry
@@ -602,10 +602,10 @@ functional_requirements:
 
 | File | Purpose |
 |------|---------|
-| `contextcore.agent.yaml` | Agent-focused capabilities (8) |
-| `contextcore.user.yaml` | User-focused capabilities (16) |
-| `contextcore.benefits.yaml` | Benefits manifest (8) |
-| `CONTEXTCORE_ROADMAP_PROMPT.md` | This file |
+| `wayfinder.agent.yaml` | Agent-focused capabilities (8) |
+| `wayfinder.user.yaml` | User-focused capabilities (16) |
+| `wayfinder.benefits.yaml` | Benefits manifest (8) |
+| `WAYFINDER_ROADMAP_PROMPT.md` | This file |
 
 ---
 

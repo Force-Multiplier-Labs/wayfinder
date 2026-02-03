@@ -38,7 +38,7 @@ This is **Stage 1, Step 1.1** of the capability-roadmap workflow plan. The plan 
 
 Phase A establishes the **breadth-first benefit landscape** — identifying all potential benefits before going deep on any one area. This follows the plan's "breadth-first outline, then depth on authoring as prototype" strategy.
 
-The benefits manifest was modeled after `contextcore.benefits.yaml` (which has been through 3 versions and proven the schema works) to ensure cross-project consistency.
+The benefits manifest was modeled after `wayfinder.benefits.yaml` (which has been through 3 versions and proven the schema works) to ensure cross-project consistency.
 
 ### Key Decisions Made
 
@@ -58,7 +58,7 @@ Per the plan at `~/.claude/plans/pure-inventing-cook.md`, the next phases are:
 1. **Select top 3-5 authoring benefits** from the manifest
    - Recommended: `authoring.validation_helpers` (high), `authoring.scaffold_interactive` (medium/partial), `authoring.decorator_pattern` (low)
 2. **Run Phase 2 (Gap Analysis)** for selected benefits
-   - Use the gap analysis template from `CONTEXTCORE_ROADMAP_PROMPT.md` Phase 2
+   - Use the gap analysis template from `WAYFINDER_ROADMAP_PROMPT.md` Phase 2
    - Follow the structure in `gap-analysis/interop.aos_compliance.md` as a working example
 3. **Save gap analyses** to `docs/capability-index/gap-analysis/authoring.*.md`
 
@@ -107,13 +107,13 @@ These 4 small-effort, high-priority items could be implemented before building t
 
 | Document | Location | Purpose |
 |---|---|---|
-| **ContextCore Benefits** | `docs/capability-index/contextcore.benefits.yaml` | Schema template — StartD8 benefits follow this format |
+| **ContextCore Benefits** | `docs/capability-index/wayfinder.benefits.yaml` | Schema template — StartD8 benefits follow this format |
 | **ContextCore Roadmap** | `docs/capability-index/roadmap.yaml` | Roadmap format for Phase B+ outputs |
 | **Gap Analysis Example** | `docs/capability-index/gap-analysis/interop.aos_compliance.md` | Template for Phase B gap analyses |
-| **Roadmap Prompt** | `docs/capability-index/CONTEXTCORE_ROADMAP_PROMPT.md` | 5-phase workflow prompt (Phases 1-5) |
+| **Roadmap Prompt** | `docs/capability-index/WAYFINDER_ROADMAP_PROMPT.md` | 5-phase workflow prompt (Phases 1-5) |
 | **AOS Session Notes** | `docs/capability-index/SESSION_2026-01-28_AOS_ROADMAP.md` | Prior session showing full workflow execution |
-| **Agent Capabilities** | `docs/capability-index/contextcore.agent.yaml` | Agent capability schema for Phase C+ |
-| **User Capabilities** | `docs/capability-index/contextcore.user.yaml` | User capability schema for Phase C+ |
+| **Agent Capabilities** | `docs/capability-index/wayfinder.agent.yaml` | Agent capability schema for Phase C+ |
+| **User Capabilities** | `docs/capability-index/wayfinder.user.yaml` | User capability schema for Phase C+ |
 
 ### StartD8 SDK References
 

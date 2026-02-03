@@ -2,7 +2,7 @@
 
 ## Why I Built This
 
-I had a benefits manifest (`contextcore.benefits.yaml`) that described what ContextCore delivers. 14 benefits, neatly organized by category. Product-centric. Clean.
+I had a benefits manifest (`wayfinder.benefits.yaml`) that described what ContextCore delivers. 14 benefits, neatly organized by category. Product-centric. Clean.
 
 But it only answered one question: *what do we ship?*
 
@@ -12,7 +12,7 @@ Benefits manifests are the answer. Pain points manifests are the question. You n
 
 ## What Was Built
 
-### 1. Pain Points Manifest (`contextcore.pain_points.yaml` v2.0)
+### 1. Pain Points Manifest (`wayfinder.pain_points.yaml` v2.0)
 
 Reverse-engineered 28 pain points from the 14 benefits, reorganized by persona as the primary axis. Each pain point includes:
 
@@ -49,7 +49,7 @@ Open in a browser. No dependencies. Self-contained CSS.
 
 ### 3. Capability-Index YAML Updates
 
-**`contextcore.user.yaml`** v1.1.0 -> v1.2.0:
+**`wayfinder.user.yaml`** v1.1.0 -> v1.2.0:
 - Added Category 6: VALUE ENGINEERING & PAIN ANALYSIS
 - 3 new capabilities:
   - `contextcore.value.pain_points_manifest` (stable) -- queryable 28-pain-point manifest
@@ -58,7 +58,7 @@ Open in a browser. No dependencies. Self-contained CSS.
 - 2 new success metrics
 - Total: 19 capabilities (was 16)
 
-**`contextcore.agent.yaml`** v1.2.0 -> v1.3.0:
+**`wayfinder.agent.yaml`** v1.2.0 -> v1.3.0:
 - Added VALUE ENGINEERING section
 - 2 new capabilities:
   - `contextcore.value.query_pain_points` (stable) -- query by persona/friction/severity
@@ -147,12 +147,12 @@ Next time I create a benefits manifest for a different project, the pain points 
 
 | File | Path |
 |---|---|
-| Pain points manifest | `./docs/capability-index/contextcore.pain_points.yaml` |
+| Pain points manifest | `./docs/capability-index/wayfinder.pain_points.yaml` |
 | Harbor tour HTML | `./docs/capability-index/pain-points-harbor-tour.html` |
 | Usage guide | `./docs/capability-index/PAIN_POINTS_GUIDE.md` |
-| Benefits manifest | `./docs/capability-index/contextcore.benefits.yaml` |
-| User capability index | `./docs/capability-index/contextcore.user.yaml` |
-| Agent capability index | `./docs/capability-index/contextcore.agent.yaml` |
+| Benefits manifest | `./docs/capability-index/wayfinder.benefits.yaml` |
+| User capability index | `./docs/capability-index/wayfinder.user.yaml` |
+| Agent capability index | `./docs/capability-index/wayfinder.agent.yaml` |
 | KM lessons (patterns) | `knowledge_management/lessons/04-organization-indexing.md (external)` |
 
 ## The Real ROI

@@ -39,7 +39,7 @@ Identified alignment gaps and created a phased roadmap.
 
 ### 4. Documented AOS Compliance as Roadmap Item
 
-Used the 5-phase workflow from `CONTEXTCORE_ROADMAP_PROMPT.md`:
+Used the 5-phase workflow from `WAYFINDER_ROADMAP_PROMPT.md`:
 
 | Phase | Output |
 |-------|--------|
@@ -55,7 +55,7 @@ Used the 5-phase workflow from `CONTEXTCORE_ROADMAP_PROMPT.md`:
 
 ### Phase 1: Benefit Identification
 
-Added new benefit to `contextcore.benefits.yaml`:
+Added new benefit to `wayfinder.benefits.yaml`:
 
 ```yaml
 - benefit_id: interop.aos_compliance
@@ -165,7 +165,7 @@ Created 5 new capabilities following `contextcore.[domain].[action]` pattern:
 
 ### Workflow Rationale
 
-The 5-phase workflow from `CONTEXTCORE_ROADMAP_PROMPT.md` was used because:
+The 5-phase workflow from `WAYFINDER_ROADMAP_PROMPT.md` was used because:
 
 1. **Benefit-First** — Starting with user value prevents feature creep
 2. **Gap Analysis** — Structured analysis catches dependencies and risks early
@@ -187,8 +187,8 @@ contextcore-mole/docs/
 ./docs/
 ├── STANDARDS_ALIGNMENT.md                  # NEW - Standards mapping
 └── capability-index/
-    ├── contextcore.benefits.yaml           # UPDATED v1.1.0
-    ├── contextcore.agent.yaml              # UPDATED v1.1.0
+    ├── wayfinder.benefits.yaml           # UPDATED v1.1.0
+    ├── wayfinder.agent.yaml              # UPDATED v1.1.0
     ├── roadmap.yaml                        # NEW - Implementation phases
     └── gap-analysis/
         └── interop.aos_compliance.md       # NEW - Gap analysis
@@ -218,7 +218,7 @@ Per the roadmap, recommended implementation sequence:
 
 - [OWASP AOS Specification](https://aos.owasp.org/spec/trace/events/)
 - [OTel GenAI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/)
-- [ContextCore Roadmap Prompt](./CONTEXTCORE_ROADMAP_PROMPT.md)
+- [Wayfinder Roadmap Prompt](./WAYFINDER_ROADMAP_PROMPT.md)
 - [A2A Protocol](https://a2a-protocol.org)
 
 ---

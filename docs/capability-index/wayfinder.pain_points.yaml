@@ -1,10 +1,10 @@
-# ContextCore Pain Points Manifest
+# Wayfinder Pain Points Manifest
 # Version: 2.0.0
 # Created: 2026-01-30
 # Updated: 2026-01-30
 #
-# PURPOSE: Reverse-engineered from contextcore.benefits.yaml v1.2.0.
-# Captures the pain points, frictions, and costs that ContextCore benefits address.
+# PURPOSE: Reverse-engineered from wayfinder.benefits.yaml v1.2.0.
+# Captures the pain points, frictions, and costs that Wayfinder benefits address.
 # Organized by persona as the primary dimension.
 #
 # v2.0 ADDITIONS:
@@ -14,8 +14,8 @@
 # - Risk-adjusted estimates for non-time-based pains
 # - Methodology documented and auditable per pain point
 
-manifest_id: contextcore.pain_points
-name: ContextCore Pain Points
+manifest_id: wayfinder.pain_points
+name: Wayfinder Pain Points
 version: "2.0.0"
 description: |
   Pain points, frictions, and costs experienced by ContextCore personas,
@@ -25,7 +25,7 @@ description: |
 
 owner: force-multiplier-labs
 
-benefits_manifest_ref: contextcore.benefits v1.2.0
+benefits_manifest_ref: wayfinder.benefits v1.2.0
 
 # ==============================================================================
 # ORG-SIZE PROFILES
@@ -1900,7 +1900,7 @@ roi_rollup:
   gap_roi_ranking:
     description: |
       Gaps ranked by annual cost addressed, helping prioritize roadmap.
-      Effort estimates from contextcore.benefits.yaml.
+      Effort estimates from wayfinder.benefits.yaml.
 
     ranked:
       - rank: 1

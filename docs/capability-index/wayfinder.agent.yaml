@@ -1,11 +1,11 @@
-# ContextCore Agent Capability Index
+# Wayfinder Agent Capability Index
 # Version: 1.3.0
 # Created: 2026-01-28
 # Updated: 2026-01-30
 # Audience: AI Agents (primary), Developers (secondary)
 
-manifest_id: contextcore.agent
-name: ContextCore Agent Capabilities
+manifest_id: wayfinder.agent
+name: Wayfinder Agent Capabilities
 version: "1.3.0"
 description: |
   Agent-focused capabilities for ContextCore SDK.
@@ -1271,7 +1271,7 @@ capabilities:
 
     description:
       agent: |
-        Query pain points manifest. Axes: persona (developer|project_manager|engineering_leader|sre|compliance|ai_agent), friction_category (7 types), severity (critical|high|medium|low), addressed_by.benefit_id. Returns: pain_id, name, description, roi_estimate, workaround_quality. 28 entries total. Source: contextcore.pain_points.yaml v2.0.
+        Query pain points manifest. Axes: persona (developer|project_manager|engineering_leader|sre|compliance|ai_agent), friction_category (7 types), severity (critical|high|medium|low), addressed_by.benefit_id. Returns: pain_id, name, description, roi_estimate, workaround_quality. 28 entries total. Source: wayfinder.pain_points.yaml v2.0.
       human: |
         Provides structured access to the pain points manifest for product
         prioritization. Query by persona to understand their burden, by friction
@@ -1317,7 +1317,7 @@ capabilities:
 
     evidence:
       - type: doc
-        ref: docs/capability-index/contextcore.pain_points.yaml
+        ref: docs/capability-index/wayfinder.pain_points.yaml
         description: Pain points manifest v2.0 with 28 entries and ROI estimates
       - type: doc
         ref: docs/capability-index/PAIN_POINTS_GUIDE.md
@@ -1334,7 +1334,7 @@ capabilities:
 
     description:
       agent: |
-        Query gap ROI ranking. Returns: ranked list of unaddressed benefits with {rank, benefit_id, effort: enum[small|medium|large], annual_cost_addressed: {startup, mid_market, enterprise}, roi_signal: string}. Source: contextcore.pain_points.yaml roi_rollup.gap_roi_ranking.
+        Query gap ROI ranking. Returns: ranked list of unaddressed benefits with {rank, benefit_id, effort: enum[small|medium|large], annual_cost_addressed: {startup, mid_market, enterprise}, roi_signal: string}. Source: wayfinder.pain_points.yaml roi_rollup.gap_roi_ranking.
       human: |
         Returns the prioritized list of roadmap gaps ranked by ROI signal
         (cost addressed vs effort). Use to answer "what should we build next?"
@@ -1372,7 +1372,7 @@ capabilities:
 
     evidence:
       - type: doc
-        ref: docs/capability-index/contextcore.pain_points.yaml
+        ref: docs/capability-index/wayfinder.pain_points.yaml
         description: gap_roi_ranking section in roi_rollup
 
     confidence: 0.9

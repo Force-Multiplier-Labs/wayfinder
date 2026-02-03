@@ -1,13 +1,13 @@
-# ContextCore User-Facing Capability Index
+# Wayfinder User-Facing Capability Index
 # Version: 1.2.0
 # Created: 2026-01-28
 # Updated: 2026-01-30
 # Audience: Users (primary), GTM (secondary)
 #
-# Complement to: contextcore.agent.yaml (technical/agent-focused)
+# Complement to: wayfinder.agent.yaml (technical/agent-focused)
 
-manifest_id: contextcore.user
-name: ContextCore User-Facing Capabilities
+manifest_id: wayfinder.user
+name: Wayfinder User-Facing Capabilities
 version: "1.2.0"
 description: |
   User-facing capabilities for ContextCore, organized by value delivered.
@@ -786,7 +786,7 @@ capabilities:
 
     evidence:
       - type: doc
-        ref: docs/capability-index/contextcore.pain_points.yaml
+        ref: docs/capability-index/wayfinder.pain_points.yaml
         description: Pain points manifest v2.0 with 28 entries across 6 personas
       - type: doc
         ref: docs/capability-index/PAIN_POINTS_GUIDE.md
@@ -834,7 +834,7 @@ capabilities:
 
     evidence:
       - type: doc
-        ref: docs/capability-index/contextcore.pain_points.yaml
+        ref: docs/capability-index/wayfinder.pain_points.yaml
         description: ROI estimates embedded in each of 28 pain points
       - type: doc
         ref: docs/capability-index/PAIN_POINTS_GUIDE.md
@@ -878,10 +878,10 @@ capabilities:
 
     evidence:
       - type: doc
-        ref: docs/capability-index/contextcore.pain_points.yaml
+        ref: docs/capability-index/wayfinder.pain_points.yaml
         description: gap_roi_ranking section with ranked gaps
       - type: doc
-        ref: docs/capability-index/contextcore.benefits.yaml
+        ref: docs/capability-index/wayfinder.benefits.yaml
         description: Benefits with delivery_status showing gaps
 
     confidence: 0.9
