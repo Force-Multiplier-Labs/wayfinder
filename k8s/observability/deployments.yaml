@@ -140,15 +140,17 @@ spec:
         - name: loki
           image: grafana/loki:3.2.0
           args:
-            - -config.file=/etc/loki/local-config.yaml
+            - -config.file=/etc/loki/loki.yaml
           ports:
             - containerPort: 3100
               name: http
           volumeMounts:
+            - name: config
+              mountPath: /etc/loki
             - name: data
               mountPath: /loki
             - name: rules
-              mountPath: /loki/rules
+              mountPath: /loki/rules/fake
           resources:
             limits:
               cpu: 500m
@@ -163,6 +165,9 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 5
       volumes:
+        - name: config
+          configMap:
+            name: loki-config
         - name: data
           emptyDir: {}
         - name: rules
