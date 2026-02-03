@@ -74,7 +74,7 @@ class ProjectContextReader:
 
         ctx = None
         if self._use_kubernetes:
-            ctx = self._lookup_kubernetes(namespace, labels)
+            ctx = self._lookup_kubernetes(namespace, labels, project_id)
 
         if ctx is None and self._yaml_path:
             ctx = self._from_yaml(self._yaml_path, project_id)
@@ -104,6 +104,7 @@ class ProjectContextReader:
         self,
         namespace: Optional[str],
         labels: Optional[Dict[str, str]],
+        project_id: Optional[str] = None,
     ) -> Optional[ProjectContext]:
         """Look up ProjectContext from Kubernetes CRD."""
         try:
@@ -131,11 +132,17 @@ class ProjectContextReader:
                 for item in items.get("items", []):
                     spec = item.get("spec", {})
                     project = spec.get("project", {})
+                    pid = project.get("id", "")
+
+                    # If caller specified a project_id, only return matching CRD
+                    if project_id and pid != project_id:
+                        continue
+
                     business = spec.get("business", {})
                     requirements = spec.get("requirements", {})
                     observability = spec.get("observability", {})
                     return ProjectContext(
-                        project_id=project.get("id", ""),
+                        project_id=pid,
                         criticality=business.get("criticality", "medium"),
                         owner=business.get("owner", ""),
                         alert_channels=observability.get("alertChannels", []),
