@@ -1,0 +1,212 @@
+# =============================================================================
+# SKILLS REGISTRY
+# =============================================================================
+# Typed schema for all available skills
+# Token budget: ~500 tokens
+# =============================================================================
+
+schema_version: "2.0"
+capability_id: skills
+
+# -----------------------------------------------------------------------------
+# SKILL INVOCATION PROTOCOL
+# -----------------------------------------------------------------------------
+invocation_protocol:
+  type: skill_delegation
+  format: |
+    Use the {{skill_name}} skill to {{task_description}}
+    Inputs: {{inputs}}
+
+# -----------------------------------------------------------------------------
+# SKILLS BY CATEGORY
+# -----------------------------------------------------------------------------
+skills:
+
+  # ---------------------------------------------------------------------------
+  # OBSERVABILITY
+  # ---------------------------------------------------------------------------
+  o11y:
+    triggers: [error, debug, investigate, production_issue, latency]
+    inputs: { error_context: string, time_range: string }
+    outputs: { root_cause: string, evidence: array, fix: string }
+
+  grafana-dashboards:
+    triggers: [dashboard, visualize, metrics, kpi]
+    inputs: { action: create|import|update, config: object }
+    outputs: { dashboard_url: string, uid: string }
+
+  grafana-plugin-dev:
+    triggers: [grafana_plugin, panel, datasource]
+    inputs: { plugin_type: panel|datasource|app, name: string }
+    outputs: { plugin_path: string }
+
+  # ---------------------------------------------------------------------------
+  # DEVELOPMENT
+  # ---------------------------------------------------------------------------
+  code-review:
+    triggers: [review, code_quality, brittleness, reliability]
+    inputs: { code_path: string, focus_areas: array }
+    outputs: { issues: array, suggestions: array }
+
+  mcp-builder:
+    triggers: [mcp_server, tool_integration, external_api]
+    inputs: { server_name: string, tools: array }
+    outputs: { server_path: string, config: object }
+
+  webapp-testing:
+    triggers: [test_web, playwright, frontend_test, ui_test]
+    inputs: { url: string, test_cases: array }
+    outputs: { results: array, screenshots: array }
+
+  skill-creator:
+    triggers: [new_skill, create_skill, extend_claude]
+    inputs: { skill_name: string, description: string }
+    outputs: { skill_path: string }
+
+  frontend-design:
+    triggers: [ui, frontend, web_component, landing_page, dashboard_ui]
+    inputs: { design_type: string, requirements: string }
+    outputs: { component_code: string }
+
+  # ---------------------------------------------------------------------------
+  # DOCUMENTS
+  # ---------------------------------------------------------------------------
+  pdf:
+    triggers: [pdf, extract_pdf, fill_form, merge_pdf]
+    inputs: { action: extract|create|merge|split|fill, file_path: string }
+    outputs: { result_path: string, extracted_text: string }
+
+  docx:
+    triggers: [word, docx, document, tracked_changes]
+    inputs: { action: create|edit|extract, file_path: string }
+    outputs: { result_path: string, content: string }
+
+  xlsx:
+    triggers: [excel, spreadsheet, xlsx, formulas]
+    inputs: { action: create|edit|analyze, file_path: string }
+    outputs: { result_path: string, data: object }
+
+  pptx:
+    triggers: [powerpoint, presentation, slides, pptx]
+    inputs: { action: create|edit, file_path: string }
+    outputs: { result_path: string }
+
+  # ---------------------------------------------------------------------------
+  # GAMES
+  # ---------------------------------------------------------------------------
+  skill-html_game_dev:
+    triggers: [html_game, canvas_game, browser_game, arcade]
+    inputs: { game_type: string, requirements: string }
+    outputs: { game_html: string }
+
+  skill-react-game-enhancer:
+    triggers: [react_game, enhance_game, add_feature]
+    inputs: { game_path: string, feature: string }
+    outputs: { updated_files: array }
+
+  ttrpg-games:
+    triggers: [ttrpg, character_sheet, dice, rpg_system]
+    inputs: { system: string, action: string }
+    outputs: { result: object }
+
+  choice-adventure-builder:
+    triggers: [text_adventure, choose_your_own, interactive_fiction]
+    inputs: { story_source: string }
+    outputs: { game_url: string }
+
+  # ---------------------------------------------------------------------------
+  # iOS
+  # ---------------------------------------------------------------------------
+  ios:
+    triggers: [ios_app, swift, swiftui, iphone]
+    inputs: { feature: string, architecture: string }
+    outputs: { code_files: array }
+
+  ios-testing:
+    triggers: [ios_test, swift_testing, xctest, tdd]
+    inputs: { test_target: string }
+    outputs: { test_files: array }
+
+  ios-project-manager:
+    triggers: [ios_project, coordinate_ios, ios_workflow]
+    inputs: { task: string }
+    outputs: { plan: object }
+
+  iOS_OCR:
+    triggers: [ocr, vision, text_extraction, document_scan]
+    inputs: { image_path: string, pattern: string }
+    outputs: { extracted_text: string, matches: array }
+
+  # ---------------------------------------------------------------------------
+  # DATA & BACKEND
+  # ---------------------------------------------------------------------------
+  database-administrator:
+    triggers: [database, postgresql, supabase, rls, schema]
+    inputs: { action: string, database: string }
+    outputs: { result: object }
+
+  sdk-developer:
+    triggers: [sdk, startd8, python_sdk, llm_provider]
+    inputs: { task: string }
+    outputs: { guidance: string }
+
+  # ---------------------------------------------------------------------------
+  # DESIGN
+  # ---------------------------------------------------------------------------
+  canvas-design:
+    triggers: [poster, visual_art, png, design_art]
+    inputs: { design_type: string, requirements: string }
+    outputs: { image_path: string }
+
+  algorithmic-art:
+    triggers: [generative_art, p5js, flow_field, particle]
+    inputs: { style: string, parameters: object }
+    outputs: { code: string }
+
+  brand-guidelines:
+    triggers: [anthropic_brand, brand_colors, style_guide]
+    inputs: { artifact_type: string }
+    outputs: { styled_content: string }
+
+  theme-factory:
+    triggers: [theme, style_artifact, color_scheme]
+    inputs: { theme_name: string, artifact: string }
+    outputs: { themed_artifact: string }
+
+  # ---------------------------------------------------------------------------
+  # COMMUNICATION
+  # ---------------------------------------------------------------------------
+  internal-comms:
+    triggers: [status_report, newsletter, incident_report, adr, rfc]
+    inputs: { document_type: string, content: string }
+    outputs: { formatted_document: string }
+
+  doc-coauthoring:
+    triggers: [coauthor, documentation, proposal, spec]
+    inputs: { doc_type: string, context: string }
+    outputs: { document: string }
+
+  # ---------------------------------------------------------------------------
+  # AGENT OPTIMIZATION
+  # ---------------------------------------------------------------------------
+  llm-formatter:
+    triggers: [format_skill, transform_document, emit_tempo, token_optimize, progressive_disclosure]
+    inputs: { source_document: string, document_type: enum, output_format: enum }
+    outputs: { manifest: object, index: object, capabilities: array, token_savings: object }
+
+# -----------------------------------------------------------------------------
+# SKILL SELECTION ALGORITHM
+# -----------------------------------------------------------------------------
+selection:
+  algorithm: |
+    1. Extract task keywords
+    2. Match against skill triggers
+    3. Select highest-priority match
+    4. Load skill's full schema if needed
+    5. Format invocation message
+
+  fallback: |
+    If no skill matches:
+    1. Check if capability exists in agent/_index.yaml
+    2. Ask user for clarification
+    3. Consider using skill-creator to build new capability

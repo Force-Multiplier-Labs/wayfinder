@@ -1,0 +1,232 @@
+# GitHub Actions Auto-Fix Workflow Template
+# Copy to: .github/workflows/auto-fix.yml
+#
+# Triggers automated error investigation and fix when:
+# 1. Grafana alert fires via webhook (repository_dispatch)
+# 2. Manual trigger with error context (workflow_dispatch)
+#
+# Prerequisites:
+# - ANTHROPIC_API_KEY secret configured in repository
+# - GITHUB_TOKEN with PR creation permissions
+# - Grafana webhook configured to send repository_dispatch events
+
+name: Auto-Fix on Error
+
+on:
+  # Triggered by Grafana webhook via repository dispatch
+  repository_dispatch:
+    types: [error-detected]
+
+  # Manual trigger for testing or ad-hoc investigation
+  workflow_dispatch:
+    inputs:
+      error_context:
+        description: 'Error details (log query, stack trace, or error message)'
+        required: true
+        type: string
+      app_name:
+        description: 'Application name'
+        required: false
+        type: string
+        default: 'unknown'
+      severity:
+        description: 'Error severity'
+        required: false
+        type: choice
+        options:
+          - critical
+          - warning
+          - info
+        default: 'warning'
+
+env:
+  # Observability stack endpoints (adjust for your environment)
+  PROMETHEUS_URL: http://localhost:9090
+  LOKI_URL: http://localhost:3100
+  TEMPO_URL: http://localhost:3200
+  PYROSCOPE_URL: http://localhost:4040
+
+jobs:
+  investigate-and-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git blame/log
+
+      - name: Set Error Context
+        id: error
+        run: |
+          if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            echo "context=${{ github.event.client_payload.error_context }}" >> $GITHUB_OUTPUT
+            echo "summary=${{ github.event.client_payload.error_summary }}" >> $GITHUB_OUTPUT
+            echo "app=${{ github.event.client_payload.app }}" >> $GITHUB_OUTPUT
+          else
+            echo "context=${{ inputs.error_context }}" >> $GITHUB_OUTPUT
+            echo "summary=Manual investigation: ${{ inputs.app_name }}" >> $GITHUB_OUTPUT
+            echo "app=${{ inputs.app_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests anthropic
+
+      - name: Setup Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Investigate Error
+        id: investigate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude-code --print --prompt "
+          You are investigating an error detected in production logs.
+
+          ## Error Context
+          Application: ${{ steps.error.outputs.app }}
+          Error: ${{ steps.error.outputs.context }}
+
+          ## Investigation Steps
+          1. Use the o11y skill to query observability data:
+             - Query Loki for full error context and surrounding logs
+             - Check Prometheus for related metrics anomalies
+             - Look for correlated traces in Tempo if available
+
+          2. Analyze the error:
+             - Identify the error type and message
+             - Find the stack trace if available
+             - Determine the affected code path
+
+          3. Search the codebase:
+             - Find the source file and line where the error originates
+             - Review recent changes with git log and git blame
+             - Understand the context and expected behavior
+
+          4. Determine root cause:
+             - Why did this error start occurring?
+             - What conditions trigger it?
+             - Is it a regression, edge case, or new issue?
+
+          5. Propose a fix:
+             - If the fix is straightforward (null check, error handling, config fix):
+               Apply the fix directly to the code
+             - If the fix is complex or risky:
+               Document the recommended approach but do not modify code
+
+          6. Output your findings as a structured report.
+          " | tee investigation-report.md
+
+      - name: Check for Code Changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            git diff --stat
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "fix: auto-fix for ${{ steps.error.outputs.app }} error"
+          title: "Auto-fix: ${{ steps.error.outputs.summary }}"
+          body: |
+            ## Automated Fix
+
+            This PR was automatically generated in response to an error detected in production logs.
+
+            ### Error Details
+            - **Application:** ${{ steps.error.outputs.app }}
+            - **Trigger:** ${{ github.event_name }}
+            - **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ### Error Context
+            ```
+            ${{ steps.error.outputs.context }}
+            ```
+
+            ### Investigation Report
+            See the full investigation in the workflow logs or the attached `investigation-report.md`.
+
+            ### Review Checklist
+            - [ ] Verify the fix addresses the root cause
+            - [ ] Check for potential side effects
+            - [ ] Ensure tests pass
+            - [ ] Consider if additional tests are needed
+
+            ---
+            > **Warning:** This is an automated fix. Please review carefully before merging.
+          branch: auto-fix/${{ github.run_id }}
+          labels: |
+            auto-fix
+            needs-review
+          draft: true
+
+      - name: Create Issue (No Code Fix)
+        if: steps.changes.outputs.has_changes == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = '';
+            try {
+              report = fs.readFileSync('investigation-report.md', 'utf8');
+            } catch (e) {
+              report = 'Investigation report not available.';
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Auto-Fix Investigation] ${{ steps.error.outputs.summary }}`,
+              body: `## Error Investigation
+
+            An error was detected but no automated fix was applied.
+
+            ### Error Details
+            - **Application:** ${{ steps.error.outputs.app }}
+            - **Workflow Run:** [#${{ github.run_number }}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+
+            ### Error Context
+            \`\`\`
+            ${{ steps.error.outputs.context }}
+            \`\`\`
+
+            ### Investigation Report
+            ${report}
+
+            ### Next Steps
+            - Review the investigation findings
+            - Implement a fix manually if needed
+            - Consider if this error pattern should be added to auto-fix rules
+
+            ---
+            > Generated by Auto-Fix workflow`,
+              labels: ['auto-fix', 'investigation', 'needs-triage']
+            });
+
+      - name: Upload Investigation Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: investigation-report
+          path: investigation-report.md
+          retention-days: 30

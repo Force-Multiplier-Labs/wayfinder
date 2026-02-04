@@ -1,0 +1,61 @@
+# Workflows: Multi-step processes, pipelines, methodologies
+# Tier: public
+
+workflows:
+  - id: session_start
+    name: Session Initialization
+    description: Standard workflow when starting a development session
+    type: methodology
+    steps:
+      - order: 1
+        name: Invoke dev-tour-guide
+        description: Orient to available infrastructure and capabilities
+        skill: dev-tour-guide
+      - order: 2
+        name: Review default behaviors
+        description: Understand which skills to use for common tasks
+      - order: 3
+        name: Check skill catalog
+        description: Identify relevant skills for the current task
+      - order: 4
+        name: Note Lessons Learned location
+        description: Know where to capture insights at session end
+    related_skills: [dev-tour-guide]
+    tags: [onboarding, session, initialization]
+    tier_origin: public
+
+  - id: session_end
+    name: Session Closure
+    description: Standard workflow when ending a development session
+    type: methodology
+    steps:
+      - order: 1
+        name: Run /end-session
+        description: Capture learnings and update project index
+        skill: end-session
+      - order: 2
+        name: Review captured insights
+        description: Verify learnings were properly recorded
+    related_skills: [end-session, capture-insights]
+    tags: [session, closure, knowledge-capture]
+    tier_origin: public
+
+  - id: debugging_workflow
+    name: Production Debugging
+    description: Standard workflow for investigating production issues
+    type: investigation
+    steps:
+      - order: 1
+        name: Use o11y skill
+        description: Never grep logs manually - use the o11y skill
+        skill: o11y
+      - order: 2
+        name: Correlate telemetry
+        description: Cross-reference metrics, logs, traces
+      - order: 3
+        name: Visualize findings
+        description: Create dashboards if needed
+        skill: grafana-dashboards
+    related_skills: [o11y, grafana-dashboards]
+    tags: [debugging, observability, investigation]
+    tier_origin: public

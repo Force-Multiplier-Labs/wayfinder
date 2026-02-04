@@ -1,0 +1,137 @@
+# =============================================================================
+# INFRASTRUCTURE CAPABILITIES
+# =============================================================================
+# Local services, endpoints, and infrastructure management
+# Token budget: ~250 tokens
+# =============================================================================
+
+schema_version: "2.0"
+capability_id: infrastructure
+
+# -----------------------------------------------------------------------------
+# HARBOR MANIFEST (CRITICAL)
+# -----------------------------------------------------------------------------
+harbor_manifest:
+  location: ~/.claude/harbor-manifest.yaml
+  purpose: Single source of truth for all local infrastructure
+
+  check_before:
+    - docker run
+    - docker-compose up
+    - brew install
+    - npm install -g
+
+  guard_hook: infra-guard-hook.sh
+  behavior: Blocks duplicate infrastructure creation
+
+# -----------------------------------------------------------------------------
+# PROTECTED SERVICES (Pre-existing - DO NOT recreate)
+# -----------------------------------------------------------------------------
+protected_services:
+  grafana:
+    url: http://localhost:3000
+    status: running
+    alternative_to: [kibana, chronograf]
+
+  prometheus:
+    url: http://localhost:9090
+    status: running
+    alternative_to: []
+
+  loki:
+    url: http://localhost:3100
+    status: running
+    alternative_to: [elasticsearch, splunk]
+
+  tempo:
+    url: http://localhost:3200
+    status: running
+    alternative_to: [jaeger, zipkin]
+
+  pyroscope:
+    url: http://localhost:4040
+    status: running
+    alternative_to: []
+
+  mimir:
+    url: http://localhost:9009
+    status: running
+    alternative_to: [influxdb, thanos, cortex]
+
+# -----------------------------------------------------------------------------
+# INFRASTRUCTURE CHECK PROTOCOL
+# -----------------------------------------------------------------------------
+pre_flight_check:
+  steps:
+    - action: read_file
+      path: ~/.claude/harbor-manifest.yaml
+      purpose: Check for existing service
+
+    - action: check_equivalents
+      purpose: See if requested service has an equivalent running
+
+    - action: bash
+      command: docker ps
+      purpose: Verify running containers
+
+    - action: decision
+      if_exists: USE existing service
+      if_not_exists: Proceed with creation, then update harbor-manifest.yaml
+
+# -----------------------------------------------------------------------------
+# SECRETS MANAGEMENT
+# -----------------------------------------------------------------------------
+secrets:
+  manager: ~/.claude/scripts/secrets.sh
+  audit_log: ~/.claude/secrets.audit.log
+
+  operations:
+    get:
+      command: 'secrets.sh get KEY'
+      output: Secret value to stdout
+
+    set:
+      command: 'secrets.sh set KEY'
+      behavior: Prompts for value (never in command line)
+
+    list:
+      command: 'secrets.sh list'
+      output: List of stored key names
+
+    check:
+      command: 'secrets.sh check'
+      output: Storage health status
+
+  registered_secrets:
+    - key: ANTHROPIC_API_KEY
+      purpose: Claude API access
+
+    - key: GRAFANA_TOKEN
+      purpose: Grafana API access
+
+    - key: GITHUB_TOKEN
+      purpose: GitHub API access
+
+  secure_usage_pattern: |
+    ANTHROPIC_API_KEY=$("$HOME/.claude/scripts/secrets.sh" get ANTHROPIC_API_KEY) python3 server.py
+
+# -----------------------------------------------------------------------------
+# 011yBubo (Dashboard Agent)
+# -----------------------------------------------------------------------------
+o11ybubo:
+  location: $HOME/Documents/dev/011yBubo/
+  purpose: AI agent interaction from Grafana dashboards
+
+  endpoints:
+    invoke: http://localhost:8080/invoke
+    webhook: http://localhost:8080/webhook/grafana
+
+  start_command: |
+    cd $HOME/Documents/dev/011yBubo
+    ANTHROPIC_API_KEY=$("$HOME/.claude/scripts/secrets.sh" get ANTHROPIC_API_KEY) python3 webhook_server.py
+
+  hermes_actions:
+    - log: Log alert to Loki
+    - notify: macOS notification
+    - claude: Send to Claude for analysis
+    - script: Execute shell script

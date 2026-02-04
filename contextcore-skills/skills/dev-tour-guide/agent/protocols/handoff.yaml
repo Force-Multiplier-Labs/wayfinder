@@ -1,0 +1,217 @@
+# =============================================================================
+# HANDOFF PROTOCOL
+# =============================================================================
+# Standard format for agent-to-agent delegation
+# Token budget: ~250 tokens
+# =============================================================================
+
+schema_version: "2.0"
+protocol_id: handoff
+
+# -----------------------------------------------------------------------------
+# HANDOFF MESSAGE SCHEMA
+# -----------------------------------------------------------------------------
+handoff_message:
+  type: object
+  required: [from_agent, to_agent, capability_id, task, inputs]
+  properties:
+
+    from_agent:
+      type: string
+      description: Identifier of delegating agent
+      example: "dev-tour-guide"
+
+    to_agent:
+      type: string
+      description: Identifier of receiving agent/skill
+      example: "o11y"
+
+    capability_id:
+      type: string
+      description: The capability being requested
+      example: "investigate_error"
+
+    task:
+      type: string
+      description: Natural language description of what to do
+      example: "Investigate production error in checkout service"
+
+    inputs:
+      type: object
+      description: Typed inputs for the capability
+      example:
+        error_context: "NullPointerException at CheckoutService.java:142"
+        time_range: "1h"
+        app_name: "checkout-service"
+
+    context:
+      type: string
+      description: Additional context the receiving agent needs
+      example: "User reported checkout failures starting 30 minutes ago"
+
+    expected_output:
+      type: object
+      description: What the delegating agent expects back
+      properties:
+        type: { type: string }
+        fields: { type: array, items: { type: string } }
+      example:
+        type: "analysis_report"
+        fields: ["root_cause", "evidence", "recommended_fix"]
+
+    constraints:
+      type: object
+      properties:
+        timeout_ms: { type: integer, default: 120000 }
+        max_tokens: { type: integer }
+        priority: { type: string, enum: [low, normal, high, critical] }
+
+    return_to:
+      type: string
+      description: How to return results (inline, file, callback)
+      enum: [inline, file, callback]
+      default: inline
+
+# -----------------------------------------------------------------------------
+# HANDOFF RESPONSE SCHEMA
+# -----------------------------------------------------------------------------
+handoff_response:
+  type: object
+  required: [from_agent, to_agent, status]
+  properties:
+
+    from_agent:
+      type: string
+      description: Agent that performed the work
+
+    to_agent:
+      type: string
+      description: Agent that requested the work
+
+    status:
+      type: string
+      enum: [success, partial, failed, timeout]
+
+    result:
+      type: object
+      description: The output matching expected_output schema
+
+    error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+        recoverable: { type: boolean }
+
+    metadata:
+      type: object
+      properties:
+        duration_ms: { type: integer }
+        tokens_used: { type: integer }
+        tools_invoked: { type: array, items: { type: string } }
+
+# -----------------------------------------------------------------------------
+# HANDOFF EXAMPLES
+# -----------------------------------------------------------------------------
+examples:
+
+  # Example 1: Debug delegation
+  debug_handoff:
+    request:
+      from_agent: "main-orchestrator"
+      to_agent: "o11y"
+      capability_id: "investigate_error"
+      task: "Find root cause of checkout failures"
+      inputs:
+        error_context: "HTTP 500 errors spiking in checkout-service"
+        time_range: "2h"
+      expected_output:
+        type: "analysis_report"
+        fields: ["root_cause", "evidence", "recommended_fix"]
+      constraints:
+        timeout_ms: 300000
+        priority: "high"
+
+    response:
+      from_agent: "o11y"
+      to_agent: "main-orchestrator"
+      status: "success"
+      result:
+        root_cause: "Database connection pool exhausted"
+        evidence:
+          - "Loki: 'connection pool exhausted' errors at 14:23"
+          - "Prometheus: db_connections_active at 100% for 45min"
+        recommended_fix: "Increase pool size from 10 to 25 in config/database.yaml"
+      metadata:
+        duration_ms: 45000
+        tokens_used: 2500
+
+  # Example 2: Dashboard creation
+  dashboard_handoff:
+    request:
+      from_agent: "project-setup"
+      to_agent: "grafana-dashboards"
+      capability_id: "create_dashboard"
+      task: "Create metrics dashboard for new service"
+      inputs:
+        dashboard_name: "Checkout Service Metrics"
+        datasource: "prometheus"
+        metrics:
+          - "http_request_duration_seconds"
+          - "http_requests_total"
+          - "db_connections_active"
+      expected_output:
+        type: "dashboard_reference"
+        fields: ["dashboard_url", "dashboard_uid"]
+
+    response:
+      from_agent: "grafana-dashboards"
+      to_agent: "project-setup"
+      status: "success"
+      result:
+        dashboard_url: "http://localhost:3000/d/checkout-metrics"
+        dashboard_uid: "checkout-metrics-001"
+
+# -----------------------------------------------------------------------------
+# HANDOFF BEST PRACTICES
+# -----------------------------------------------------------------------------
+best_practices:
+
+  - practice: "Include all required context"
+    reason: "Receiving agent has no access to delegating agent's context"
+
+  - practice: "Specify expected_output explicitly"
+    reason: "Ensures receiving agent knows what format to return"
+
+  - practice: "Set appropriate timeout"
+    reason: "Prevents indefinite waiting on failed handoffs"
+
+  - practice: "Use capability_id not prose"
+    reason: "Enables precise routing and schema validation"
+
+  - practice: "Check prerequisites before handoff"
+    reason: "Fail fast if required services unavailable"
+
+# -----------------------------------------------------------------------------
+# CHAIN OF DELEGATION
+# -----------------------------------------------------------------------------
+# When an agent needs to delegate to multiple agents in sequence
+chain_delegation:
+  format: |
+    Chain: A → B → C → D
+    Each step waits for previous result before invoking next
+
+  example:
+    steps:
+      - delegate_to: o11y
+        task: "Get error context"
+        pass_result_to: next
+
+      - delegate_to: code-review
+        task: "Review affected code"
+        inputs_from: previous.related_code
+        pass_result_to: next
+
+      - delegate_to: main-orchestrator
+        task: "Generate fix"
+        inputs_from: [step_1.evidence, step_2.issues]

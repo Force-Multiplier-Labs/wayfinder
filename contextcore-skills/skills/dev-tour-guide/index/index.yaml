@@ -1,0 +1,21 @@
+# Dev Tour Guide Capability Index
+# This is the PUBLIC tier - skill defaults visible to all sessions
+
+version: "1.0"
+tier: public
+description: Default capability index for dev-tour-guide skill
+
+# Capability files loaded from ./capabilities/
+capabilities:
+  - endpoints.yaml
+  - workflows.yaml
+  - tools.yaml
+  - skills.yaml
+  - processes.yaml
+  - projects.yaml
+
+# Other tiers (loaded at runtime, higher tiers override lower):
+# 1. public:         ~/.claude/skills/dev-tour-guide/index/ (this file)
+# 2. widely_shared:  ~/Documents/craft/Lessons_Learned/index/
+# 3. narrowly_shared: ~/Documents/craft/shared-index/
+# 4. personal:       ~/Documents/craft/local-index/

@@ -1,0 +1,99 @@
+# Skills: Claude skills and skill-like capabilities
+# Tier: public
+
+skills:
+  - id: dev-tour-guide
+    name: Dev Tour Guide
+    category: development
+    description: Onboarding guide for local development infrastructure, processes, and capabilities
+    location: ~/.claude/skills/dev-tour-guide/
+    use_when:
+      - Starting a new development session
+      - Need to understand available infrastructure
+      - Want to avoid reinventing existing capabilities
+    tags: [onboarding, orientation, infrastructure]
+    tier_origin: public
+
+  - id: o11y
+    name: Observability Analyst
+    category: observability
+    description: AI-powered root cause analysis and incident investigation
+    location: ~/.claude/skills/o11y/
+    use_when:
+      - Investigating production issues
+      - Analyzing error spikes
+      - Debugging latency problems
+      - Understanding system behavior from telemetry
+    tags: [debugging, observability, investigation]
+    tier_origin: public
+
+  - id: grafana-dashboards
+    name: Grafana Dashboards
+    category: observability
+    description: Create and manage Grafana dashboards programmatically
+    location: ~/.claude/skills/grafana-dashboards/
+    use_when:
+      - Building dashboards for metrics visualization
+      - Project tracking dashboards
+      - Business KPI visualization
+    tags: [dashboards, visualization, grafana]
+    tier_origin: public
+
+  - id: end-session
+    name: End Session
+    category: development
+    description: Update Lessons Learned and Project Index at session end
+    location: ~/.claude/skills/end-session/
+    use_when:
+      - Ending a development session
+      - Capturing insights before closing
+    tags: [session, knowledge-capture]
+    tier_origin: public
+
+  - id: capture-insights
+    name: Capture Insights
+    category: development
+    description: Extract and persist session learnings
+    location: ~/.claude/skills/capture-insights/
+    use_when:
+      - Want to save learnings mid-session
+      - Discovered something worth preserving
+    tags: [knowledge-capture, insights]
+    tier_origin: public
+
+  - id: skill-creator
+    name: Skill Creator
+    category: development
+    description: Guide for creating effective Claude skills
+    location: ~/.claude/skills/skill-creator/
+    use_when:
+      - Creating a new skill
+      - Updating an existing skill
+    tags: [skills, development, meta]
+    tier_origin: public
+
+  - id: llm-formatter
+    name: LLM Formatter
+    category: development
+    description: Transform documents for optimal human-LLM interoperability using 10+ formatting patterns
+    location: ~/Documents/craft/Lessons_Learned/skills/llm-formatter/
+    use_when:
+      - Optimizing documents for agent consumption
+      - Creating skill manifests and routing tables
+      - Implementing progressive disclosure patterns
+      - Designing agent handoff protocols
+    tags: [llm-optimization, formatting, skills, token-efficiency]
+    tier_origin: public
+
+  - id: capability-value-promoter
+    name: Capability Value Promoter
+    category: marketing
+    description: Extract, articulate, and communicate the value of system capabilities
+    location: ~/.claude/skills/capability-value-promoter/
+    use_when:
+      - Generating user-facing documentation
+      - Creating value propositions
+      - Onboarding content
+      - Marketing materials
+    tags: [value-props, marketing, documentation]
+    tier_origin: public

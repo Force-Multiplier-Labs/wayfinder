@@ -1,0 +1,86 @@
+# =============================================================================
+# ACTION: DEBUG ERROR
+# =============================================================================
+# Pre-packaged action sequence for debugging production errors
+# Token budget: ~100 tokens
+# =============================================================================
+
+action_id: debug-error
+description: Complete workflow for investigating and resolving production errors
+
+# -----------------------------------------------------------------------------
+# INPUTS
+# -----------------------------------------------------------------------------
+inputs:
+  error_description:
+    type: string
+    required: true
+    description: Error message, log snippet, or problem description
+
+  app_name:
+    type: string
+    required: false
+    description: Application name if known
+
+  time_range:
+    type: string
+    required: false
+    default: "1h"
+
+# -----------------------------------------------------------------------------
+# ACTION SEQUENCE
+# -----------------------------------------------------------------------------
+steps:
+
+  - step: 1
+    name: delegate_to_o11y
+    action: skill_delegation
+    skill: o11y
+    inputs:
+      error_context: "{{inputs.error_description}}"
+      app_name: "{{inputs.app_name}}"
+      time_range: "{{inputs.time_range}}"
+    outputs:
+      root_cause: string
+      evidence: array
+      recommended_fix: string
+      related_code: object
+
+  - step: 2
+    name: apply_fix_if_simple
+    condition: "step_1.recommended_fix exists AND fix_complexity == 'simple'"
+    action: apply_fix
+    inputs:
+      file: "{{step_1.related_code.file}}"
+      fix: "{{step_1.recommended_fix}}"
+    outputs:
+      fix_applied: boolean
+
+  - step: 3
+    name: create_issue_if_complex
+    condition: "fix_complexity == 'complex'"
+    action: create_github_issue
+    inputs:
+      title: "Production error: {{inputs.error_description}}"
+      body: |
+        ## Root Cause
+        {{step_1.root_cause}}
+
+        ## Evidence
+        {{step_1.evidence}}
+
+        ## Recommended Fix
+        {{step_1.recommended_fix}}
+
+# -----------------------------------------------------------------------------
+# EXAMPLE INVOCATION
+# -----------------------------------------------------------------------------
+example:
+  request: |
+    Execute action: debug-error
+    Inputs:
+      error_description: "Users reporting 500 errors on checkout page"
+      app_name: "checkout-service"
+      time_range: "2h"
+
+  typical_duration: "2-5 minutes"

@@ -1,0 +1,39 @@
+# Endpoints: Infrastructure URLs, services, APIs
+# Tier: public
+
+endpoints:
+  - id: grafana_local
+    name: Grafana Dashboard
+    type: service
+    url: http://localhost:3000
+    protocol: http
+    authentication:
+      type: none
+    description: Local observability dashboards
+    related_skills: [o11y, grafana-dashboards]
+    tags: [observability, monitoring, dashboards]
+    tier_origin: public
+
+  - id: prometheus_local
+    name: Prometheus Metrics
+    type: service
+    url: http://localhost:9090
+    protocol: http
+    authentication:
+      type: none
+    description: Metrics collection and querying
+    related_skills: [o11y]
+    tags: [observability, metrics]
+    tier_origin: public
+
+  - id: loki_local
+    name: Loki Logs
+    type: service
+    url: http://localhost:3100
+    protocol: http
+    authentication:
+      type: none
+    description: Log aggregation and querying
+    related_skills: [o11y]
+    tags: [observability, logs]
+    tier_origin: public

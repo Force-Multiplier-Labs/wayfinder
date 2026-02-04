@@ -1,0 +1,127 @@
+# =============================================================================
+# KNOWLEDGE CAPABILITIES
+# =============================================================================
+# Knowledge bases, lessons learned, and learning resources
+# Token budget: ~200 tokens
+# =============================================================================
+
+schema_version: "2.0"
+capability_id: knowledge
+
+# -----------------------------------------------------------------------------
+# LESSONS LEARNED LIBRARY
+# -----------------------------------------------------------------------------
+lessons_learned:
+  location: ~/Documents/craft/Lessons_Learned/
+  purpose: Domain-specific patterns and anti-patterns from past work
+
+  domains:
+    llm_formatting:
+      file: llm_formatting/LLM_Formatting_LESSONS_LEARNED.md
+      update_prompt: LLM_Formatting_AGENT_UPDATE_PROMPT.md
+      description: Patterns for human-LLM interoperability
+
+    infrastructure:
+      file: infrastructure/Infrastructure_LESSONS_LEARNED.md
+      update_prompt: null
+
+    interactive_text_games:
+      file: Interactive_text_game/Interactive_Text_Game_LESSONS_LEARNED.md
+      update_prompt: Interactive_Text_Game_AGENT_UPDATE_PROMPT.md
+
+    mcp_server:
+      file: mcp/MCP_developer_LESSONS_LEARNED.md
+      update_prompt: MCP_DEV_LESSONS_LEARNED_AGENT_UPDATE_PROMPT.md
+
+    sdk_development:
+      file: sdk/SDK_developer_LESSONS_LEARNED.md
+      update_prompt: SDK_DEV_LESSONS_LEARNED_AGENT_UPDATE_PROMPT.md
+
+    gui_games:
+      file: GUI_Game/GUI_Game_Developer_LESSONS_LEARNED.md
+      update_prompt: GUI_Game_AGENT_UPDATE_PROMPT.md
+
+    knowledge_management:
+      file: knowledge_management/knowledge_mgmt_LESSONS_LEARNED.md
+      update_prompt: knowledge_mgmt_AGENT_UPDATE_PROMPT.MD
+
+    ttrpg_games:
+      file: ttrpg/TTRPG_Games_LESSONS_LEARNED.md
+      update_prompt: TTRPG_Games_AGENT_UPDATE_PROMPT.md
+
+  lesson_format:
+    context: What were you trying to do?
+    problem: What obstacle did you encounter?
+    solution: How did you resolve it?
+    reusable: Heuristic | Pattern | Checklist | Anti-pattern
+
+  usage_protocol: |
+    1. Identify domain from project path
+    2. Read relevant lessons_learned file before starting work
+    3. Apply patterns, avoid anti-patterns
+    4. Add new lessons via /end-session
+
+# -----------------------------------------------------------------------------
+# PROMPT ENGINEERING FRAMEWORK
+# -----------------------------------------------------------------------------
+prompt_framework:
+  location: ~/Documents/craft/Prompt_Engineering/
+
+  components:
+    prompt_library: Prompt_Library/
+    templates:
+      - prompt_template.md
+      - feature_implementation_template.md
+    implementation_prompts: prompts/*.md
+    archive: Prompt_Raw_Archive/
+    generator: template_generator.py
+    tui: run_tui.py
+
+  implementation_cycle:
+    - Create Tests
+    - Implement
+    - Test & Fix
+    - Code Review
+    - Fix Critical
+    - Fix Remaining
+    - Prepare Commit
+
+# -----------------------------------------------------------------------------
+# 4-TIER CAPABILITY INDEX
+# -----------------------------------------------------------------------------
+capability_index:
+  tiers:
+    - tier: personal
+      location: ~/Documents/craft/local-index/
+      scope: Private credentials, personal scripts
+      commit: never
+
+    - tier: narrowly_shared
+      location: ~/Documents/craft/shared-index/
+      scope: Team tools, internal workflows
+
+    - tier: widely_shared
+      location: ~/Documents/craft/Lessons_Learned/index/
+      scope: Cross-project capabilities
+
+    - tier: public
+      location: ~/.claude/skills/dev-tour-guide/index/
+      scope: Skill defaults
+
+  override_rule: Higher tiers override lower tiers
+
+  categories:
+    - endpoints
+    - workflows
+    - tools
+    - skills
+    - processes
+    - projects
+    - credentials  # personal tier only
+
+# -----------------------------------------------------------------------------
+# PROJECT INDEX
+# -----------------------------------------------------------------------------
+project_index:
+  location: ~/Documents/pers/persOS/index/
+  purpose: Track active projects and associations

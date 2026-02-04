@@ -1,0 +1,330 @@
+# Lesson Learned Schema for ContextCore Squirrel
+# Agent-optimized span structure for efficient querying and token management
+#
+# Design Principles:
+# 1. Progressive Disclosure - Summary attributes for routing, full content on demand
+# 2. Semantic Span Names - lesson_domain:*, lesson_leg:*, lesson:* hierarchy
+# 3. Typed Attributes - Enable TraceQL filtering on all relevant fields
+# 4. Token Budgeting - Explicit token counts for agent cost estimation
+
+schema_version: "1.0.0"
+schema_name: "lesson-learned"
+description: "Schema for storing engineering lessons learned as OTel spans in Tempo"
+
+# =============================================================================
+# SPAN HIERARCHY
+# =============================================================================
+#
+# lesson_domain:observability           (root span - domain level)
+#   └── lesson_leg:observability-tracing    (child span - topic group)
+#         ├── lesson:observability-tracing-14  (leaf span - individual lesson)
+#         └── lesson:observability-tracing-15  (leaf span - individual lesson)
+#
+# This hierarchy enables:
+# - Domain-level queries: { name =~ "lesson_domain:.*" }
+# - Topic-level queries:  { name =~ "lesson_leg:.*" && span.lesson.domain = "observability" }
+# - Lesson-level queries: { name =~ "lesson:.*" && span.lesson.tags =~ ".*traceql.*" }
+
+span_types:
+  lesson_domain:
+    name_pattern: "lesson_domain:{domain_id}"
+    description: "Top-level grouping for a knowledge domain"
+    attributes:
+      domain.id:
+        type: string
+        required: true
+        description: "Unique domain identifier (kebab-case)"
+        examples: ["observability", "mcp", "sdk", "interactive-text-game"]
+      domain.name:
+        type: string
+        required: true
+        description: "Human-readable domain name"
+      domain.description:
+        type: string
+        required: false
+        description: "Brief domain description"
+      domain.leg_count:
+        type: int
+        required: true
+        description: "Number of legs/topics in this domain"
+      domain.lesson_count:
+        type: int
+        required: true
+        description: "Total lessons in this domain"
+      domain.source_path:
+        type: string
+        required: true
+        description: "Path to domain's lessons directory"
+
+  lesson_leg:
+    name_pattern: "lesson_leg:{domain_id}-{leg_id}"
+    description: "Topic grouping within a domain"
+    attributes:
+      leg.id:
+        type: string
+        required: true
+        description: "Unique leg identifier within domain"
+        examples: ["tracing", "dashboards", "log-ingestion"]
+      leg.number:
+        type: int
+        required: true
+        description: "Leg number (for ordering)"
+      leg.name:
+        type: string
+        required: true
+        description: "Human-readable leg name"
+      leg.description:
+        type: string
+        required: false
+        description: "Brief topic description"
+      leg.lesson_count:
+        type: int
+        required: true
+        description: "Number of lessons in this leg"
+      leg.key_patterns:
+        type: string
+        required: false
+        description: "Comma-separated key patterns covered"
+      leg.source_file:
+        type: string
+        required: true
+        description: "Path to leg's markdown file"
+
+  lesson:
+    name_pattern: "lesson:{domain_id}-{leg_id}-{lesson_number}"
+    description: "Individual lesson learned"
+    attributes:
+      # === Identity ===
+      lesson.id:
+        type: string
+        required: true
+        description: "Unique lesson identifier"
+        examples: ["observability-tracing-14", "mcp-tools-25"]
+      lesson.number:
+        type: int
+        required: true
+        description: "Lesson number within leg"
+      lesson.title:
+        type: string
+        required: true
+        description: "Descriptive title (< 100 chars)"
+
+      # === Metadata ===
+      lesson.domain:
+        type: string
+        required: true
+        description: "Parent domain ID"
+      lesson.leg:
+        type: string
+        required: true
+        description: "Parent leg ID"
+      lesson.version:
+        type: string
+        required: false
+        description: "Version when lesson was added"
+      lesson.date:
+        type: string
+        required: false
+        description: "Date lesson was documented (ISO format)"
+      lesson.actor:
+        type: string
+        required: true
+        description: "Who contributed the lesson"
+        examples: ["agent:claude-code", "agent:cursor", "human:neil"]
+
+      # === Content Summaries (Token-Efficient) ===
+      # These are compressed for quick agent routing decisions
+      lesson.context_summary:
+        type: string
+        required: true
+        description: "1-2 sentence context summary (< 150 chars)"
+      lesson.problem_summary:
+        type: string
+        required: true
+        description: "1-2 sentence problem summary (< 150 chars)"
+      lesson.solution_summary:
+        type: string
+        required: true
+        description: "1-2 sentence solution summary (< 200 chars)"
+
+      # === Reusable Knowledge ===
+      lesson.heuristic:
+        type: string
+        required: false
+        description: "Rule of thumb / mental model"
+      lesson.pattern_name:
+        type: string
+        required: false
+        description: "Name of reusable pattern (if present)"
+      lesson.anti_pattern:
+        type: string
+        required: false
+        description: "What NOT to do"
+      lesson.has_checklist:
+        type: bool
+        required: true
+        description: "Whether lesson includes actionable checklist"
+      lesson.has_code_example:
+        type: bool
+        required: true
+        description: "Whether lesson includes code examples"
+
+      # === Categorization ===
+      lesson.tags:
+        type: string
+        required: true
+        description: "Comma-separated tags for filtering"
+        examples: ["tempo,tracing,traceql,pattern,validated"]
+      lesson.scope:
+        type: string
+        required: false
+        description: "Affected systems/components"
+      lesson.root_cause:
+        type: string
+        required: false
+        description: "Why the problem occurred (summary)"
+
+      # === Progressive Disclosure ===
+      lesson.token_budget:
+        type: int
+        required: true
+        description: "Estimated tokens for full lesson content"
+      lesson.summary_tokens:
+        type: int
+        required: true
+        description: "Tokens in summary attributes only"
+      lesson.source_file:
+        type: string
+        required: true
+        description: "Path to original markdown file"
+      lesson.source_line:
+        type: int
+        required: true
+        description: "Starting line number in source file"
+
+# =============================================================================
+# TRACEQL QUERY PATTERNS
+# =============================================================================
+
+query_patterns:
+  # Find all lessons in a domain
+  by_domain: |
+    { name =~ "lesson:.*" && span.lesson.domain = "${domain}" }
+
+  # Find lessons by tag
+  by_tag: |
+    { name =~ "lesson:.*" && span.lesson.tags =~ ".*${tag}.*" }
+
+  # Find anti-patterns
+  anti_patterns: |
+    { name =~ "lesson:.*" && span.lesson.anti_pattern != "" }
+
+  # Find patterns by name
+  patterns_named: |
+    { name =~ "lesson:.*" && span.lesson.pattern_name =~ ".*${pattern}.*" }
+
+  # Find lessons by actor
+  by_actor: |
+    { name =~ "lesson:.*" && span.lesson.actor = "${actor}" }
+
+  # Find lessons with checklists (actionable)
+  with_checklists: |
+    { name =~ "lesson:.*" && span.lesson.has_checklist = true }
+
+  # Find high-value lessons (have multiple reusable elements)
+  high_value: |
+    { name =~ "lesson:.*" && span.lesson.heuristic != "" && span.lesson.pattern_name != "" }
+
+  # Find small lessons for quick reference
+  quick_reference: |
+    { name =~ "lesson:.*" && span.lesson.token_budget < 300 }
+
+  # Find detailed lessons for deep investigation
+  detailed: |
+    { name =~ "lesson:.*" && span.lesson.token_budget > 500 && span.lesson.has_code_example = true }
+
+  # Browse summaries with select()
+  browse_summaries: |
+    { name =~ "lesson:.*" && span.lesson.domain = "${domain}" }
+    | select(span.lesson.id, span.lesson.title, span.lesson.problem_summary, span.lesson.heuristic)
+
+# =============================================================================
+# AGENT USAGE PATTERNS
+# =============================================================================
+
+agent_patterns:
+  discovery:
+    description: "Find relevant lessons for a problem"
+    workflow:
+      - step: "Search by tags matching the problem domain"
+        query: "{ name =~ 'lesson:.*' && span.lesson.tags =~ '.*{domain}.*' }"
+      - step: "Filter by problem keywords in summary"
+        query: "{ ... && span.lesson.problem_summary =~ '.*{keyword}.*' }"
+      - step: "Load summaries for top matches"
+        query: "... | select(span.lesson.id, span.lesson.title, span.lesson.solution_summary)"
+      - step: "Load full content only for selected lesson"
+        action: "Read source file at lesson.source_file:lesson.source_line"
+    token_efficiency: "~50 tokens per summary vs ~400 tokens per full lesson"
+
+  prevention:
+    description: "Check for anti-patterns before implementation"
+    workflow:
+      - step: "Query anti-patterns in relevant domain"
+        query: "{ name =~ 'lesson:.*' && span.lesson.domain = '{domain}' && span.lesson.anti_pattern != '' }"
+      - step: "Review anti-pattern summaries"
+        action: "Check if any match planned approach"
+    token_efficiency: "Prevents wasted tokens on failed implementations"
+
+  checklist:
+    description: "Find actionable checklists for a task"
+    workflow:
+      - step: "Find lessons with checklists in domain"
+        query: "{ name =~ 'lesson:.*' && span.lesson.domain = '{domain}' && span.lesson.has_checklist = true }"
+      - step: "Filter by pattern name if known"
+        query: "... && span.lesson.pattern_name =~ '.*{pattern}.*'"
+      - step: "Load full checklist from source"
+        action: "Read source file for detailed checklist steps"
+
+# =============================================================================
+# EMISSION CONFIGURATION
+# =============================================================================
+
+emission:
+  otlp_endpoint: "http://localhost:4317"
+  service_name: "contextcore-squirrel-lessons"
+  resource_attributes:
+    service.version: "1.0.0"
+    deployment.environment: "development"
+
+  # Batch settings for bulk loading
+  batch:
+    max_lessons_per_trace: 50  # Group lessons into traces
+    flush_interval_ms: 5000
+
+  # Content summarization rules
+  summarization:
+    context_max_chars: 150
+    problem_max_chars: 150
+    solution_max_chars: 200
+    heuristic_max_chars: 200
+    anti_pattern_max_chars: 200
+
+# =============================================================================
+# TOKEN ESTIMATION
+# =============================================================================
+
+token_estimation:
+  # Approximate tokens per character (for GPT-style tokenizers)
+  chars_per_token: 4
+
+  # Fixed overhead per lesson
+  attribute_overhead_tokens: 50
+
+  # Content multipliers
+  code_block_multiplier: 1.2  # Code blocks are more token-dense
+
+  # Categories
+  small_lesson: { max_tokens: 300 }
+  medium_lesson: { max_tokens: 500 }
+  large_lesson: { max_tokens: 1000 }
+  detailed_lesson: { min_tokens: 1000 }

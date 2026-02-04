@@ -1,0 +1,15 @@
+# Projects: Project references and associations
+# Tier: public
+
+projects: []
+# Projects are typically added at widely_shared or narrowly_shared tiers
+# Example:
+# - id: project_id
+#   name: Project Name
+#   description: What it is
+#   status: active|complete|paused|archived
+#   path: /path/to/project
+#   key_docs: [CLAUDE.md, README.md]
+#   related_skills: [skill_id]
+#   tags: [tag1, tag2]
+#   tier_origin: widely_shared

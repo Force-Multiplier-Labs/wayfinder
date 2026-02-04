@@ -1,0 +1,127 @@
+# =============================================================================
+# CAPABILITY INDEX
+# =============================================================================
+# Lightweight discovery file (~200 tokens)
+# Pattern: Read this first, load full schema only when needed
+# =============================================================================
+
+version: "2.0"
+token_budget: 200
+
+# -----------------------------------------------------------------------------
+# CAPABILITY ROUTING TABLE
+# Given a task type, find the right capability
+# -----------------------------------------------------------------------------
+routing:
+  # Debugging & Investigation
+  production_error: { delegate: o11y, priority: 1 }
+  error_spike: { delegate: o11y, priority: 1 }
+  latency_issue: { delegate: o11y, priority: 1 }
+  log_analysis: { delegate: o11y, priority: 1 }
+
+  # Visualization
+  dashboard_create: { delegate: grafana-dashboards, priority: 1 }
+  metrics_visualize: { delegate: grafana-dashboards, priority: 1 }
+
+  # Code Quality
+  code_review: { delegate: code-review, priority: 1 }
+  security_review: { delegate: application-security-skill, priority: 1 }
+
+  # Development
+  mcp_server: { delegate: mcp-builder, priority: 1 }
+  web_testing: { delegate: webapp-testing, priority: 1 }
+  frontend_ui: { delegate: frontend-design, priority: 1 }
+
+  # Documents
+  pdf_work: { delegate: pdf, priority: 1 }
+  docx_work: { delegate: docx, priority: 1 }
+  xlsx_work: { delegate: xlsx, priority: 1 }
+  pptx_work: { delegate: pptx, priority: 1 }
+
+  # Games
+  html_game: { delegate: skill-html_game_dev, priority: 1 }
+  ttrpg_game: { delegate: ttrpg-games, priority: 1 }
+  react_game: { delegate: skill-react-game-enhancer, priority: 1 }
+
+  # iOS
+  ios_app: { delegate: ios, priority: 1 }
+  ios_testing: { delegate: ios-testing, priority: 1 }
+
+  # Database
+  database: { delegate: database-administrator, priority: 1 }
+  supabase: { delegate: database-administrator, priority: 1 }
+
+# -----------------------------------------------------------------------------
+# SKILLS BY CATEGORY (for browsing)
+# -----------------------------------------------------------------------------
+categories:
+  observability:
+    - o11y
+    - grafana-dashboards
+    - grafana-plugin-dev
+
+  development:
+    - code-review
+    - mcp-builder
+    - webapp-testing
+    - skill-creator
+    - frontend-design
+
+  documents:
+    - pdf
+    - docx
+    - xlsx
+    - pptx
+
+  games:
+    - skill-html_game_dev
+    - skill-react-game-enhancer
+    - ttrpg-games
+    - choice-adventure-builder
+
+  ios:
+    - ios
+    - ios-testing
+    - ios-project-manager
+    - iOS_OCR
+
+  data:
+    - database-administrator
+    - sdk-developer
+
+  design:
+    - frontend-design
+    - canvas-design
+    - algorithmic-art
+    - brand-guidelines
+    - theme-factory
+
+# -----------------------------------------------------------------------------
+# INFRASTRUCTURE ENDPOINTS (pre-existing - don't recreate)
+# -----------------------------------------------------------------------------
+endpoints:
+  grafana: http://localhost:3000
+  prometheus: http://localhost:9090
+  loki: http://localhost:3100
+  tempo: http://localhost:3200
+  pyroscope: http://localhost:4040
+  mimir: http://localhost:9009
+
+# -----------------------------------------------------------------------------
+# KNOWLEDGE BASES
+# -----------------------------------------------------------------------------
+knowledge:
+  lessons_learned: ~/Documents/craft/Lessons_Learned/
+  prompt_framework: ~/Documents/craft/Prompt_Engineering/
+  skills_directory: ~/.claude/skills/
+  harbor_manifest: ~/.claude/harbor-manifest.yaml
+
+# -----------------------------------------------------------------------------
+# FULL SCHEMA LOCATIONS (load on demand)
+# -----------------------------------------------------------------------------
+schemas:
+  observability: agent/capabilities/observability.yaml
+  skills: agent/capabilities/skills.yaml
+  workflows: agent/capabilities/workflows.yaml
+  infrastructure: agent/capabilities/infrastructure.yaml
+  knowledge: agent/capabilities/knowledge.yaml

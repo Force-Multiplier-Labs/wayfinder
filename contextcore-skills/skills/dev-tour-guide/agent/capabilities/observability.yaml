@@ -1,0 +1,195 @@
+# =============================================================================
+# OBSERVABILITY CAPABILITIES
+# =============================================================================
+# Full schema for observability-related capabilities
+# Token budget: ~400 tokens
+# =============================================================================
+
+schema_version: "2.0"
+capability_id: observability
+
+# -----------------------------------------------------------------------------
+# o11y SKILL
+# -----------------------------------------------------------------------------
+o11y:
+  id: o11y
+  type: skill
+  description: AI-powered root cause analysis correlating metrics, logs, traces, profiles with source code
+
+  # When to delegate to this skill
+  triggers:
+    - production_error
+    - error_spike
+    - latency_debugging
+    - system_behavior_investigation
+    - log_analysis
+
+  # Typed inputs
+  inputs:
+    error_context:
+      type: string
+      required: true
+      description: Error message, stack trace, or log query
+
+    time_range:
+      type: string
+      required: false
+      default: "1h"
+      description: Time range to investigate (e.g., "1h", "24h", "7d")
+
+    app_name:
+      type: string
+      required: false
+      description: Application name to filter by
+
+    severity:
+      type: enum
+      values: [critical, warning, info]
+      required: false
+
+  # Typed outputs
+  outputs:
+    root_cause:
+      type: string
+      description: Identified root cause
+
+    evidence:
+      type: array
+      items: { type: string }
+      description: Supporting evidence from telemetry
+
+    recommended_fix:
+      type: string
+      description: Suggested remediation
+
+    related_code:
+      type: object
+      properties:
+        file: { type: string }
+        line: { type: integer }
+        function: { type: string }
+
+  # Invocation pattern
+  invocation:
+    type: skill_delegation
+    skill_name: o11y
+    message_template: |
+      Investigate this error using the observability stack:
+      Error: {{error_context}}
+      Time range: {{time_range}}
+      App: {{app_name}}
+
+  # Prerequisites
+  prerequisites:
+    - endpoint: http://localhost:9090
+      name: Prometheus
+    - endpoint: http://localhost:3100
+      name: Loki
+
+  # Environment setup
+  environment:
+    PROMETHEUS_URL: http://localhost:9090
+    LOKI_URL: http://localhost:3100
+    TEMPO_URL: http://localhost:3200
+    PYROSCOPE_URL: http://localhost:4040
+
+# -----------------------------------------------------------------------------
+# grafana-dashboards SKILL
+# -----------------------------------------------------------------------------
+grafana-dashboards:
+  id: grafana-dashboards
+  type: skill
+  description: Create, import, manage Grafana dashboards programmatically
+
+  triggers:
+    - dashboard_create
+    - metrics_visualize
+    - kpi_tracking
+    - project_tracking
+
+  inputs:
+    action:
+      type: enum
+      values: [create, import, update, delete, list]
+      required: true
+
+    dashboard_config:
+      type: object
+      required: false
+      description: Dashboard JSON or configuration
+
+    datasource:
+      type: enum
+      values: [prometheus, loki, influxdb, mysql, postgresql]
+      required: false
+      default: prometheus
+
+  outputs:
+    dashboard_url:
+      type: string
+      description: URL to created/updated dashboard
+
+    dashboard_uid:
+      type: string
+      description: Unique dashboard identifier
+
+  invocation:
+    type: skill_delegation
+    skill_name: grafana-dashboards
+    message_template: |
+      {{action}} a Grafana dashboard:
+      Config: {{dashboard_config}}
+      Datasource: {{datasource}}
+
+  prerequisites:
+    - endpoint: http://localhost:3000
+      name: Grafana
+
+# -----------------------------------------------------------------------------
+# OBSERVABILITY ENDPOINTS
+# -----------------------------------------------------------------------------
+endpoints:
+  grafana:
+    url: http://localhost:3000
+    purpose: Dashboards, visualization, alerting
+    api_docs: http://localhost:3000/api/docs
+
+  prometheus:
+    url: http://localhost:9090
+    purpose: Metrics collection, PromQL queries
+    query_endpoint: /api/v1/query
+
+  loki:
+    url: http://localhost:3100
+    purpose: Log aggregation, LogQL queries
+    query_endpoint: /loki/api/v1/query
+
+  tempo:
+    url: http://localhost:3200
+    purpose: Distributed tracing
+    query_endpoint: /api/traces
+
+  pyroscope:
+    url: http://localhost:4040
+    purpose: Continuous profiling
+
+  mimir:
+    url: http://localhost:9009
+    purpose: Long-term metrics storage
+    note: Use instead of Prometheus for long retention
+
+# -----------------------------------------------------------------------------
+# ANTI-PATTERNS (What NOT to do)
+# -----------------------------------------------------------------------------
+anti_patterns:
+  - pattern: "grep -r error *.log"
+    reason: Loses correlation with metrics/traces
+    use_instead: o11y skill
+
+  - pattern: "tail -f /var/log/*"
+    reason: No structured analysis
+    use_instead: o11y skill with Loki
+
+  - pattern: "docker logs container_name"
+    reason: Logs should go through Loki
+    use_instead: Query Loki via o11y skill

@@ -1,0 +1,61 @@
+# Tools: CLI tools, scripts, utilities, configurations
+# Tier: public
+
+tools:
+  - id: skills_dir
+    name: Claude Skills Directory
+    type: directory
+    description: Location of installed Claude skills
+    location: ~/.claude/skills/
+    usage: |
+      Browse available skills
+      Install new skills here
+    related_skills: [skill-creator]
+    tags: [skills, claude, configuration]
+    tier_origin: public
+    added: "2026-01-11"
+    added_by: claude_code
+
+  - id: lessons_learned_dir
+    name: Lessons Learned Directory
+    type: directory
+    description: Central repository for captured insights and learnings
+    location: $HOME/Documents/craft/Lessons_Learned/
+    usage: |
+      Store domain-specific LESSONS_LEARNED.md files
+      Run /end-session to update automatically
+    related_skills: [end-session, capture-insights]
+    tags: [knowledge, documentation, lessons]
+    tier_origin: widely_shared
+    added: "2026-01-11"
+    added_by: claude_code
+
+  - id: prompt_engineering_dir
+    name: Prompt Engineering Framework
+    type: directory
+    description: Prompt templates and engineering patterns
+    location: $HOME/Documents/craft/Prompt_Engineering/
+    usage: |
+      Reference for prompt design patterns
+      Templates for common tasks
+    tags: [prompts, templates, framework]
+    tier_origin: widely_shared
+    added: "2026-01-11"
+    added_by: claude_code
+
+  - id: set_anthropic_key
+    name: Set Anthropic API Key
+    type: script
+    description: Simple script to set/update ANTHROPIC_API_KEY in macOS Keychain
+    location: ~/.claude/skills/authentication-access-manager/scripts/set_anthropic_key.py
+    usage: |
+      # Basic usage - prompts for key securely
+      python3 ~/.claude/skills/authentication-access-manager/scripts/set_anthropic_key.py
+
+      # With validation (makes test API call)
+      python3 ~/.claude/skills/authentication-access-manager/scripts/set_anthropic_key.py --validate
+    related_skills: [authentication-access-manager]
+    tags: [credentials, anthropic, api-key, setup]
+    tier_origin: public
+    added: "2026-01-13"
+    added_by: claude_code
