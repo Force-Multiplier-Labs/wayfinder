@@ -16,7 +16,8 @@
 
 .PHONY: help doctor up down destroy status health smoke-test verify backup restore \
         storage-status storage-clean logs-tempo logs-mimir logs-loki logs-grafana \
-        test lint typecheck build install clean dashboards-provision dashboards-list \
+        test test-fox test-all lint typecheck build install install-core install-fox \
+        clean dashboards-provision dashboards-list \
         seed-metrics full-setup wait-ready install-verify \
         kind-up kind-down kind-status kind-seed \
         rules-validate rules-status \
@@ -342,23 +343,35 @@ logs-grafana: ## Follow Grafana logs
 
 # === Development ===
 
-install: ## Install Wayfinder in development mode
-	pip3 install -e ".[dev]"
+install: ## Install all workspace packages in development mode
+	uv sync --all-packages --all-extras
 
-test: ## Run tests
-	PYTHONPATH=./src python3 -m pytest tests/ -v
+install-core: ## Install core contextcore package only
+	uv sync --package contextcore --all-extras
 
-lint: ## Run linting
-	ruff check src/
+install-fox: ## Install wayfinder-fox package only
+	uv sync --package wayfinder-fox --all-extras
+
+test: ## Run core tests
+	uv run pytest tests/ -v
+
+test-fox: ## Run wayfinder-fox tests
+	uv run pytest wayfinder-fox/tests/ -v
+
+test-all: ## Run all workspace tests
+	uv run pytest tests/ wayfinder-fox/tests/ -v
+
+lint: ## Run linting across all packages
+	uv run ruff check src/ wayfinder-fox/src/
 
 typecheck: ## Run type checking
-	mypy src/contextcore
+	uv run mypy src/contextcore
 
 build: ## Build package
-	python3 -m build
+	uv build
 
 clean: ## Clean build artifacts
-	rm -rf build/ dist/ *.egg-info src/*.egg-info
+	rm -rf build/ dist/ *.egg-info src/*.egg-info .venv
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 
@@ -497,7 +510,7 @@ help: ## Show this help
 	@grep -E '^logs-' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
 	@echo ""
 	@echo "$(YELLOW)Development:$(NC)"
-	@grep -E '^(install|install-verify|test|lint|typecheck|build|clean):' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
+	@grep -E '^(install|install-core|install-fox|install-verify|test|test-fox|test-all|lint|typecheck|build|clean):' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
 	@echo ""
 	@echo "$(YELLOW)Kind Cluster:$(NC)"
 	@grep -E '^kind-' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'

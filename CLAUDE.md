@@ -212,26 +212,31 @@ wayfinder/
 
 ## System Requirements
 
-**Python Command (macOS/Linux)**: This system only has `python3`, not `python`. Always use:
-- `python3` instead of `python`
-- `pip3` instead of `pip`
-- `python3 -m module` instead of `python -m module`
+**Package Manager**: This project uses [uv](https://docs.astral.sh/uv/) for dependency management and workspace support. The repo is a uv workspace with two members: `contextcore` (root) and `wayfinder-fox`.
+
+**Python Command (macOS/Linux)**: This system only has `python3`, not `python`. When running commands outside of `uv run`, use `python3` / `pip3`.
 
 ## Commands
 
 ```bash
-# Install
-pip3 install -e ".[dev]"
+# Install (all workspace packages, all extras)
+uv sync --all-packages --all-extras
+
+# Install individual packages
+uv sync --package contextcore --all-extras
+uv sync --package wayfinder-fox --all-extras
 
 # Run tests
-python3 -m pytest
+uv run pytest tests/                              # Core tests
+uv run pytest wayfinder-fox/tests/                 # Fox tests
+uv run pytest tests/ wayfinder-fox/tests/          # All tests
 
 # Type checking
-mypy src/contextcore
+uv run mypy src/contextcore
 
 # Linting
-ruff check src/
-black src/
+uv run ruff check src/ wayfinder-fox/src/
+uv run black src/
 
 # CLI usage — Task tracking
 contextcore task start --id PROJ-123 --title "Feature" --type story

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests.conftest import CollectingExporter
+from conftest import CollectingExporter
 from wayfinder_fox.telemetry import FoxTracer
 
 

@@ -93,6 +93,12 @@ Documentation = "https://github.com/Force-Multiplier-Labs/wayfinder#readme"
 Issues = "https://github.com/Force-Multiplier-Labs/wayfinder/issues"
 Source = "https://github.com/Force-Multiplier-Labs/wayfinder"
 
+[tool.uv.workspace]
+members = ["wayfinder-fox"]
+
+[tool.uv.sources]
+contextcore-rabbit = { path = "../contextcore-rabbit", editable = true }
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/contextcore"]
 

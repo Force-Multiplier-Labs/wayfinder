@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests.conftest import CollectingExporter
+from conftest import CollectingExporter
 from wayfinder_fox.config import FoxConfig
 from wayfinder_fox.enricher import Alert, EnrichedAlert
 from wayfinder_fox.router import CriticalityRouter

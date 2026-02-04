@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests.conftest import CollectingExporter, MockProjectContextReader
+from conftest import CollectingExporter, MockProjectContextReader
 from wayfinder_fox.enricher import Alert, ProjectContextEnricher
 from wayfinder_fox.kubernetes import ProjectContext
 from wayfinder_fox.telemetry import FoxTracer
