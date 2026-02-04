@@ -23,6 +23,7 @@ all = ["wayfinder-fox[rabbit,kubernetes]"]
 
 [tool.uv.sources]
 contextcore = { workspace = true }
+contextcore-rabbit = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/wayfinder_fox"]

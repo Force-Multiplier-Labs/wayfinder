@@ -25,10 +25,10 @@ jobs:
       - run: uv sync --all-packages --all-extras
 
       - name: Ruff check
-        run: uv run ruff check src/ wayfinder-fox/src/
+        run: uv run ruff check src/ wayfinder-fox/src/ contextcore-rabbit/src/ contextcore-mole/src/
 
       - name: Black format check
-        run: uv run black --check src/
+        run: uv run black --check src/ wayfinder-fox/src/ contextcore-rabbit/src/ contextcore-mole/src/
 
   typecheck:
     runs-on: ubuntu-latest
@@ -71,3 +71,6 @@ jobs:
 
       - name: Run fox tests
         run: uv run pytest wayfinder-fox/tests/ -x
+
+      - name: Run mole tests
+        run: uv run pytest contextcore-mole/tests/ -x

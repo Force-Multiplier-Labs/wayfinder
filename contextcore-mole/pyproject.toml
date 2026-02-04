@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "contextcore-mole"
@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "CLI tool to recover tasks from ContextCore Tempo trace exports"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 authors = [
     { name = "Neil Yashinsky" }
 ]
@@ -18,10 +18,9 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
@@ -42,14 +41,14 @@ dev = [
 mole = "contextcore_mole.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/contextcore/contextcore-mole"
-Repository = "https://github.com/contextcore/contextcore-mole"
+Homepage = "https://github.com/Force-Multiplier-Labs/wayfinder"
+Repository = "https://github.com/Force-Multiplier-Labs/wayfinder"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/contextcore_mole"]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py311"
 line-length = 100
 src = ["src", "tests"]
 
@@ -57,7 +56,7 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_ignores = true

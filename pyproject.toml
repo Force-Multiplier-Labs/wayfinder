@@ -94,10 +94,11 @@ Issues = "https://github.com/Force-Multiplier-Labs/wayfinder/issues"
 Source = "https://github.com/Force-Multiplier-Labs/wayfinder"
 
 [tool.uv.workspace]
-members = ["wayfinder-fox"]
-
-[tool.uv.sources]
-contextcore-rabbit = { path = "../contextcore-rabbit", editable = true }
+members = [
+    "wayfinder-fox",
+    "contextcore-rabbit",
+    "contextcore-mole",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/contextcore"]
