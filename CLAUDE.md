@@ -444,7 +444,7 @@ Animal-named packages using Anishinaabe (Ojibwe) names honoring the indigenous p
 | **contextcore-squirrel** | Squirrel | Ajidamoo | Skills library for token-efficient agent discovery | beta |
 | **contextcore-owl** | Owl | Gookooko'oo | Grafana plugins (**internal**, not user-facing) | internal |
 
-> **Note:** `contextcore-rabbit` and `contextcore-owl` have been extracted to their own repos under the Force-Multiplier-Labs org. Dashboard JSON for these packs remains in this repo for provisioning.
+> **Note:** `contextcore-rabbit` has been brought back into this monorepo as a workspace member. `contextcore-owl` remains extracted to its own repo under the Force-Multiplier-Labs org. Dashboard JSON for these packs remains in this repo for provisioning.
 
 ### Dependency Graph
 

@@ -37,3 +37,7 @@ packages = ["src/contextcore_rabbit"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/contextcore_rabbit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

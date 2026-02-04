@@ -16,7 +16,7 @@
 
 .PHONY: help doctor up down destroy status health smoke-test verify backup restore \
         storage-status storage-clean logs-tempo logs-mimir logs-loki logs-grafana \
-        test test-fox test-mole test-all lint typecheck build install install-core install-fox \
+        test test-fox test-rabbit test-mole test-all lint typecheck build install install-core install-fox \
         clean dashboards-provision dashboards-list \
         seed-metrics full-setup wait-ready install-verify \
         kind-up kind-down kind-status kind-seed \
@@ -358,11 +358,14 @@ test: ## Run core tests
 test-fox: ## Run wayfinder-fox tests
 	uv run pytest wayfinder-fox/tests/ -v
 
+test-rabbit: ## Run contextcore-rabbit tests
+	uv run pytest contextcore-rabbit/tests/ -v
+
 test-mole: ## Run contextcore-mole tests
 	uv run pytest contextcore-mole/tests/ -v
 
 test-all: ## Run all workspace tests
-	uv run pytest tests/ wayfinder-fox/tests/ contextcore-mole/tests/ -v
+	uv run pytest tests/ -v && uv run pytest wayfinder-fox/tests/ -v && uv run pytest contextcore-rabbit/tests/ -v && uv run pytest contextcore-mole/tests/ -v
 
 lint: ## Run linting across all packages
 	uv run ruff check src/ wayfinder-fox/src/ contextcore-rabbit/src/ contextcore-mole/src/
@@ -513,7 +516,7 @@ help: ## Show this help
 	@grep -E '^logs-' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
 	@echo ""
 	@echo "$(YELLOW)Development:$(NC)"
-	@grep -E '^(install|install-core|install-fox|install-verify|test|test-fox|test-mole|test-all|lint|typecheck|build|clean):' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
+	@grep -E '^(install|install-core|install-fox|install-verify|test|test-fox|test-rabbit|test-mole|test-all|lint|typecheck|build|clean):' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'
 	@echo ""
 	@echo "$(YELLOW)Kind Cluster:$(NC)"
 	@grep -E '^kind-' $(MAKEFILE_LIST) | sed 's/:.*##/  →/' | sed 's/^/  make /'

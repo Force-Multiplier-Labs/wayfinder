@@ -43,8 +43,11 @@ jobs:
 
       - run: uv sync --all-packages --all-extras
 
-      - name: Mypy
+      - name: Mypy (contextcore)
         run: uv run mypy src/contextcore
+
+      - name: Mypy (contextcore-mole)
+        run: uv run mypy contextcore-mole/src/contextcore_mole
 
   test:
     runs-on: ${{ matrix.os }}
@@ -71,6 +74,9 @@ jobs:
 
       - name: Run fox tests
         run: uv run pytest wayfinder-fox/tests/ -x
+
+      - name: Run rabbit tests
+        run: uv run pytest contextcore-rabbit/tests/ -x
 
       - name: Run mole tests
         run: uv run pytest contextcore-mole/tests/ -x
