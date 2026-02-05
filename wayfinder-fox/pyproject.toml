@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Fox (Waagosh) - Context enrichment for alert automation"
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",

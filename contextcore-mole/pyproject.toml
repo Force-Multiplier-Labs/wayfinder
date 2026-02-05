@@ -7,8 +7,8 @@ name = "contextcore-mole"
 version = "0.1.0"
 description = "CLI tool to recover tasks from ContextCore Tempo trace exports"
 readme = "README.md"
-license = "MIT"
-requires-python = ">=3.11"
+license = "Apache-2.0"
+requires-python = ">=3.12"
 authors = [
     { name = "Neil Yashinsky" }
 ]
@@ -18,9 +18,9 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
@@ -48,7 +48,7 @@ Repository = "https://github.com/Force-Multiplier-Labs/wayfinder"
 packages = ["src/contextcore_mole"]
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 100
 src = ["src", "tests"]
 
@@ -56,7 +56,7 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
 warn_return_any = true
 warn_unused_ignores = true

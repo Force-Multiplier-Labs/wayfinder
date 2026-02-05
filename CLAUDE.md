@@ -214,7 +214,7 @@ wayfinder/
 
 **Package Manager**: This project uses [uv](https://docs.astral.sh/uv/) for dependency management and workspace support. The repo is a uv workspace with four members: `contextcore` (root), `wayfinder-fox`, `contextcore-rabbit`, and `contextcore-mole`.
 
-**Python Command (macOS/Linux)**: This system only has `python3`, not `python`. When running commands outside of `uv run`, use `python3` / `pip3`.
+**Python**: `.python-version` pins 3.14 for local development (uv uses this as default). CI tests the full matrix: 3.12, 3.13, 3.14. All packages require `>=3.12`. When running commands outside of `uv run`, use `python3` / `pip3` (this system does not have `python`).
 
 ## Commands
 
