@@ -70,8 +70,8 @@ class AutoInstaller:
         self.log("Checking prerequisites...")
 
         # Check Python version
-        if sys.version_info < (3, 9):
-            self.log(f"Python 3.9+ required, found {sys.version_info.major}.{sys.version_info.minor}", error=True)
+        if sys.version_info < (3, 12):
+            self.log(f"Python 3.12+ required, found {sys.version_info.major}.{sys.version_info.minor}", error=True)
             return False
 
         # Check Docker
@@ -102,8 +102,8 @@ class AutoInstaller:
                 self.log(f"Failed to start stack: {stderr}", error=True)
                 return False
         else:
-            # Fallback to docker-compose directly
-            success, stdout, stderr = self.run_command(["docker-compose", "up", "-d"])
+            # Fallback to docker compose directly
+            success, stdout, stderr = self.run_command(["docker", "compose", "up", "-d"])
             if not success:
                 self.log(f"Failed to start stack: {stderr}", error=True)
                 return False

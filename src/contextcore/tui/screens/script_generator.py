@@ -100,7 +100,7 @@ class ScriptGeneratorScreen(Screen):
             yield Label("Deployment Method", classes="section-title")
             with Vertical(classes="method-options"):
                 yield RadioButton("Docker Compose (Recommended)", value=True, id="method-docker")
-                yield Static("Quick local development with make full-setup", classes="method-description")
+                yield Static("Quick local development with Docker Compose", classes="method-description")
                 yield RadioButton("Kind Cluster", id="method-kind")
                 yield Static("Kubernetes patterns with Kind", classes="method-description")
                 yield RadioButton("Custom Infrastructure", id="method-custom")

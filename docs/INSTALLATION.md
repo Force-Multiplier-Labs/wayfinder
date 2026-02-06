@@ -6,10 +6,10 @@ Complete installation guide for the Wayfinder observability stack.
 
 | I want to... | Go to |
 |--------------|-------|
+| Use the interactive TUI (recommended) | [Terminal User Interface](#terminal-user-interface-tui) |
 | Get started fast (solo dev) | [Docker Compose Quick Start](#option-a-docker-compose) |
 | Use Kubernetes patterns | [Kind Cluster Quick Start](#option-b-kind-cluster) |
 | Install on Windows | [Windows Installation](#windows-installation) |
-| Use the interactive TUI | [Terminal User Interface](#terminal-user-interface-tui) |
 | Troubleshoot issues | [Troubleshooting](#troubleshooting) |
 | Verify my installation | [Verification](#verification) |
 
@@ -22,7 +22,7 @@ Complete installation guide for the Wayfinder observability stack.
 | Tool | Version | Check Command | Install (macOS) | Install (Windows) |
 |------|---------|---------------|-----------------|-------------------|
 | Docker | 20.10+ | `docker --version` | `brew install --cask docker` | `winget install Docker.DockerDesktop` |
-| Python | 3.11+ | `python3 --version` (`python` on Windows) | `brew install python@3.11` | `winget install Python.Python.3.11` |
+| Python | 3.12+ | `python3 --version` (`python` on Windows) | `brew install python@3.12` | `winget install Python.Python.3.12` |
 | kubectl | 1.28+ | `kubectl version --client` | `brew install kubectl` | `winget install Kubernetes.kubectl` |
 | Kind | 0.20+ | `kind --version` | `brew install kind` | `winget install Kubernetes.kind` |
 
@@ -82,7 +82,121 @@ The virtual environment must be activated in each new PowerShell session:
 
 ---
 
-## Choose Your Deployment
+## Terminal User Interface (TUI)
+
+> **Recommended for first-time setup.** The TUI walks you through prerequisites, deployment, and verification interactively — no need to memorize commands. Works on macOS, Linux, and Windows.
+
+### Launch the TUI
+
+**macOS / Linux:**
+
+```bash
+source .venv/bin/activate
+
+# Launch the welcome screen
+contextcore tui launch
+
+# Jump directly to a specific screen
+contextcore tui launch --screen install      # Installation wizard
+contextcore tui launch --screen status       # Service health dashboard
+contextcore tui launch --screen configure    # Environment configuration
+contextcore tui launch --screen script_generator  # Generate install scripts
+```
+
+**Windows (PowerShell):**
+
+```powershell
+.venv\Scripts\Activate.ps1
+
+# Launch the welcome screen
+contextcore tui launch
+
+# Jump directly to a specific screen
+contextcore tui launch --screen install      # Installation wizard
+contextcore tui launch --screen status       # Service health dashboard
+contextcore tui launch --screen configure    # Environment configuration
+contextcore tui launch --screen script_generator  # Generate install scripts
+```
+
+### TUI Screens
+
+| Screen | Key | Description |
+|--------|-----|-------------|
+| Welcome | - | Main menu with navigation cards |
+| Install | `I` | 5-step guided installation wizard |
+| Status | `S` | Real-time service health monitoring |
+| Configure | `C` | Edit environment variables, test endpoints |
+| Script Generator | `G` | Generate custom installation scripts |
+| Help | `H` | Keyboard shortcuts and documentation |
+
+### Installation Wizard (TUI)
+
+The TUI installation wizard guides you through:
+
+1. **Prerequisites Check** - Verifies Python, Docker, ports, etc.
+2. **Deployment Method** - Choose Docker Compose, Kind, or Custom
+3. **Configuration** - Set endpoints, credentials
+4. **Deployment** - Starts the observability stack via Docker Compose or Kind
+5. **Verification** - Confirms services are healthy
+
+```bash
+# Launch directly to install wizard
+contextcore tui install
+
+# Non-interactive install with defaults
+contextcore tui install --method docker --auto
+```
+
+### Service Status (TUI)
+
+Monitor service health in real-time:
+
+```bash
+# Interactive dashboard with auto-refresh
+contextcore tui status
+
+# JSON output for scripting
+contextcore tui status --json
+
+# Continuous watch mode
+contextcore tui status --watch
+```
+
+### Script Generator
+
+Generate custom installation scripts for your environment. On Windows, the generator automatically produces PowerShell (`.ps1`) scripts; on macOS/Linux it produces bash scripts.
+
+```bash
+# Interactive TUI
+contextcore tui launch --screen script_generator
+
+# CLI script generation
+contextcore tui generate-script --method docker
+contextcore tui generate-script --method kind -o install.sh
+```
+
+The script generator supports:
+- **Docker Compose** - Starts the stack via `docker compose`
+- **Kind Cluster** - Creates cluster and deploys stack
+- **Custom** - Connects to existing infrastructure
+
+### Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `q` | Quit |
+| `?` | Help |
+| `Esc` | Go back / Cancel |
+| `d` | Toggle dark/light mode |
+| `Tab` | Navigate between elements |
+
+---
+
+## Manual Deployment
+
+If you prefer command-line setup over the TUI, choose one of the options below.
+
+### Choose Your Deployment
 
 | Option | Best For | Setup Time | Components |
 |--------|----------|------------|------------|
@@ -329,7 +443,7 @@ If you prefer to stay in PowerShell without WSL:
 #### 1. Install Prerequisites
 
 ```powershell
-winget install Python.Python.3.11
+winget install Python.Python.3.12
 winget install Docker.DockerDesktop
 winget install Git.Git
 ```
@@ -418,99 +532,7 @@ docker compose down -v
 - **State directory:** Stored at `%USERPROFILE%\.contextcore\state\<project>\`. Falls back to `%TEMP%\contextcore\state` if not writable.
 - **TUI script generator:** Detects Windows and generates PowerShell (`.ps1`) scripts instead of bash.
 - **Make targets:** If you install Make via `winget install GnuWin32.Make` or Chocolatey, most targets work from Git Bash but not from PowerShell directly.
-
----
-
-## Terminal User Interface (TUI)
-
-> **New in v0.1.0:** Wayfinder includes an interactive TUI for guided installation and monitoring.
-
-### Launch the TUI
-
-```bash
-source .venv/bin/activate
-
-# Launch the welcome screen
-contextcore tui launch
-
-# Jump directly to a specific screen
-contextcore tui launch --screen install      # Installation wizard
-contextcore tui launch --screen status       # Service health dashboard
-contextcore tui launch --screen configure    # Environment configuration
-contextcore tui launch --screen script_generator  # Generate install scripts
-```
-
-### TUI Screens
-
-| Screen | Key | Description |
-|--------|-----|-------------|
-| Welcome | - | Main menu with navigation cards |
-| Install | `I` | 5-step guided installation wizard |
-| Status | `S` | Real-time service health monitoring |
-| Configure | `C` | Edit environment variables, test endpoints |
-| Script Generator | `G` | Generate custom installation scripts |
-| Help | `H` | Keyboard shortcuts and documentation |
-
-### Installation Wizard (TUI)
-
-The TUI installation wizard guides you through:
-
-1. **Prerequisites Check** - Verifies Python, Docker, ports, etc.
-2. **Deployment Method** - Choose Docker Compose, Kind, or Custom
-3. **Configuration** - Set endpoints, credentials
-4. **Deployment** - Runs `make full-setup` or creates Kind cluster
-5. **Verification** - Confirms services are healthy
-
-```bash
-# Launch directly to install wizard
-contextcore tui install
-
-# Non-interactive install with defaults
-contextcore tui install --method docker --auto
-```
-
-### Service Status (TUI)
-
-Monitor service health in real-time:
-
-```bash
-# Interactive dashboard with auto-refresh
-contextcore tui status
-
-# JSON output for scripting
-contextcore tui status --json
-
-# Continuous watch mode
-contextcore tui status --watch
-```
-
-### Script Generator
-
-Generate custom installation scripts for your environment:
-
-```bash
-# Interactive TUI
-contextcore tui launch --screen script_generator
-
-# CLI script generation
-contextcore tui generate-script --method docker
-contextcore tui generate-script --method kind -o install.sh
-```
-
-The script generator supports:
-- **Docker Compose** - Uses `make full-setup`
-- **Kind Cluster** - Creates cluster and deploys stack
-- **Custom** - Connects to existing infrastructure
-
-### Keyboard Shortcuts
-
-| Key | Action |
-|-----|--------|
-| `q` | Quit |
-| `?` | Help |
-| `Esc` | Go back / Cancel |
-| `d` | Toggle dark/light mode |
-| `Tab` | Navigate between elements |
+- **Known issues:** See [KNOWN_ISSUES.md](KNOWN_ISSUES.md#windows-specific-notes) for Windows-specific edge cases.
 
 ---
 
@@ -518,9 +540,27 @@ The script generator supports:
 
 ### Health Checks
 
+**macOS / Linux:**
+
 ```bash
 # Docker Compose
 make health
+
+# Kind Cluster
+kubectl get pods -n observability
+```
+
+**Windows (PowerShell):**
+
+```powershell
+# Docker Compose
+curl.exe http://localhost:3000/api/health
+curl.exe http://localhost:3200/ready
+curl.exe http://localhost:9009/ready
+curl.exe http://localhost:3100/ready
+
+# Test OTLP port
+Test-NetConnection -ComputerName localhost -Port 4317
 
 # Kind Cluster
 kubectl get pods -n observability
@@ -535,7 +575,7 @@ Expected output (all healthy):
 | Mimir | `curl -sf localhost:9009/ready` | Pod Running |
 | Loki | `curl -sf localhost:3100/ready` | Pod Running |
 | Alloy | `curl -sf localhost:12345/ready` | Pod Running |
-| OTLP gRPC | `nc -z localhost 4317` | Port open |
+| OTLP gRPC | `nc -z localhost 4317` (or `Test-NetConnection` on Windows) | Port open |
 
 ### Installation Verification
 
@@ -575,18 +615,36 @@ This is useful for:
 
 ### Check Metrics in Mimir
 
+**macOS / Linux:**
+
 ```bash
 curl -s "http://localhost:9009/prometheus/api/v1/query?query=contextcore_install_completeness_percent" \
   | python3 -c "import sys,json; d=json.load(sys.stdin); r=d['data']['result']; print(f'{r[0][\"value\"][1]}%' if r else 'No data')"
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$response = Invoke-RestMethod "http://localhost:9009/prometheus/api/v1/query?query=contextcore_install_completeness_percent"
+if ($response.data.result) { "$($response.data.result[0].value[1])%" } else { "No data" }
 ```
 
 Expected: `100%`
 
 ### Check Traces in Tempo
 
+**macOS / Linux:**
+
 ```bash
 curl -s "http://localhost:3200/api/search" -G --data-urlencode 'q={}' --data-urlencode 'limit=5' \
   | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Found {len(d.get(\"traces\",[]))} traces')"
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$response = Invoke-RestMethod "http://localhost:3200/api/search?q=%7B%7D&limit=5"
+"Found $($response.traces.Count) traces"
 ```
 
 Expected: `Found 5 traces` (or more)
@@ -715,6 +773,8 @@ kubectl logs -n observability -l app=alloy --tail 50
 
 ### Diagnostic Commands
 
+**macOS / Linux:**
+
 ```bash
 # Docker Compose
 make health
@@ -730,6 +790,21 @@ kubectl logs -n observability -l app=tempo --tail 50
 kubectl logs -n observability -l app=mimir --tail 50
 kubectl logs -n observability -l app=alloy --tail 50
 kubectl describe pod -n observability -l app=mimir
+```
+
+**Windows (PowerShell):**
+
+```powershell
+# Docker Compose
+docker compose ps
+docker logs contextcore-alloy --tail 50
+docker logs contextcore-tempo --tail 50
+docker logs contextcore-mimir --tail 50
+
+# Kind (same as macOS/Linux — kubectl is cross-platform)
+kubectl get pods -n observability
+kubectl get svc -n observability
+kubectl logs -n observability -l app=tempo --tail 50
 ```
 
 ---
@@ -804,3 +879,4 @@ After installation:
 - [dashboards/INSTALLATION.md](dashboards/INSTALLATION.md) - Dashboard-specific installation
 - [OPERATIONAL_RUNBOOK.md](OPERATIONAL_RUNBOOK.md) - Day-to-day operations
 - [OPERATIONAL_RESILIENCE.md](OPERATIONAL_RESILIENCE.md) - Backup and recovery
+- [KNOWN_ISSUES.md](KNOWN_ISSUES.md) - Known issues and Windows-specific notes

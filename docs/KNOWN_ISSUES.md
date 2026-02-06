@@ -9,6 +9,7 @@ This document catalogs known issues in the ContextCore codebase and their soluti
 - [Module Import Errors](#module-import-errors) *(resolved)*
 - [Example Code Executed at Import Time](#example-code-executed-at-import-time) *(resolved)*
 - [Missing Module Files](#missing-module-files) *(resolved)*
+- [Windows-Specific Notes](#windows-specific-notes)
 
 ---
 
@@ -284,6 +285,58 @@ FeatureQueue().print_status()
 
 ---
 
+## Windows-Specific Notes
+
+### `make` Targets Not Available in Native PowerShell
+
+**Symptom:** Running `make full-setup`, `make up`, etc. fails in PowerShell.
+
+**Cause:** The Makefile uses bash constructs. Windows does not ship with `make`.
+
+**Workaround:** Run Docker Compose directly:
+```powershell
+docker compose up -d
+docker compose ps
+docker compose down
+```
+
+Or install Make via `winget install GnuWin32.Make` and use Git Bash.
+
+### PowerShell `curl` Alias
+
+**Symptom:** `curl http://localhost:3000/api/health` returns an error or unexpected object output in PowerShell.
+
+**Cause:** PowerShell aliases `curl` to `Invoke-WebRequest`, which has different behavior.
+
+**Fix:** Use `curl.exe` (the real curl) instead:
+```powershell
+curl.exe http://localhost:3000/api/health
+```
+
+### Execution Policy Blocks `.ps1` Scripts
+
+**Symptom:** `.venv\Scripts\Activate.ps1` or generated install scripts fail with a security error.
+
+**Fix:**
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### State File Locking Differences
+
+**Note:** On Windows, `msvcrt` only supports exclusive locks (no shared/read lock mode). This is handled transparently — the `exclusive` parameter in `state.py` is accepted for API compatibility but always acquires an exclusive lock. This means concurrent reads are serialized on Windows, which is fine for typical usage but may affect performance under heavy parallel access.
+
+### `nc` (netcat) Not Available
+
+**Symptom:** Verification command `nc -z localhost 4317` fails.
+
+**Workaround:** Use PowerShell to test port connectivity:
+```powershell
+Test-NetConnection -ComputerName localhost -Port 4317
+```
+
+---
+
 ## Prevention
 
 1. **Before running Prime Contractor:** Check that target files have no uncommitted changes
@@ -293,4 +346,4 @@ FeatureQueue().print_status()
 
 ---
 
-*Last updated: 2026-02-02*
+*Last updated: 2026-02-06*
