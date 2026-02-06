@@ -1,7 +1,7 @@
 # Wayfinder Pain Points Manifest
-# Version: 2.0.0
+# Version: 2.1.0
 # Created: 2026-01-30
-# Updated: 2026-01-30
+# Updated: 2026-02-05
 #
 # PURPOSE: Reverse-engineered from wayfinder.benefits.yaml v1.2.0.
 # Captures the pain points, frictions, and costs that Wayfinder benefits address.
@@ -16,7 +16,7 @@
 
 manifest_id: wayfinder.pain_points
 name: Wayfinder Pain Points
-version: "2.0.0"
+version: "2.1.0"
 description: |
   Pain points, frictions, and costs experienced by ContextCore personas,
   reverse-engineered from the benefits manifest. Each pain traces to
@@ -610,6 +610,51 @@ personas:
           type: agent_insight
           ref: "Span-based generation contracts design"
 
+      - pain_id: dev.context_scattered_across_tools
+        name: "Business Context in Wiki, Config in Repo"
+        description: "I update K8s config but business context lives in a wiki somewhere else"
+        friction_category: context_fragmentation
+
+        severity: high
+        emotional_weight: frustration
+
+        cost_model:
+          frequency: 3
+          frequency_unit: per_week
+          unit_cost: 12
+          unit_cost_basis: minutes
+          affected_pct: 70
+          baseline_statement: "Search wiki, Jira, Slack, code comments—5-15 minutes to find context"
+          compounding: true
+
+        roi_estimate:
+          method: time_based
+          formula: "devs × 3/wk × 0.2hr × 50wk × 70% × $100/hr"
+          per_person_annual:
+            hours: 21.0
+            cost_usd: 2_100
+          annual_cost_usd:
+            startup: 10_500
+            mid_market: 52_500
+            enterprise: 210_000
+          magnitude:
+            startup: "~$11K"
+            mid_market: "~$53K"
+            enterprise: "~$210K"
+          confidence: medium
+          note: "Compounding: grows worse as project history lengthens and more context accumulates across tools"
+
+        current_workaround: "Search across wiki, Jira, Slack, and code comments until context found"
+        workaround_quality: poor
+
+        addressed_by:
+          - benefit_id: context.unified_source_of_truth
+            relief: full
+
+        evidence_source:
+          type: design_decision
+          ref: "Context Manifest design session 2026-02-05"
+
   # ============================================================================
   # PROJECT MANAGER
   # ============================================================================
@@ -867,6 +912,51 @@ personas:
         evidence_source:
           type: agent_insight
           ref: "P2 risk — execution ≠ completion discovered via phase tasks"
+
+      - pain_id: pm.strategy_config_disconnect
+        name: "Roadmap, Strategy, and Infra Config Disconnected"
+        description: "Roadmap, strategy, and infrastructure config are disconnected across tools"
+        friction_category: context_fragmentation
+
+        severity: high
+        emotional_weight: disconnect
+
+        cost_model:
+          frequency: 2
+          frequency_unit: per_week
+          unit_cost: 20
+          unit_cost_basis: minutes
+          affected_pct: 80
+          baseline_statement: "Strategy in roadmap doc, tactics in Jira, config in Git—no single view"
+          compounding: true
+
+        roi_estimate:
+          method: time_based
+          formula: "PMs × 2/wk × 0.333hr × 50wk × 80% × $90/hr"
+          per_person_annual:
+            hours: 26.6
+            cost_usd: 2_394
+          annual_cost_usd:
+            startup: 2_394
+            mid_market: 7_182
+            enterprise: 23_940
+          magnitude:
+            startup: "~$2K"
+            mid_market: "~$7K"
+            enterprise: "~$24K"
+          confidence: medium
+          note: "Particularly painful during planning cycles when strategy↔config alignment is critical"
+
+        current_workaround: "Manually cross-reference roadmap, Jira, and Git during planning"
+        workaround_quality: poor
+
+        addressed_by:
+          - benefit_id: context.unified_source_of_truth
+            relief: full
+
+        evidence_source:
+          type: design_decision
+          ref: "Context Manifest design session 2026-02-05"
 
   # ============================================================================
   # ENGINEERING LEADER

@@ -1,14 +1,14 @@
 # Wayfinder Benefits Manifest
-# Version: 1.2.0
+# Version: 1.5.0
 # Created: 2026-01-28
-# Updated: 2026-01-29
+# Updated: 2026-02-05
 #
 # PURPOSE: First-class user benefits that drive capability creation.
 # Benefits with delivery_status: "gap" represent roadmap opportunities.
 
 manifest_id: wayfinder.benefits
 name: Wayfinder User Benefits
-version: "1.2.0"
+version: "1.5.0"
 description: |
   User benefits for ContextCore, articulated independently of implementation.
   Benefits drive capability design; gaps become roadmap items.
@@ -592,6 +592,83 @@ benefits:
       - "Completion triggers automatic deliverable verification"
       - "Verification results emitted as span events"
       - "Dashboard distinguishes verified from unverified completions"
+
+  # ============================================================================
+  # CATEGORY: CONTEXT MANAGEMENT
+  # ============================================================================
+
+  - benefit_id: context.unified_source_of_truth
+    name: "Unified Context Source of Truth"
+    value_statement: "Users can maintain one file that drives both business strategy and operational config so they avoid context fragmentation across tools"
+
+    personas:
+      - persona_id: developer
+        pain_point: "I update K8s config but business context lives in a wiki somewhere else"
+        value_received: "Single .contextcore.yaml for both strategic and operational context"
+        importance: high
+      - persona_id: project_manager
+        pain_point: "Roadmap, strategy, and infrastructure config are disconnected"
+        value_received: "Strategies and tactics in same file as observability config"
+        importance: critical
+      - persona_id: ai_agent
+        pain_point: "Business objectives scattered, hard to find why decisions were made"
+        value_received: "Structured access to objectives, strategies, and rationale"
+        importance: high
+
+    measurable_outcome: "Context lookup time reduced from minutes to seconds"
+    measurement_method: "Time to answer 'why was this service built this way?'"
+    baseline: "Search wiki, Jira, Slack, code comments—5-15 minutes"
+
+    origin:
+      type: vision
+      ref: "Context Manifest design session 2026-02-05"
+      date: 2026-02-05
+
+    delivered_by:
+      - contextcore.manifest.load
+      - contextcore.manifest.distill_crd
+      - contextcore.manifest.validate
+    delivery_status: delivered
+    delivered_at: "2026-02-05"
+
+    acceptance_criteria:
+      - "Single .contextcore.yaml captures objectives, strategies, tactics, and operational spec"
+      - "CRD can be distilled from manifest without manual translation"
+      - "Schema validation catches misconfigurations before deployment"
+      - "LLMs and agents can read manifest for business context"
+
+  - benefit_id: context.crd_without_bloat
+    name: "Lightweight CRD Without Context Stuffing"
+    value_statement: "Users can derive K8s CRDs from rich context files so they get policy-driving metadata without cluster bloat"
+
+    personas:
+      - persona_id: operator
+        pain_point: "CRDs bloated with business context that controllers don't need"
+        value_received: "Distilled CRDs contain only operational fields"
+        importance: high
+      - persona_id: developer
+        pain_point: "Large CRDs slow down kubectl and increase etcd storage"
+        value_received: "Manifest stores rich context, CRD stores only essentials"
+        importance: medium
+
+    measurable_outcome: "CRD size reduced by 60%+ vs embedding full context"
+    measurement_method: "Compare CRD YAML size: full context vs distilled"
+    baseline: "CRDs that include all business context: 500+ lines"
+
+    origin:
+      type: design_decision
+      ref: "Two-Context Architecture design 2026-02-05"
+      date: 2026-02-05
+
+    delivered_by:
+      - contextcore.manifest.distill_crd
+    delivery_status: delivered
+    delivered_at: "2026-02-05"
+
+    acceptance_criteria:
+      - "Distilled CRD contains only spec.project, spec.business, spec.requirements, spec.observability"
+      - "Objectives, strategies, insights excluded from CRD"
+      - "CRD validates against existing ProjectContext schema"
 
   # ============================================================================
   # CATEGORY: DEVELOPER EXPERIENCE

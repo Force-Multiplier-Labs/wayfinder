@@ -1,12 +1,12 @@
 # Wayfinder Agent Capability Index
-# Version: 1.3.0
+# Version: 1.4.0
 # Created: 2026-01-28
-# Updated: 2026-01-30
+# Updated: 2026-02-05
 # Audience: AI Agents (primary), Developers (secondary)
 
 manifest_id: wayfinder.agent
 name: Wayfinder Agent Capabilities
-version: "1.3.0"
+version: "1.4.0"
 description: |
   Agent-focused capabilities for ContextCore SDK.
   Tasks as OTel spans, insights as knowledge, handoffs as coordination.
@@ -928,6 +928,232 @@ capabilities:
     confidence: 0.8
 
 # ============================================================================
+  # CONTEXT MANIFEST CAPABILITIES (Beta)
+  # ============================================================================
+
+  - capability_id: contextcore.manifest.load
+    category: query
+    maturity: beta
+    summary: Load and parse Context Manifest (.contextcore.yaml) from file path or dict
+
+    audiences: [agent, human]
+
+    description:
+      agent: |
+        Load Context Manifest. In: {path: string} or {data: dict}. Out: ContextManifest with {version, spec (ProjectContextSpec), objectives (Objective[]), strategies (Strategy[]), insights (Insight[])}. Validates against Pydantic schema. Source: .contextcore.yaml or programmatic dict.
+      human: |
+        Loads a Context Manifest from YAML file or dictionary. The manifest serves as the
+        Master Source of Truth containing both operational context (spec for K8s CRD) and
+        strategic context (objectives, strategies, tactics for PM tools and LLMs). Validates
+        against Pydantic schema with helpful error messages.
+
+    triggers:
+      - "load context manifest"
+      - "read contextcore yaml"
+      - "parse project context"
+      - "load business context"
+
+    inputs:
+      type: object
+      required: []
+      properties:
+        path:
+          type: string
+          description: Path to .contextcore.yaml file
+        data:
+          type: object
+          description: Dict representation of manifest (for programmatic use)
+
+    outputs:
+      type: object
+      properties:
+        version: { type: string }
+        spec: { type: object, description: "ProjectContextSpec for K8s CRD" }
+        objectives: { type: array, description: "Business objectives with metrics" }
+        strategies: { type: array, description: "Strategies with tactics and horizons" }
+        insights: { type: array, description: "Derived insights with confidence" }
+
+    evidence:
+      - type: code
+        ref: src/contextcore/models/manifest.py
+        description: ContextManifest Pydantic model with validation (lines 63-83)
+      - type: code
+        ref: src/contextcore/models/manifest.py
+        description: Objective, Strategy, Tactic, Insight models (lines 30-60)
+      - type: doc
+        ref: examples/context_manifest_example.yaml
+        description: Complete example manifest with all sections
+
+    confidence: 0.85
+
+    anti_patterns:
+      - "Don't load manifest in hot paths—cache the parsed result"
+      - "Don't embed sensitive data in manifest—it's checked into Git"
+
+  - capability_id: contextcore.manifest.distill_crd
+    category: transform
+    maturity: beta
+    summary: Distill lightweight K8s ProjectContext CRD from full Context Manifest
+
+    audiences: [agent, human]
+
+    description:
+      agent: |
+        Distill CRD from manifest. In: {manifest: ContextManifest}. Out: ProjectContextSpec (K8s-ready). Extracts only spec section, discarding objectives/strategies/insights. Use for GitOps sync to cluster without context stuffing.
+      human: |
+        Extracts the operational spec from a full Context Manifest to produce a lightweight
+        ProjectContext CRD suitable for Kubernetes. This implements the "Two-Context Architecture"
+        where rich strategic context lives in the manifest, but only policy-driving metadata
+        reaches the cluster. Prevents CRD bloat while maintaining single source of truth.
+
+    triggers:
+      - "distill crd"
+      - "extract k8s spec"
+      - "manifest to crd"
+      - "generate projectcontext"
+
+    inputs:
+      type: object
+      required: [manifest]
+      properties:
+        manifest:
+          type: object
+          description: Full ContextManifest object
+
+    outputs:
+      type: object
+      description: ProjectContextSpec for K8s CRD
+      properties:
+        project: { type: object }
+        business: { type: object }
+        requirements: { type: object }
+        targets: { type: array }
+        observability: { type: object }
+        risks: { type: array }
+
+    evidence:
+      - type: code
+        ref: src/contextcore/models/manifest.py
+        description: ContextManifest.spec field maps directly to CRD (line 75)
+      - type: code
+        ref: src/contextcore/models/core.py
+        description: ProjectContextSpec Pydantic model
+
+    confidence: 0.85
+
+    delivers_benefit: context.unified_source_of_truth
+
+  - capability_id: contextcore.manifest.validate
+    category: validate
+    maturity: beta
+    summary: Validate Context Manifest against schema with detailed error reporting
+
+    audiences: [agent, human]
+
+    description:
+      agent: |
+        Validate manifest schema. In: {data: dict}. Out: {valid: bool, errors: ValidationError[]}. Checks: required fields, enum values, confidence ranges [0,1], strategy horizon enums, nested tactic structure. Uses Pydantic validation with path-based error locations.
+      human: |
+        Validates a Context Manifest against the Pydantic schema with comprehensive
+        error reporting. Checks structural validity, required fields, enum constraints
+        (e.g., StrategicHorizon must be now|next|later), and value ranges (e.g., confidence
+        must be 0.0-1.0). Returns detailed errors with paths to invalid fields.
+
+    triggers:
+      - "validate manifest"
+      - "check contextcore yaml"
+      - "manifest schema check"
+      - "validate context file"
+
+    inputs:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          description: Dict representation of manifest to validate
+
+    outputs:
+      type: object
+      properties:
+        valid: { type: boolean }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string }
+              message: { type: string }
+              value: { type: any }
+
+    evidence:
+      - type: code
+        ref: src/contextcore/models/manifest.py
+        description: Pydantic BaseModel with Field validators
+      - type: code
+        ref: src/contextcore/models/manifest.py
+        description: StrategicHorizon enum for horizon validation (lines 23-27)
+
+    confidence: 0.85
+
+  - capability_id: contextcore.manifest.sync_strategy
+    category: action
+    maturity: draft
+    summary: Sync strategy/tactic status bidirectionally with project management tools
+
+    audiences: [agent, human]
+
+    description:
+      agent: |
+        Sync strategy status. In: {manifest: ContextManifest, pm_source: enum[jira|github|linear]}. Out: {updated_tactics: Tactic[], sync_conflicts: Conflict[]}. Bidirectional: reads PM tool status, updates manifest tactics, optionally writes back. Detects conflicts when status diverges.
+      human: |
+        Enables bidirectional synchronization between the Context Manifest's strategies/tactics
+        and external project management tools (Jira, GitHub Projects, Linear). Reads current
+        status from PM tool, updates manifest tactics, and optionally pushes updates back.
+        Detects conflicts when manifest and PM tool have diverged.
+
+    triggers:
+      - "sync strategy status"
+      - "update tactics from jira"
+      - "bidirectional pm sync"
+      - "strategy pm integration"
+
+    inputs:
+      type: object
+      required: [manifest, pm_source]
+      properties:
+        manifest:
+          type: object
+        pm_source:
+          type: string
+          enum: [jira, github, linear]
+        direction:
+          type: string
+          enum: [read, write, bidirectional]
+          default: bidirectional
+
+    outputs:
+      type: object
+      properties:
+        updated_tactics: { type: array }
+        sync_conflicts: { type: array }
+
+    evidence:
+      - type: doc
+        ref: docs/CONTEXT_MANIFEST_VALUE_PROPOSITION.md
+        description: Value proposition for PM tool integration
+
+    confidence: 0.5
+
+    delivers_benefit: context.unified_source_of_truth
+
+    roadmap:
+      phase: 2
+      depends_on: [contextcore.manifest.load, contextcore.manifest.validate]
+      estimated_effort: large
+      implements_frs: [FR-600, FR-601]
+
+  # ============================================================================
   # AOS COMPLIANCE CAPABILITIES (Draft)
   # ============================================================================
 
@@ -1422,6 +1648,16 @@ pivoted_work:
 # ==============================================================================
 
 changelog:
+  - version: "1.4.0"
+    date: "2026-02-05"
+    changes:
+      - "Added CONTEXT MANIFEST capabilities (4 new): manifest.load, manifest.distill_crd, manifest.validate, manifest.sync_strategy"
+      - "New category: CONTEXT MANIFEST CAPABILITIES"
+      - "manifest.load: Load and parse Context Manifest (.contextcore.yaml) from file or dict (beta)"
+      - "manifest.distill_crd: Distill lightweight K8s CRD from full manifest (beta)"
+      - "manifest.validate: Validate manifest against Pydantic schema (beta)"
+      - "manifest.sync_strategy: Bidirectional PM tool sync for strategies/tactics (draft)"
+      - "25 total capabilities: insight (2), handoff (3), guidance (2), code_generation (1), size_estimation (1), a2a (4), api (1), aos (5), value (2), manifest (4)"
   - version: "1.3.0"
     date: "2026-01-30"
     changes:
