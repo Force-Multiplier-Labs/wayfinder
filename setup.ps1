@@ -17,10 +17,20 @@
 
 param(
     [Parameter(Position = 0)]
-    [string]$Command = "help"
+    [string]$Command = "help",
+    [switch]$Debug
 )
 
 $ErrorActionPreference = "Stop"
+
+# Debug + progress helpers
+$ScriptStart = Get-Date
+$DebugMode = $Debug -or ($env:CONTEXTCORE_DEBUG -eq "1")
+
+function Write-Phase([int]$Step, [int]$Total, [string]$Message) {
+    $elapsed = [int]((Get-Date) - $ScriptStart).TotalSeconds
+    Write-Host ("[{0}/{1}] {2} (elapsed {3}s)" -f $Step, $Total, $Message, $elapsed) -ForegroundColor Cyan
+}
 
 # Configuration
 $ComposeFile = "docker-compose.yaml"
@@ -67,6 +77,7 @@ function Test-Url([string]$Url) {
 
 function Invoke-Doctor {
     Write-Host "`n=== Preflight Check ===" -ForegroundColor Cyan
+
 
     Write-Host "`nChecking required tools..."
     if (Get-Command docker -ErrorAction SilentlyContinue) {
@@ -127,9 +138,15 @@ function Invoke-Doctor {
 }
 
 function Invoke-Up {
+    Write-Phase 1 3 "Preflight checks"
     Invoke-Doctor
 
     Write-Host "`n=== Starting Wayfinder Stack ===" -ForegroundColor Cyan
+    if ($DebugMode) {
+        Write-Host "Compose file: $ComposeFile"
+        Write-Host "Data dir: $DataDir"
+    }
+
 
     # Create data directories
     foreach ($dir in @("tempo", "mimir", "loki", "grafana", "alertmanager")) {
@@ -141,6 +158,9 @@ function Invoke-Up {
 
     if (Test-Path $ComposeFile) {
         docker compose -f $ComposeFile up -d
+        if ($DebugMode) {
+            docker compose -f $ComposeFile ps
+        }
         Write-Host "Stack started. Run '.\setup.ps1 health' to verify." -ForegroundColor Green
     } else {
         Write-Host "No $ComposeFile found." -ForegroundColor Yellow
@@ -262,6 +282,7 @@ function Invoke-SmokeTest {
 function Invoke-WaitReady {
     Write-Host "`n=== Waiting for Services ===" -ForegroundColor Cyan
 
+
     $timeout = 60
     $interval = 2
     $elapsed = 0
@@ -294,6 +315,8 @@ function Invoke-WaitReady {
 
 function Invoke-SeedMetrics {
     Write-Host "`n=== Seeding Installation Metrics ===" -ForegroundColor Cyan
+    Write-Phase 3 3 "Seeding installation metrics"
+
     
     if (-not (Get-Command contextcore -ErrorAction SilentlyContinue)) {
         Write-Host "Error: contextcore CLI not found." -ForegroundColor Red
@@ -314,8 +337,10 @@ function Invoke-SeedMetrics {
 function Invoke-FullSetup {
     Write-Host "`n=== Full Setup ===" -ForegroundColor Cyan
 
+
     Invoke-Up
     if (Invoke-WaitReady) {
+        Write-Phase 2 3 "Services ready"
         Invoke-SeedMetrics
         Write-Host "`n=== Full Setup Complete ===" -ForegroundColor Green
         Write-Host "`nWayfinder observability stack is ready!"
@@ -336,7 +361,7 @@ function Invoke-Help {
 
 Wayfinder Setup (Windows)
 =========================
-Usage: .\setup.ps1 <command>
+Usage: .\setup.ps1 <command> [-Debug]
 
 Quick Start:
   full-setup    Complete setup (up + wait-ready + seed-metrics)
@@ -364,6 +389,7 @@ Environment Variables:
 Notes:
   - Docker Desktop with WSL2 backend is recommended.
   - For the full set of targets see the Makefile (requires WSL or Git Bash).
+  - Use -Debug or CONTEXTCORE_DEBUG=1 for verbose output.
 "@
 }
 

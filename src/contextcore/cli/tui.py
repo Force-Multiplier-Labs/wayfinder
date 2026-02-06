@@ -1,6 +1,7 @@
 """CLI commands for the ContextCore Terminal User Interface."""
 
 import sys
+import os
 from pathlib import Path
 from typing import Optional
 import click
@@ -197,6 +198,11 @@ def status_check(watch: bool, output_json: bool) -> None:
     help="Deployment method"
 )
 @click.option(
+    "--debug",
+    is_flag=True,
+    help="Embed debug mode in the generated script (verbose metadata)"
+)
+@click.option(
     "--project-dir", "-p",
     default=None,
     help="Project directory path"
@@ -206,7 +212,7 @@ def status_check(watch: bool, output_json: bool) -> None:
     default=None,
     help="Output file path (default: stdout)"
 )
-def generate_script(method: str, project_dir: Optional[str], output: Optional[str]) -> None:
+def generate_script(method: str, debug: bool, project_dir: Optional[str], output: Optional[str]) -> None:
     """Generate an installation script.
 
     Examples:
@@ -225,13 +231,15 @@ def generate_script(method: str, project_dir: Optional[str], output: Optional[st
         if project_dir is None:
             project_dir = str(_find_repo_root(Path.cwd()))
 
+        debug_enabled = debug or (os.environ.get("CONTEXTCORE_DEBUG") == "1")
+
         # Generate script based on method
         if method == "docker":
-            script = render_docker_compose_script(project_dir=project_dir)
+            script = render_docker_compose_script(project_dir=project_dir, debug=debug_enabled)
         elif method == "kind":
-            script = render_kind_script(project_dir=project_dir)
+            script = render_kind_script(project_dir=project_dir, debug=debug_enabled)
         else:
-            script = render_custom_script(project_dir=project_dir)
+            script = render_custom_script(project_dir=project_dir, debug=debug_enabled)
 
         # Output
         if output:

@@ -56,8 +56,11 @@ from .graph import graph
 # TUI commands
 from .tui import tui
 
-# Discovery commands (from discovery module)
-from contextcore.discovery import discovery_group
+# Discovery commands (optional — graceful fallback if not installed)
+try:
+    from contextcore.discovery.cli import discovery_group
+except Exception:
+    discovery_group = None
 
 
 @click.group()
@@ -102,8 +105,9 @@ main.add_command(graph)
 # TUI command group
 main.add_command(tui)
 
-# Discovery command group
-main.add_command(discovery_group, name="discovery")
+# Discovery command group (if available)
+if discovery_group is not None:
+    main.add_command(discovery_group, name="discovery")
 
 
 if __name__ == "__main__":
