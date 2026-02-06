@@ -26,7 +26,7 @@ uv run contextcore --version
 
 # Start the observability stack
 make full-setup
-# (Windows PowerShell alternative: .\setup.ps1 up)
+# (Windows PowerShell alternative: .\setup.ps1 full-setup)
 
 # Track a task
 uv run contextcore task start --id PROJ-123 --title "Feature" --type story

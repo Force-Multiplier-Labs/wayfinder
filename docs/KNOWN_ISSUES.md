@@ -344,6 +344,25 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Test-NetConnection -ComputerName localhost -Port 4317
 ```
 
+### Grafana Owl Plugins (Optional)
+
+**Note:** The base `docker-compose.yaml` does **not** mount the `contextcore-owl` Grafana plugins. If you are developing or testing the Owl plugins (chat panel, workflow panel, datasource), clone the `contextcore-owl` repo adjacent to this one and use the override file:
+
+```powershell
+docker compose -f docker-compose.yaml -f docker-compose.owl.yaml up -d
+```
+
+Grafana will function normally without the Owl plugins — they are not required for core Wayfinder functionality.
+
+### Line Endings (`.gitattributes`)
+
+**Note:** The repository includes a `.gitattributes` file that enforces LF for shell scripts and CRLF for PowerShell scripts. This prevents `\r` errors when running `.sh` scripts in WSL or Git Bash on Windows. If you cloned the repo before `.gitattributes` was added, run:
+
+```bash
+git add --renormalize .
+git checkout -- .
+```
+
 ---
 
 ## Prevention

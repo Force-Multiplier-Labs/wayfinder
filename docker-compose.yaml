@@ -45,7 +45,9 @@ services:
     volumes:
       - ./data/grafana:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
-      - ../contextcore-owl/grafana/plugins:/var/lib/grafana/plugins:ro
+      # Owl plugins (optional): see docker-compose.owl.yaml
+      # If developing contextcore-owl, run:
+      #   docker compose -f docker-compose.yaml -f docker-compose.owl.yaml up -d
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 10s

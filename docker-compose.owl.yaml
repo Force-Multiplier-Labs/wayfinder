@@ -1,0 +1,14 @@
+# Override: Mount contextcore-owl Grafana plugins
+# Usage: docker compose -f docker-compose.yaml -f docker-compose.owl.yaml up -d
+#
+# Requires the contextcore-owl repo cloned adjacent to this repo:
+#   ../contextcore-owl/grafana/plugins/
+#
+# The plugins (chat-panel, workflow-panel, datasource) are unsigned,
+# so GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS is already set in the
+# base docker-compose.yaml.
+
+services:
+  grafana:
+    volumes:
+      - ../contextcore-owl/grafana/plugins:/var/lib/grafana/plugins:ro

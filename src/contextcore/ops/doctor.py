@@ -82,7 +82,7 @@ REQUIRED_TOOLS = ["docker", "python" if _sys.platform == "win32" else "python3"]
 OPTIONAL_TOOLS = ["docker-compose", "kubectl", "kind"]
 
 # Data directories (relative to project root)
-DATA_DIRS = ["data/tempo", "data/mimir", "data/loki", "data/grafana"]
+DATA_DIRS = ["data/tempo", "data/mimir", "data/loki", "data/grafana", "data/alertmanager"]
 
 
 def check_tool(name: str) -> CheckResult:

@@ -77,7 +77,7 @@ doctor: ## Check system readiness (ports, container engine, tools)
 	done
 	@echo ""
 	@echo "Checking data directories..."
-	@for dir in tempo mimir loki grafana; do \
+	@for dir in tempo mimir loki grafana alertmanager; do \
 		if [ -d "$(DATA_DIR)/$$dir" ]; then \
 			echo "$(GREEN)✅ $(DATA_DIR)/$$dir exists$(NC)"; \
 		else \
@@ -92,7 +92,7 @@ doctor: ## Check system readiness (ports, container engine, tools)
 up: doctor ## Start the stack (runs doctor first, creates data dirs)
 	@echo ""
 	@echo "$(CYAN)=== Starting Wayfinder Stack ===$(NC)"
-	@mkdir -p $(DATA_DIR)/tempo $(DATA_DIR)/mimir $(DATA_DIR)/loki $(DATA_DIR)/grafana
+	@mkdir -p $(DATA_DIR)/tempo $(DATA_DIR)/mimir $(DATA_DIR)/loki $(DATA_DIR)/grafana $(DATA_DIR)/alertmanager
 	@if [ -f "$(COMPOSE_FILE)" ]; then \
 		$(COMPOSE_CMD) -f $(COMPOSE_FILE) up -d; \
 		echo "$(GREEN)Stack started. Run 'make health' to verify.$(NC)"; \
@@ -177,7 +177,7 @@ verify: ## Quick cluster health check
 	@echo "$(CYAN)=== Quick Verification ===$(NC)"
 	@echo ""
 	@echo "Data directories:"
-	@for dir in tempo mimir loki grafana; do \
+	@for dir in tempo mimir loki grafana alertmanager; do \
 		if [ -d "$(DATA_DIR)/$$dir" ]; then \
 			size=$$(du -sh "$(DATA_DIR)/$$dir" 2>/dev/null | cut -f1); \
 			echo "$(GREEN)  ✅ $(DATA_DIR)/$$dir ($$size)$(NC)"; \

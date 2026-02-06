@@ -161,7 +161,7 @@ class VerificationResults(Widget):
     def _show_mock_results(self) -> None:
         """Show mock results when CLI is not available."""
         self.results = [
-            {"name": "Python Version", "status": "passed", "category": "prerequisites", "message": "Python 3.9+"},
+            {"name": "Python Version", "status": "passed", "category": "prerequisites", "message": "Python 3.12+"},
             {"name": "Docker Running", "status": "passed", "category": "prerequisites", "message": "Docker daemon OK"},
             {"name": "Grafana", "status": "passed", "category": "services", "message": "http://localhost:3000"},
             {"name": "Tempo", "status": "passed", "category": "services", "message": "http://localhost:3200"},

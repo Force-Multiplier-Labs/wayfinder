@@ -114,7 +114,7 @@ function Invoke-Doctor {
     }
 
     Write-Host "`nChecking data directories..."
-    foreach ($dir in @("tempo", "mimir", "loki", "grafana")) {
+    foreach ($dir in @("tempo", "mimir", "loki", "grafana", "alertmanager")) {
         $path = Join-Path $DataDir $dir
         if (Test-Path $path) {
             Write-Status "pass" "$path exists"
@@ -132,7 +132,7 @@ function Invoke-Up {
     Write-Host "`n=== Starting Wayfinder Stack ===" -ForegroundColor Cyan
 
     # Create data directories
-    foreach ($dir in @("tempo", "mimir", "loki", "grafana")) {
+    foreach ($dir in @("tempo", "mimir", "loki", "grafana", "alertmanager")) {
         $path = Join-Path $DataDir $dir
         if (-not (Test-Path $path)) {
             New-Item -ItemType Directory -Path $path -Force | Out-Null
