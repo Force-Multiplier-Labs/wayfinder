@@ -110,9 +110,12 @@ agent-based-commuication/
 # Generated HTML artifacts
 index.html
 
-# Commit planning (temporary)
+# Commit planning and working plans (temporary)
 COMMIT_PLAN.md
 .prime_contractor_state.json
+docs/CI_WORKFLOW_PLAN.md
+docs/WAYFINDER_PHASE2_PROPAGATION.md
+docs/plans/WAYFINDER_OPERATOR_DEPLOYMENT_PLAN.md
 
 # Demo output (generated)
 demo_output/
