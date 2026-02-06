@@ -57,9 +57,10 @@ class ScriptPreview(Widget):
     def compose(self) -> ComposeResult:
         yield Static("Generated Installation Script", classes="preview-header")
 
+        language = "powershell" if _IS_WINDOWS else "bash"
         yield TextArea(
             self.script_content,
-            language="bash",
+            language=language,
             read_only=True,
             show_line_numbers=True,
             id="script-display"

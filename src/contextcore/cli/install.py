@@ -519,8 +519,8 @@ def install_init(endpoint, skip_verify):
     click.echo(click.style("=== Getting Started ===", fg="cyan"))
     click.echo()
     click.echo("Dashboards:")
-    click.echo(f"  Installation Status: {grafana_url}/d/contextcore-installation")
-    click.echo(f"  Project Portfolio:   {grafana_url}/d/contextcore-portfolio")
+    click.echo(f"  Installation Status: {grafana_url}/d/cc-core-installation-status")
+    click.echo(f"  Project Portfolio:   {grafana_url}/d/cc-core-portfolio-overview")
     click.echo()
     click.echo("Quick Commands:")
     click.echo("  contextcore task start --id TASK-1 --title 'My First Task'")
@@ -528,7 +528,7 @@ def install_init(endpoint, skip_verify):
     click.echo("  contextcore task complete --id TASK-1")
     click.echo()
     click.echo("Documentation:")
-    click.echo("  https://github.com/contextcore/contextcore#readme")
+    click.echo("  https://github.com/Force-Multiplier-Labs/wayfinder#readme")
     click.echo()
 
 

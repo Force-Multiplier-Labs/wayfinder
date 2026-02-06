@@ -242,6 +242,9 @@ class VerificationResults(Widget):
             asyncio.create_task(self.run_verification())
         elif event.button.id == "dashboard-btn":
             try:
-                webbrowser.open("http://localhost:3000/d/contextcore-installation")
+                import os
+
+                grafana_url = os.environ.get("GRAFANA_URL", "http://localhost:3000")
+                webbrowser.open(f"{grafana_url}/d/cc-core-installation-status")
             except Exception as e:
                 self.log.error(f"Failed to open dashboard: {e}")

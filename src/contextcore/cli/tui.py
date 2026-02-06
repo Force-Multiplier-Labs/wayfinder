@@ -1,6 +1,7 @@
 """CLI commands for the ContextCore Terminal User Interface."""
 
 import sys
+from pathlib import Path
 from typing import Optional
 import click
 
@@ -9,6 +10,15 @@ import click
 def tui():
     """Launch the ContextCore Terminal User Interface."""
     pass
+
+
+def _find_repo_root(start: Path) -> Path:
+    """Best-effort: walk upward to find a repo root (pyproject.toml/uv.lock)."""
+    cur = start.resolve()
+    for candidate in [cur, *cur.parents]:
+        if (candidate / "pyproject.toml").exists() or (candidate / "uv.lock").exists():
+            return candidate
+    return start.resolve()
 
 
 @tui.command("launch")
@@ -35,7 +45,7 @@ def launch(screen: str, no_auto_refresh: bool) -> None:
         from contextcore.tui import ContextCoreTUI
     except ImportError as e:
         click.echo("Error: TUI requires the 'textual' package.", err=True)
-        click.echo("Install with: pip install textual aiohttp", err=True)
+        click.echo("Install with: pip install -e \".[dev]\"", err=True)
         click.echo(f"Details: {e}", err=True)
         sys.exit(1)
 
@@ -93,7 +103,7 @@ def install_wizard(method: Optional[str], auto: bool) -> None:
             from contextcore.tui import ContextCoreTUI
         except ImportError as e:
             click.echo("Error: TUI requires the 'textual' package.", err=True)
-            click.echo("Install with: pip install textual aiohttp", err=True)
+            click.echo("Install with: pip install -e \".[dev]\"", err=True)
             click.echo(f"Details: {e}", err=True)
             sys.exit(1)
 
@@ -161,7 +171,7 @@ def status_check(watch: bool, output_json: bool) -> None:
             from contextcore.tui import ContextCoreTUI
         except ImportError as e:
             click.echo("Error: TUI requires the 'textual' package.", err=True)
-            click.echo("Install with: pip install textual aiohttp", err=True)
+            click.echo("Install with: pip install -e \".[dev]\"", err=True)
             click.echo(f"Details: {e}", err=True)
             sys.exit(1)
 
@@ -213,7 +223,7 @@ def generate_script(method: str, project_dir: Optional[str], output: Optional[st
 
         # Determine project directory
         if project_dir is None:
-            project_dir = str(Path.home() / "Documents" / "dev" / "ContextCore")
+            project_dir = str(_find_repo_root(Path.cwd()))
 
         # Generate script based on method
         if method == "docker":

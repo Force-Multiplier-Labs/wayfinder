@@ -56,7 +56,7 @@ contextcore install verify
 
 echo ""
 echo "=== Installation Complete ==="
-echo "Dashboard: ${{GRAFANA_URL:-http://localhost:3000}}/d/contextcore-installation"
+echo "Dashboard: ${{GRAFANA_URL:-http://localhost:3000}}/d/cc-core-installation-status"
 '''
 
 
@@ -117,7 +117,7 @@ contextcore install verify --endpoint localhost:4317
 
 echo ""
 echo "=== Installation Complete ==="
-echo "Dashboard: http://localhost:3000/d/contextcore-installation"
+echo "Dashboard: http://localhost:3000/d/cc-core-installation-status"
 echo "Note: You may need to port-forward Grafana: kubectl port-forward svc/grafana 3000:3000"
 '''
 
@@ -158,7 +158,7 @@ contextcore install verify
 
 echo ""
 echo "=== Installation Complete ==="
-echo "Dashboard: ${{GRAFANA_URL:-http://localhost:3000}}/d/contextcore-installation"
+echo "Dashboard: ${{GRAFANA_URL:-http://localhost:3000}}/d/cc-core-installation-status"
 echo ""
 echo "Note: This script assumes your observability infrastructure is already running."
 echo "Make sure the following services are accessible:"
@@ -225,7 +225,7 @@ contextcore install verify
 Write-Host ""
 Write-Host "=== Installation Complete ==="
 $grafanaUrl = if ($env:GRAFANA_URL) {{ $env:GRAFANA_URL }} else {{ "http://localhost:3000" }}
-Write-Host "Dashboard: $grafanaUrl/d/contextcore-installation"
+Write-Host "Dashboard: $grafanaUrl/d/cc-core-installation-status"
 '''
 
 
@@ -286,7 +286,7 @@ contextcore install verify --endpoint localhost:4317
 
 Write-Host ""
 Write-Host "=== Installation Complete ==="
-Write-Host "Dashboard: http://localhost:3000/d/contextcore-installation"
+Write-Host "Dashboard: http://localhost:3000/d/cc-core-installation-status"
 Write-Host "Note: You may need to port-forward Grafana: kubectl port-forward svc/grafana 3000:3000"
 '''
 
@@ -327,7 +327,7 @@ contextcore install verify
 Write-Host ""
 Write-Host "=== Installation Complete ==="
 $grafanaUrl = if ($env:GRAFANA_URL) {{ $env:GRAFANA_URL }} else {{ "http://localhost:3000" }}
-Write-Host "Dashboard: $grafanaUrl/d/contextcore-installation"
+Write-Host "Dashboard: $grafanaUrl/d/cc-core-installation-status"
 Write-Host ""
 Write-Host "Note: This script assumes your observability infrastructure is already running."
 Write-Host "Make sure the following services are accessible:"

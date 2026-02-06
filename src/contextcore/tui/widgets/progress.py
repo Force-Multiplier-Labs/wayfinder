@@ -1,6 +1,8 @@
 """Deployment progress widget for ContextCore TUI."""
 
 import asyncio
+import sys
+import shutil
 from typing import Optional
 
 from textual.app import ComposeResult
@@ -10,6 +12,8 @@ from textual.widgets import Button, ProgressBar, RichLog, Static
 from ..screens.install import InstallWizardState
 
 __all__ = ["DeploymentProgress"]
+
+_IS_WINDOWS = sys.platform == "win32"
 
 
 class DeploymentProgress(Widget):
@@ -77,12 +81,16 @@ class DeploymentProgress(Widget):
                 log.write("[bold green]Starting Docker Compose deployment...[/]")
                 progress.progress = 10
 
-                # Run make up
-                log.write("Running: make up")
+                if shutil.which("make"):
+                    cmd = ("make", "up")
+                else:
+                    cmd = ("docker", "compose", "up", "-d")
+
+                log.write(f"Running: {' '.join(cmd)}")
                 proc = await asyncio.create_subprocess_exec(
-                    "make", "up",
+                    *cmd,
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.STDOUT
+                    stderr=asyncio.subprocess.STDOUT,
                 )
 
                 while True:
@@ -113,11 +121,25 @@ class DeploymentProgress(Widget):
                 log.write("[bold green]Starting Kind cluster deployment...[/]")
                 progress.progress = 10
 
-                log.write("Creating Kind cluster...")
+                if _IS_WINDOWS:
+                    log.write("[bold yellow]Kind cluster automation requires WSL or Git Bash on Windows.[/]")
+                    log.write("Recommended: use WSL2 and run the Kind setup from a Linux shell.")
+                    log.write("Alternative (manual):")
+                    log.write("  kind create cluster --name wayfinder-dev")
+                    log.write("  kubectl apply -f deploy/kind/namespaces.yaml")
+                    log.write("  kubectl apply -k k8s/observability/")
+                    log.write("  kubectl wait --for=condition=ready pod --all -n observability --timeout=180s")
+                    progress.progress = 100
+                    self.wizard_state.deployment_complete = False
+                    return
+
+                script_path = "./deploy/kind/scripts/create-cluster.sh"
+                log.write(f"Creating Kind cluster (script): {script_path}")
                 proc = await asyncio.create_subprocess_exec(
-                    "./scripts/create-cluster.sh",
+                    script_path,
+                    "--verbose",
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.STDOUT
+                    stderr=asyncio.subprocess.STDOUT,
                 )
 
                 while True:

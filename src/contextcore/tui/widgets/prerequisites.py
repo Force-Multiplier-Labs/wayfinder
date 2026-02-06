@@ -82,7 +82,7 @@ class PrerequisitesChecker(Widget):
     async def check_python_version(self) -> CheckResult:
         """Check Python version requirement."""
         version = sys.version_info
-        if version >= (3, 9):
+        if version >= (3, 12):
             return CheckResult(
                 "Python",
                 CheckStatus.PASSED,
@@ -92,7 +92,7 @@ class PrerequisitesChecker(Widget):
             return CheckResult(
                 "Python",
                 CheckStatus.FAILED,
-                f"Python {version.major}.{version.minor} < 3.9 required"
+                f"Python {version.major}.{version.minor} < 3.12 required"
             )
 
     async def check_docker(self) -> CheckResult:
@@ -131,7 +131,7 @@ class PrerequisitesChecker(Widget):
 
     async def check_ports(self) -> CheckResult:
         """Check if required ports are available."""
-        required_ports = [3000, 3100, 3200, 4317, 9009]
+        required_ports = [3000, 3100, 3200, 4317, 4318, 9009, 12345]
         unavailable = []
 
         for port in required_ports:
