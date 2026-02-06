@@ -30,7 +30,7 @@ storage:
 
 querier:
   search:
-    prefer_self: 10  # Prefer local data
+    # prefer_self removed for tempo 2.9.x compatibility
 
 metrics_generator:
   registry:
