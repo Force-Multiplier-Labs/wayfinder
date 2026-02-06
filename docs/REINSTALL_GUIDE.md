@@ -5,7 +5,7 @@ This guide walks through a complete teardown and fresh installation of the Conte
 ## Prerequisites
 
 - Docker and Docker Compose installed
-- Python 3.9+ with ContextCore installed (`pip install -e ".[dev]"`)
+- Python 3.12+ with ContextCore installed (`uv sync --all-extras` or `pip install -e ".[dev]"`)
 - All commands run from the **project root directory**
 
 ---
@@ -86,7 +86,7 @@ Run each check and verify expected results:
 ### Dashboard URL
 
 ```
-http://localhost:3000/d/contextcore-installation
+http://localhost:3000/d/cc-core-installation-status
 ```
 
 Login: `admin` / `admin`
@@ -133,8 +133,8 @@ Expected output: `Found 25 requirements`
 | Service | URL | Purpose |
 |---------|-----|---------|
 | Grafana | http://localhost:3000 | Dashboards (admin/admin) |
-| Installation Dashboard | http://localhost:3000/d/contextcore-installation | Self-monitoring |
-| Portfolio Dashboard | http://localhost:3000/d/contextcore-portfolio | Project overview |
+| Installation Dashboard | http://localhost:3000/d/cc-core-installation-status | Self-monitoring |
+| Portfolio Dashboard | http://localhost:3000/d/cc-core-portfolio-overview | Project overview |
 | Tempo | http://localhost:3200 | Traces API |
 | Mimir | http://localhost:9009 | Metrics API |
 | Loki | http://localhost:3100 | Logs API |
@@ -242,5 +242,5 @@ make smoke-test
 contextcore install status
 
 # Open dashboard
-open http://localhost:3000/d/contextcore-installation
+open http://localhost:3000/d/cc-core-installation-status
 ```

@@ -187,7 +187,7 @@ contextcore task start --id my-task --title "The thing I'm working on"
 contextcore tui status
 
 # Or check the dashboard
-open http://localhost:3000/d/contextcore-portfolio
+open http://localhost:3000/d/cc-core-portfolio-overview
 ```
 
 ### During Work: Capture Context

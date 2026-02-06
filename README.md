@@ -18,16 +18,20 @@ Dual-telemetry emission:
 ## Quick Start
 
 ```bash
-# Install
-pip3 install -e ".[dev]"
+# Install (recommended: uv workspace)
+uv sync --all-extras
+
+# Verify CLI
+uv run contextcore --version
 
 # Start the observability stack
 make full-setup
+# (Windows PowerShell alternative: .\setup.ps1 up)
 
 # Track a task
-contextcore task start --id PROJ-123 --title "Feature" --type story
-contextcore task update --id PROJ-123 --status in_progress
-contextcore task complete --id PROJ-123
+uv run contextcore task start --id PROJ-123 --title "Feature" --type story
+uv run contextcore task update --id PROJ-123 --status in_progress
+uv run contextcore task complete --id PROJ-123
 
 # View dashboards
 open http://localhost:3000
@@ -35,7 +39,7 @@ open http://localhost:3000
 
 ## Tech Stack
 
-- **Language**: Python 3.11+
+- **Language**: Python 3.12+
 - **CRD Framework**: kopf (Kubernetes Operator Framework)
 - **Telemetry**: OpenTelemetry SDK, OTLP export
 - **Reference Backend**: Grafana (Tempo, Mimir, Loki)

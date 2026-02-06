@@ -241,8 +241,8 @@ contextcore dashboards list
 
 **Add dashboard links to team channels:**
 
-- Portfolio Overview: `http://grafana:3000/d/contextcore-portfolio`
-- Project Details: `http://grafana:3000/d/contextcore-project`
+- Portfolio Overview: `http://grafana:3000/d/cc-core-portfolio-overview`
+- Project Details: `http://grafana:3000/d/cc-core-project-progress`
 
 #### Step 7: Validate and Iterate (1 week)
 

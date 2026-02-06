@@ -293,7 +293,16 @@ FeatureQueue().print_status()
 
 **Cause:** The Makefile uses bash constructs. Windows does not ship with `make`.
 
-**Workaround:** Run Docker Compose directly:
+**Recommended:** Use the included `setup.ps1` wrapper script:
+```powershell
+.\setup.ps1 full-setup    # Complete setup (up + wait-ready + seed-metrics)
+.\setup.ps1 up            # Start the stack
+.\setup.ps1 health        # Check component health
+.\setup.ps1 smoke-test    # Validate entire stack
+.\setup.ps1 down          # Stop the stack
+```
+
+Or run Docker Compose directly:
 ```powershell
 docker compose up -d
 docker compose ps

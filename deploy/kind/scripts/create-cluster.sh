@@ -593,7 +593,7 @@ echo ""
 echo -e "${CYAN}Next Steps:${NC}"
 echo "  1. Activate venv:    source ${WAYFINDER_ROOT}/.venv/bin/activate"
 echo "  2. Seed metrics:     contextcore install verify --endpoint localhost:4317"
-echo "  3. Open dashboard:   open http://localhost:3000/d/contextcore-installation"
+echo "  3. Open dashboard:   open http://localhost:3000/d/cc-core-installation-status"
 
 if [ "$TUTORIAL" = true ]; then
     echo ""

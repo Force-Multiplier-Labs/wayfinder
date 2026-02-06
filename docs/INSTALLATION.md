@@ -37,6 +37,18 @@ Complete installation guide for the Wayfinder observability stack.
 
 All commands below assume you are in the repository root directory.
 
+**Recommended (uv workspace, macOS / Linux / Windows):**
+
+```bash
+# Install all workspace packages + extras
+uv sync --all-extras
+
+# Run the CLI
+uv run contextcore --version
+```
+
+> If you prefer a traditional venv, use the platform-specific steps below.
+
 **macOS / Linux:**
 
 ```bash
@@ -172,7 +184,8 @@ contextcore tui launch --screen script_generator
 
 # CLI script generation
 contextcore tui generate-script --method docker
-contextcore tui generate-script --method kind -o install.sh
+contextcore tui generate-script --method kind -o install.sh        # macOS/Linux
+contextcore tui generate-script --method kind -o install.ps1       # Windows
 ```
 
 The script generator supports:
@@ -475,7 +488,32 @@ docker compose up -d
 docker compose ps
 ```
 
-Wait for services to become healthy, then verify:
+Or use the included Windows wrapper script (equivalent to common `make` targets):
+
+```powershell
+# One-command setup (recommended)
+.\setup.ps1 full-setup
+
+# Or step-by-step
+.\setup.ps1 up
+.\setup.ps1 wait-ready
+.\setup.ps1 seed-metrics
+```
+
+Available `setup.ps1` commands:
+
+| Command | Description |
+|---------|-------------|
+| `full-setup` | Complete setup (up + wait-ready + seed-metrics) |
+| `up` | Start the stack (runs doctor first) |
+| `down` | Stop the stack (preserve data) |
+| `doctor` | Run preflight checks |
+| `health` | Show component health |
+| `smoke-test` | Validate entire stack |
+| `wait-ready` | Wait for all services to be ready |
+| `seed-metrics` | Run installation verification to populate dashboards |
+
+Alternatively, check health manually with `curl.exe`:
 
 ```powershell
 curl.exe http://localhost:3000/api/health    # Grafana
@@ -486,13 +524,7 @@ curl.exe http://localhost:3100/ready         # Loki
 
 > **Note:** Use `curl.exe` (not `curl`) in PowerShell. The bare `curl` is an alias for `Invoke-WebRequest`, which behaves differently.
 
-#### 4. Seed Metrics
-
-```powershell
-contextcore install verify --endpoint localhost:4317
-```
-
-#### 5. Verify and Open Dashboards
+#### 4. Verify and Open Dashboards
 
 ```powershell
 contextcore install status

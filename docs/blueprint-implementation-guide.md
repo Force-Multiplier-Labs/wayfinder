@@ -12,7 +12,7 @@ Before implementing Wayfinder, ensure you have:
 - [ ] OTLP-compatible backend (Tempo, Jaeger, or cloud equivalent)
 - [ ] Metrics backend (Mimir, Prometheus, or cloud equivalent)
 - [ ] Grafana (8.0+) for dashboards
-- [ ] Python 3.9+ for SDK usage
+- [ ] Python 3.12+ for SDK usage
 
 ---
 

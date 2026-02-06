@@ -66,8 +66,11 @@ Import dashboard JSON files directly into Grafana:
 
 | Dashboard | UID | Description |
 |-----------|-----|-------------|
-| Project Portfolio Overview | `contextcore-portfolio` | High-level view of all projects |
-| Project Details | `contextcore-project-details` | Drill-down into single project |
+| Installation Status | `cc-core-installation-status` | Self-monitoring and verification |
+| Project Portfolio Overview | `cc-core-portfolio-overview` | High-level view of all projects |
+| Project Progress | `cc-core-project-progress` | Drill-down into single project |
+| Sprint Metrics | `cc-core-sprint-metrics` | Sprint burndown and velocity |
+| Project Operations | `cc-core-project-operations` | Operational metrics |
 
 ## Configuration
 
@@ -112,9 +115,10 @@ After installation, verify dashboards are working:
 contextcore dashboards list
 
 # Expected output:
-# UID                        Title                        Folder
-# contextcore-portfolio      Project Portfolio Overview   Wayfinder
-# contextcore-project-details Project Details             Wayfinder
+# UID                          Title                        Folder
+# cc-core-installation-status  Installation Status          Wayfinder
+# cc-core-portfolio-overview   Project Portfolio Overview   Wayfinder
+# cc-core-project-progress     Project Progress             Wayfinder
 ```
 
 ### Health Check

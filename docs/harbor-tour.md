@@ -155,7 +155,7 @@ contextcore tui generate-script
 After installation, open Grafana at `http://localhost:3000`:
 
 ### Installation Dashboard
-Path: `contextcore-installation`
+Path: `cc-core-installation-status`
 
 Verifies everything is working:
 - All services healthy
@@ -163,7 +163,7 @@ Verifies everything is working:
 - Demo data flowing
 
 ### Portfolio Dashboard
-Path: `contextcore-portfolio`
+Path: `cc-core-portfolio-overview`
 
 High-level view:
 - Active projects
@@ -301,7 +301,7 @@ contextcore install verify
 # Expected output: 100% completeness
 ```
 
-Open `http://localhost:3000/d/contextcore-installation` to see it visualized.
+Open `http://localhost:3000/d/cc-core-installation-status` to see it visualized.
 
 ---
 
