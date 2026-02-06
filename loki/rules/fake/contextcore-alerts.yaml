@@ -35,20 +35,6 @@ groups:
           description: "In-flight spans may be lost on restart."
           runbook_url: "docs/OPERATIONAL_RUNBOOK.md#span-state-loss"
 
-  - name: contextcore_task_alerts
-    rules:
-      - alert: ContextCoreTaskStalled
-        expr: |
-          (time() - max by (project_id, task_id) (
-            timestamp(count_over_time(
-              {service="contextcore"} | json
-              | event = "task.status_changed" [24h]
-            ) > 0)
-          )) > 86400
-        for: 1h
-        labels:
-          severity: warning
-        annotations:
-          summary: "Task {{ $labels.task_id }} stalled > 24h"
-          description: "Task {{ $labels.task_id }} in project {{ $labels.project_id }} has had no status change for over 24 hours."
-          runbook_url: "docs/OPERATIONAL_RUNBOOK.md#task-stalled"
+  # NOTE: Task-stalled alert removed from Loki rules. The previous expression used
+  # PromQL-only functions (time(), timestamp()) which are invalid in LogQL.
+  # A per-task stalled alert should be implemented as a metric rule in Mimir.

@@ -17,3 +17,14 @@ groups:
           summary: "Insight query latency > 500ms P99"
           description: "Agent insight queries are exceeding the 500ms P99 latency budget."
           runbook_url: "docs/OPERATIONAL_RUNBOOK.md#insight-latency"
+
+      - alert: ContextCoreTaskStalled
+        expr: |
+          max_over_time(project_task:contextcore_task_progress:rate1h[24h]) == 0
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Task stalled > 24h"
+          description: "Task progress has not changed for at least 24 hours."
+          runbook_url: "docs/OPERATIONAL_RUNBOOK.md#task-stalled"

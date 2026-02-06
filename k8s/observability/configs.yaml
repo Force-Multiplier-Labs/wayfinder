@@ -328,22 +328,8 @@ data:
             annotations:
               summary: "Span state persistence failure"
               runbook_url: "docs/OPERATIONAL_RUNBOOK.md#span-state-loss"
-      - name: contextcore_task_alerts
-        rules:
-          - alert: ContextCoreTaskStalled
-            expr: |
-              (time() - max by (project_id, task_id) (
-                timestamp(count_over_time(
-                  {service="contextcore"} | json
-                  | event = "task.status_changed" [24h]
-                ) > 0)
-              )) > 86400
-            for: 1h
-            labels:
-              severity: warning
-            annotations:
-              summary: "Task {{ $labels.task_id }} stalled > 24h"
-              runbook_url: "docs/OPERATIONAL_RUNBOOK.md#task-stalled"
+      # NOTE: Task-stalled alert removed from Loki rules. The previous expression
+      # used PromQL-only functions (time(), timestamp()) which are invalid in LogQL.
 ---
 # Mimir Recording Rules
 apiVersion: v1
@@ -374,6 +360,16 @@ data:
             annotations:
               summary: "Insight query latency > 500ms P99"
               runbook_url: "docs/OPERATIONAL_RUNBOOK.md#insight-latency"
+
+          - alert: ContextCoreTaskStalled
+            expr: |
+              max_over_time(project_task:contextcore_task_progress:rate1h[24h]) == 0
+            for: 1h
+            labels:
+              severity: warning
+            annotations:
+              summary: "Task stalled > 24h"
+              runbook_url: "docs/OPERATIONAL_RUNBOOK.md#task-stalled"
 ---
 # Grafana Datasources
 apiVersion: v1
