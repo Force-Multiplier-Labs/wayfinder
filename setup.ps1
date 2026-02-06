@@ -8,6 +8,9 @@
 #   .\setup.ps1 smoke-test  Validate entire stack
 #   .\setup.ps1 doctor      Preflight checks
 #   .\setup.ps1 status      Show container status
+#   .\setup.ps1 wait-ready  Wait for services to be ready
+#   .\setup.ps1 seed-metrics Seed installation metrics
+#   .\setup.ps1 full-setup  Complete setup (up + wait + seed)
 #   .\setup.ps1 help        Show available commands
 #
 # Requires: Docker Desktop with WSL2 backend for best performance.
@@ -250,12 +253,79 @@ function Invoke-SmokeTest {
     Write-Host "`n=== Smoke Test Complete: $passed/$total passed ===" -ForegroundColor Cyan
 }
 
+function Invoke-WaitReady {
+    Write-Host "`n=== Waiting for Services ===" -ForegroundColor Cyan
+
+    $timeout = 60
+    $interval = 2
+    $elapsed = 0
+
+    while ($elapsed -lt $timeout) {
+        $allReady = $true
+        foreach ($url in @(
+            "http://localhost:3000/api/health",
+            "http://localhost:3200/ready",
+            "http://localhost:9009/ready",
+            "http://localhost:3100/ready",
+            "http://localhost:12345/ready"
+        )) {
+            if (-not (Test-Url $url)) {
+                $allReady = $false
+                break
+            }
+        }
+        if ($allReady) {
+            Write-Host "All services ready!" -ForegroundColor Green
+            return $true
+        }
+        Write-Host "  Waiting... ($elapsed/$timeout seconds)"
+        Start-Sleep -Seconds $interval
+        $elapsed += $interval
+    }
+    Write-Host "Timeout waiting for services" -ForegroundColor Red
+    return $false
+}
+
+function Invoke-SeedMetrics {
+    Write-Host "`n=== Seeding Installation Metrics ===" -ForegroundColor Cyan
+    Write-Host "Running installation verification with telemetry export..."
+
+    $env:PYTHONPATH = "./src"
+    contextcore install verify --endpoint localhost:4317
+
+    Write-Host "`nMetrics exported to Mimir via localhost:4317" -ForegroundColor Green
+    Write-Host "Dashboard: $GrafanaUrl/d/cc-core-installation-status"
+}
+
+function Invoke-FullSetup {
+    Write-Host "`n=== Full Setup ===" -ForegroundColor Cyan
+
+    Invoke-Up
+    if (Invoke-WaitReady) {
+        Invoke-SeedMetrics
+        Write-Host "`n=== Full Setup Complete ===" -ForegroundColor Green
+        Write-Host "`nWayfinder observability stack is ready!"
+        Write-Host "`nDashboards available at: $GrafanaUrl"
+        Write-Host "  - Installation Status: $GrafanaUrl/d/cc-core-installation-status"
+        Write-Host "  - Project Portfolio:   $GrafanaUrl/d/cc-core-portfolio-overview"
+        Write-Host "`nQuick commands:"
+        Write-Host "  .\setup.ps1 health       - Check component health"
+        Write-Host "  .\setup.ps1 smoke-test   - Validate entire stack"
+        Write-Host "  .\setup.ps1 seed-metrics - Re-export installation metrics"
+    } else {
+        Write-Host "Setup incomplete - services did not become ready" -ForegroundColor Red
+    }
+}
+
 function Invoke-Help {
     Write-Host @"
 
 Wayfinder Setup (Windows)
 =========================
 Usage: .\setup.ps1 <command>
+
+Quick Start:
+  full-setup    Complete setup (up + wait-ready + seed-metrics)
 
 Stack Management:
   up            Start the stack (runs doctor first)
@@ -266,6 +336,8 @@ Health & Validation:
   doctor        Run preflight checks
   health        Show component health
   smoke-test    Validate entire stack
+  wait-ready    Wait for all services to be ready (60s timeout)
+  seed-metrics  Run installation verification to populate dashboards
 
 Info:
   help          Show this message
@@ -286,12 +358,15 @@ Notes:
 # ---------------------------------------------------------------------------
 
 switch ($Command) {
-    "up"         { Invoke-Up }
-    "down"       { Invoke-Down }
-    "status"     { Invoke-Status }
-    "doctor"     { Invoke-Doctor }
-    "health"     { Invoke-Health }
-    "smoke-test" { Invoke-SmokeTest }
-    "help"       { Invoke-Help }
-    default      { Write-Host "Unknown command: $Command. Run '.\setup.ps1 help' for usage." -ForegroundColor Red }
+    "up"           { Invoke-Up }
+    "down"         { Invoke-Down }
+    "status"       { Invoke-Status }
+    "doctor"       { Invoke-Doctor }
+    "health"       { Invoke-Health }
+    "smoke-test"   { Invoke-SmokeTest }
+    "wait-ready"   { Invoke-WaitReady }
+    "seed-metrics" { Invoke-SeedMetrics }
+    "full-setup"   { Invoke-FullSetup }
+    "help"         { Invoke-Help }
+    default        { Write-Host "Unknown command: $Command. Run '.\setup.ps1 help' for usage." -ForegroundColor Red }
 }
