@@ -45,24 +45,24 @@ if [ "$DEBUG_MODE" = "1" ]; then
     echo "OTLP endpoint:     ${{OTEL_EXPORTER_OTLP_ENDPOINT:-localhost:4317}}"
 fi
 
-# Create virtual environment if needed
-if [ ! -d "$VENV_PATH" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv "$VENV_PATH"
-fi
-
-# Activate virtual environment
-source "$VENV_PATH/bin/activate"
-
-# Install ContextCore
+# Install ContextCore (uv recommended, pip fallback)
 echo "[2/4] Installing ContextCore..."
-echo "Installing ContextCore..."
-pip install -e ".[dev]"
+if command -v uv &> /dev/null; then
+    echo "Installing with uv..."
+    uv sync --all-packages --all-extras
+else
+    echo "Installing with pip..."
+    if [ ! -d "$VENV_PATH" ]; then
+        python3 -m venv "$VENV_PATH"
+    fi
+    source "$VENV_PATH/bin/activate"
+    pip install -e ".[dev]"
+fi
 
 # Deploy observability stack
 echo "[3/4] Deploying observability stack..."
 echo "Deploying observability stack..."
-make full-setup
+docker compose up -d
 
 # Verify installation
 echo "[4/4] Verifying installation..."
@@ -125,13 +125,16 @@ kubectl cluster-info --context "kind-$CLUSTER_NAME"
 
 # Install ContextCore CLI
 cd "$PROJECT_DIR"
-if [ ! -d "$VENV_PATH" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv "$VENV_PATH"
-fi
-source "$VENV_PATH/bin/activate"
 echo "[3/5] Installing ContextCore..."
-pip install -e ".[dev]"
+if command -v uv &> /dev/null; then
+    uv sync --all-packages --all-extras
+else
+    if [ ! -d "$VENV_PATH" ]; then
+        python3 -m venv "$VENV_PATH"
+    fi
+    source "$VENV_PATH/bin/activate"
+    pip install -e ".[dev]"
+fi
 
 # Deploy observability stack to cluster
 echo "[4/5] Deploying observability stack to Kind..."
@@ -184,19 +187,19 @@ if [ "$DEBUG_MODE" = "1" ]; then
     echo "OTLP endpoint:     ${{OTEL_EXPORTER_OTLP_ENDPOINT:-localhost:4317}}"
 fi
 
-# Create virtual environment if needed
-if [ ! -d "$VENV_PATH" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv "$VENV_PATH"
-fi
-
-# Activate virtual environment
-source "$VENV_PATH/bin/activate"
-
 # Install ContextCore
 echo "[2/3] Installing ContextCore..."
-echo "Installing ContextCore..."
-pip install -e ".[dev]"
+if command -v uv &> /dev/null; then
+    echo "Installing with uv..."
+    uv sync --all-packages --all-extras
+else
+    echo "Installing with pip..."
+    if [ ! -d "$VENV_PATH" ]; then
+        python3 -m venv "$VENV_PATH"
+    fi
+    source "$VENV_PATH/bin/activate"
+    pip install -e ".[dev]"
+fi
 
 # Verify connection to existing infrastructure
 echo "[3/3] Verifying connection to infrastructure..."
@@ -249,19 +252,19 @@ if ($DebugMode) {{
     Write-Host "OTLP endpoint:     $otelEndpoint"
 }}
 
-# Create virtual environment if needed
-if (-not (Test-Path $VenvPath)) {{
-    Write-Host "Creating virtual environment..."
-    python -m venv $VenvPath
-}}
-
-# Activate virtual environment
-& "$VenvPath\\Scripts\\Activate.ps1"
-
-# Install ContextCore
+# Install ContextCore (uv recommended, pip fallback)
 Write-Host "[2/4] Installing ContextCore..."
-Write-Host "Installing ContextCore..."
-pip install -e ".[dev]"
+if (Get-Command uv -ErrorAction SilentlyContinue) {{
+    Write-Host "Installing with uv..."
+    uv sync --all-packages --all-extras
+}} else {{
+    Write-Host "Installing with pip..."
+    if (-not (Test-Path $VenvPath)) {{
+        python -m venv $VenvPath
+    }}
+    & "$VenvPath\\Scripts\\Activate.ps1"
+    pip install -e ".[dev]"
+}}
 
 # Deploy observability stack
 Write-Host "[3/4] Deploying observability stack..."
@@ -346,13 +349,16 @@ kubectl cluster-info --context "kind-$ClusterName"
 
 # Install ContextCore CLI
 Set-Location $ProjectDir
-if (-not (Test-Path $VenvPath)) {{
-    Write-Host "Creating virtual environment..."
-    python -m venv $VenvPath
-}}
-& "$VenvPath\\Scripts\\Activate.ps1"
 Write-Host "[3/5] Installing ContextCore..."
-pip install -e ".[dev]"
+if (Get-Command uv -ErrorAction SilentlyContinue) {{
+    uv sync --all-packages --all-extras
+}} else {{
+    if (-not (Test-Path $VenvPath)) {{
+        python -m venv $VenvPath
+    }}
+    & "$VenvPath\\Scripts\\Activate.ps1"
+    pip install -e ".[dev]"
+}}
 
 # Deploy observability stack to cluster
 Write-Host "[4/5] Deploying observability stack to Kind..."
@@ -406,19 +412,19 @@ if ($DebugMode) {{
     Write-Host "OTLP endpoint:     $otelEndpoint"
 }}
 
-# Create virtual environment if needed
-if (-not (Test-Path $VenvPath)) {{
-    Write-Host "Creating virtual environment..."
-    python -m venv $VenvPath
-}}
-
-# Activate virtual environment
-& "$VenvPath\\Scripts\\Activate.ps1"
-
 # Install ContextCore
 Write-Host "[2/3] Installing ContextCore..."
-Write-Host "Installing ContextCore..."
-pip install -e ".[dev]"
+if (Get-Command uv -ErrorAction SilentlyContinue) {{
+    Write-Host "Installing with uv..."
+    uv sync --all-packages --all-extras
+}} else {{
+    Write-Host "Installing with pip..."
+    if (-not (Test-Path $VenvPath)) {{
+        python -m venv $VenvPath
+    }}
+    & "$VenvPath\\Scripts\\Activate.ps1"
+    pip install -e ".[dev]"
+}}
 
 # Verify connection to existing infrastructure
 Write-Host "[3/3] Verifying connection to infrastructure..."

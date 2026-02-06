@@ -8,7 +8,9 @@ with installtracking_statefile.py and installtracking_metrics.py.
 
 from __future__ import annotations
 
+import shlex
 import subprocess
+import sys
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -200,9 +202,14 @@ class StepExecutor:
             return step.callable()
 
         if step.command is not None:
+            # On Windows, avoid shell=True (uses cmd.exe, not bash).
+            # Split command string into a list for cross-platform safety.
+            if sys.platform == "win32":
+                cmd = shlex.split(step.command, posix=False)
+            else:
+                cmd = shlex.split(step.command)
             result = subprocess.run(
-                step.command,
-                shell=True,
+                cmd,
                 capture_output=True,
                 timeout=step.timeout_seconds,
                 text=True,
