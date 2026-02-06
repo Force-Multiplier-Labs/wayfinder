@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Wayfinder Installation Verification - Self-monitoring dashboard showing installation completeness and requirement status",
+  "description": "Wayfinder Installation Verification - Self-monitoring dashboard showing installation completeness and requirement status. Run 'contextcore install verify --endpoint localhost:4317' to populate data.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -74,7 +74,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": true
+        "showThresholdMarkers": true,
+        "text": {}
       },
       "pluginVersion": "11.4.0",
       "targets": [
@@ -83,11 +84,12 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "contextcore_install_completeness{installation_id=\"contextcore\"}",
+          "expr": "last_over_time(contextcore_install_completeness_percent{installation_id=\"contextcore\"}[1h])",
           "legendFormat": "Completeness",
           "refId": "A"
         }
       ],
+      "description": "Run 'contextcore install verify --endpoint localhost:4317' to populate metrics. Shows last value within 1 hour.",
       "title": "Installation Completeness",
       "type": "gauge"
     },
@@ -143,7 +145,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "contextcore_install_critical_met{installation_id=\"contextcore\"}",
+          "expr": "last_over_time(contextcore_install_critical_met_ratio{installation_id=\"contextcore\"}[1h])",
           "legendFormat": "Met",
           "refId": "A"
         }
@@ -203,7 +205,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "contextcore_install_critical_total{installation_id=\"contextcore\"}",
+          "expr": "last_over_time(contextcore_install_critical_total_ratio{installation_id=\"contextcore\"}[1h])",
           "legendFormat": "Total",
           "refId": "A"
         }
@@ -271,12 +273,12 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, rate(contextcore_install_verification_duration_bucket{installation_id=\"contextcore\"}[5m]))",
-          "legendFormat": "p95",
+          "expr": "last_over_time(contextcore_install_verification_duration_milliseconds_sum{installation_id=\"contextcore\"}[1h]) / last_over_time(contextcore_install_verification_duration_milliseconds_count{installation_id=\"contextcore\"}[1h])",
+          "legendFormat": "avg",
           "refId": "A"
         }
       ],
-      "title": "Verification Duration (p95)",
+      "title": "Verification Duration (avg)",
       "type": "stat"
     },
     {
@@ -287,16 +289,49 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
             }
           },
           "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "green",
+                "value": 100
+              }
+            ]
+          },
           "unit": "percent"
         },
         "overrides": []
@@ -309,42 +344,44 @@
       },
       "id": 5,
       "options": {
-        "displayLabels": [
-          "name",
-          "value"
-        ],
+        "barRadius": 0.1,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
         "legend": {
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        },
-        "pieType": "pie",
-        "reduceOptions": {
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "",
-          "values": false
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
+        "orientation": "horizontal",
+        "showValue": "always",
+        "stacking": "none",
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "contextcore_install_category_completeness{installation_id=\"contextcore\"}",
+          "expr": "last_over_time(contextcore_install_category_completeness_percent{installation_id=\"contextcore\"}[1h])",
+          "format": "table",
+          "instant": true,
           "legendFormat": "{{category}}",
           "refId": "A"
         }
       ],
       "title": "Completeness by Category",
-      "type": "piechart"
+      "type": "barchart"
     },
     {
       "datasource": {
@@ -470,7 +507,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "contextcore_install_requirement_status",
+          "expr": "last_over_time(contextcore_install_requirement_status_ratio[1h])",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -486,7 +523,8 @@
               "Time": true,
               "__name__": true,
               "instance": true,
-              "job": true
+              "job": true,
+              "installation_id": true
             },
             "indexByName": {
               "category": 1,
@@ -594,7 +632,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "contextcore_install_completeness{installation_id=\"contextcore\"}",
+          "expr": "contextcore_install_completeness_percent{installation_id=\"contextcore\"}",
           "legendFormat": "Completeness",
           "refId": "A"
         }
@@ -659,12 +697,13 @@
             "uid": "${tempo}"
           },
           "queryType": "traceql",
-          "query": "{ name = \"contextcore.install.verify\" } | select(status, contextcore.install.completeness, contextcore.install.critical_met)",
+          "query": "{ name = \"contextcore.install.verify\" }",
           "refId": "A",
           "tableType": "spans"
         }
       ],
       "title": "Recent Verification Traces",
+      "description": "Shows recent verification runs stored in Tempo. Click a trace to see detailed requirement checks.",
       "type": "table"
     },
     {
@@ -689,11 +728,12 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "All requirements passed - no failures detected"
         },
         "overrides": []
       },
@@ -724,12 +764,13 @@
             "uid": "${tempo}"
           },
           "queryType": "traceql",
-          "query": "{ name =~ \"install.verify.*\" && contextcore.install.requirement.status = \"failed\" } | select(contextcore.install.requirement.id, contextcore.install.requirement.name, contextcore.install.requirement.category)",
+          "query": "{ name =~ \"install.verify.*\" && span.contextcore.install.requirement.status = \"failed\" }",
           "refId": "A",
           "tableType": "spans"
         }
       ],
       "title": "Failed Requirements (Traces)",
+      "description": "Shows requirements that failed during verification. No results = all requirements passed (this is the expected state for a successful installation).",
       "type": "table"
     }
   ],
@@ -788,8 +829,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Wayfinder Installation Status",
-  "uid": "contextcore-installation",
+  "title": "[CORE] Wayfinder Installation Status",
+  "uid": "cc-core-installation-status",
   "version": 1,
   "weekStart": ""
 }

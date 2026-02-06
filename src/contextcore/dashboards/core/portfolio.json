@@ -138,7 +138,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "count(avg by (project_id) (task_percent_complete{task_type=~\"story|epic\"}) > 60 unless count by (project_id) (task_status{status=\"blocked\"}) > 0)",
+          "expr": "count(avg by (project_id) (project:contextcore_task_percent_complete:max_over_time5m{task_type=~\"story|epic\"}) > 60 unless count by (project_id) (project:contextcore_task_count:count_by_status{to_status=\"blocked\"}) > 0)",
           "refId": "A"
         }
       ],
@@ -197,7 +197,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "count(avg by (project_id) (task_percent_complete{task_type=~\"story|epic\"}) < 40 or count by (project_id) (task_status{status=\"blocked\"}) > 0)",
+          "expr": "count(avg by (project_id) (project:contextcore_task_percent_complete:max_over_time5m{task_type=~\"story|epic\"}) < 40 or count by (project_id) (project:contextcore_task_count:count_by_status{to_status=\"blocked\"}) > 0)",
           "refId": "A"
         }
       ],
@@ -293,22 +293,22 @@
             "inspect": false
           },
           "mappings": [
-             {
+            {
               "options": {
                 "0": {
                   "color": "green",
                   "index": 2,
-                  "text": "🟢"
+                  "text": "\ud83d\udfe2"
                 },
                 "1": {
                   "color": "yellow",
                   "index": 1,
-                  "text": "🟡"
+                  "text": "\ud83d\udfe1"
                 },
                 "2": {
                   "color": "red",
                   "index": 0,
-                  "text": "🔴"
+                  "text": "\ud83d\udd34"
                 }
               },
               "type": "value"
@@ -325,7 +325,7 @@
           }
         },
         "overrides": [
-           {
+          {
             "matcher": {
               "id": "byName",
               "options": "Status"
@@ -348,16 +348,16 @@
                 "value": "gradient-gauge"
               },
               {
-                 "id": "min",
-                 "value": 0
+                "id": "min",
+                "value": 0
               },
               {
-                 "id": "max",
-                 "value": 100
+                "id": "max",
+                "value": 100
               }
             ]
           },
-           {
+          {
             "matcher": {
               "id": "byName",
               "options": "Project"
@@ -419,20 +419,20 @@
                 "operation": "aggregate"
               },
               "to_status": {
-                 "aggregations": [],
-                 "operation": "groupby"
+                "aggregations": [],
+                "operation": "groupby"
               }
             }
           }
         },
         {
-           "id": "organize",
-           "options": {
-              "renameByName": {
-                 "project_id": "Project",
-                 "percent_complete (mean)": "Progress"
-              }
-           }
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "project_id": "Project",
+              "percent_complete (mean)": "Progress"
+            }
+          }
         }
       ],
       "type": "table"
@@ -506,7 +506,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "avg by (project_id) (task_percent_complete{task_type=~\"story|epic\"})",
+          "expr": "avg by (project_id) (project:contextcore_task_percent_complete:max_over_time5m{task_type=~\"story|epic\"})",
           "legendFormat": "{{project_id}}",
           "refId": "A"
         }
@@ -568,24 +568,24 @@
           }
         },
         "overrides": [
-           {
+          {
             "matcher": {
-               "id": "byRegexp",
-               "options": "Planned.*"
+              "id": "byRegexp",
+              "options": "Planned.*"
             },
             "properties": [
-               {
-                  "id": "custom.lineStyle",
-                  "value": {
-                     "dash": [
-                        10,
-                        10
-                     ],
-                     "fill": "dash"
-                  }
-               }
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
             ]
-           }
+          }
         ]
       },
       "gridPos": {
@@ -764,7 +764,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "sum by (project_id, status) (task_count_by_status)",
+          "expr": "sum by (project_id, status) (project:contextcore_task_count:count_by_status)",
           "legendFormat": "{{status}}",
           "refId": "A"
         }
@@ -898,7 +898,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-9
+          "le": 1e-09
         },
         "legend": {
           "show": true
@@ -962,7 +962,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "expr": "{service=\"contextcore\"} | json | event=~\"task.created|task.completed|task.blocked|task.unblocked|task.status_changed\" | line_format \"{{.event}} {{.project_id}} {{.task_id}} {{if .to_status}}{{.from_status}}→{{.to_status}}{{end}} {{if .reason}}\\\"{{.reason}}\\\"{{end}}\"",
+          "expr": "{service=\"contextcore\"} | json | event=~\"task.created|task.completed|task.blocked|task.unblocked|task.status_changed\" | line_format \"{{.event}} {{.project_id}} {{.task_id}} {{if .to_status}}{{.from_status}}\u2192{{.to_status}}{{end}} {{if .reason}}\\\"{{.reason}}\\\"{{end}}\"",
           "refId": "A"
         }
       ],
@@ -987,13 +987,13 @@
           "type": "prometheus",
           "uid": "mimir"
         },
-        "definition": "label_values(task_percent_complete, project_id)",
+        "definition": "label_values(project:contextcore_task_percent_complete:max_over_time5m, project_id)",
         "hide": 0,
         "includeAll": true,
         "multi": true,
         "name": "project",
         "options": [],
-        "query": "label_values(task_percent_complete, project_id)",
+        "query": "label_values(project:contextcore_task_percent_complete:max_over_time5m, project_id)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -1092,8 +1092,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Project Portfolio Overview",
-  "uid": "contextcore-portfolio",
+  "title": "[CORE] Project Portfolio Overview",
+  "uid": "cc-core-portfolio-overview",
   "version": 1,
   "weekStart": ""
 }
