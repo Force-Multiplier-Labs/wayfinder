@@ -1,0 +1,14 @@
+# Enforce LF for shell scripts (crucial for WSL/Git Bash execution on Windows)
+*.sh text eol=lf
+
+# Enforce CRLF for PowerShell scripts (optional, but good practice for Windows)
+*.ps1 text eol=crlf
+
+# Standardize Python/YAML/JSON/MD to LF (git handles conversion on Windows if autocrlf=true, 
+# but forcing LF ensures consistency across repo)
+*.py text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+Makefile text eol=lf

@@ -465,6 +465,27 @@ Restart your terminal after installing Python so `python` is on your `PATH`.
 
 #### 2. Clone and Install
 
+We recommend using [uv](https://docs.astral.sh/uv/) for dependency management, but standard `pip` works too.
+
+**Option A: Using uv (Recommended)**
+
+```powershell
+# Install uv if you haven't already
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+# Restart terminal if needed
+
+git clone https://github.com/Force-Multiplier-Labs/wayfinder.git
+cd wayfinder
+
+# Sync dependencies (creates .venv automatically)
+uv sync --all-extras
+
+# Activate virtual environment
+.venv\Scripts\Activate.ps1
+```
+
+**Option B: Using pip (Standard)**
+
 ```powershell
 git clone https://github.com/Force-Multiplier-Labs/wayfinder.git
 cd wayfinder
@@ -473,6 +494,10 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 
 pip install -e ".[dev]"
+```
+
+Verify installation:
+```powershell
 contextcore --version
 ```
 

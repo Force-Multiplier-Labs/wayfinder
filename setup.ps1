@@ -86,6 +86,12 @@ function Invoke-Doctor {
         Write-Status "fail" "python not found (install from python.org or via winget)"
     }
 
+    if (Get-Command contextcore -ErrorAction SilentlyContinue) {
+        Write-Status "pass" "contextcore CLI"
+    } else {
+        Write-Status "warn" "contextcore CLI not found (is .venv activated?)"
+    }
+
     Write-Host "`nChecking Docker daemon..."
     try {
         docker info 2>&1 | Out-Null
@@ -288,6 +294,14 @@ function Invoke-WaitReady {
 
 function Invoke-SeedMetrics {
     Write-Host "`n=== Seeding Installation Metrics ===" -ForegroundColor Cyan
+    
+    if (-not (Get-Command contextcore -ErrorAction SilentlyContinue)) {
+        Write-Host "Error: contextcore CLI not found." -ForegroundColor Red
+        Write-Host "Please activate your virtual environment:"
+        Write-Host "  .venv\Scripts\Activate.ps1"
+        return
+    }
+
     Write-Host "Running installation verification with telemetry export..."
 
     $env:PYTHONPATH = "./src"

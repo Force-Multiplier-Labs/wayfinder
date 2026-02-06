@@ -195,7 +195,7 @@ def discover_from_filesystem(
 
     Example:
         >>> list(discover_from_filesystem("core"))
-        [DashboardConfig(uid='contextcore-portfolio', title='Project Portfolio', ...)]
+        [DashboardConfig(uid='cc-core-portfolio-overview', title='Project Portfolio Overview', ...)]
     """
     extensions_to_scan = [extension] if extension else list(EXTENSION_REGISTRY.keys())
     dashboard_root = get_dashboard_root()
