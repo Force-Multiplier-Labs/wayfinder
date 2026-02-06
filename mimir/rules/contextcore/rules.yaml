@@ -9,3 +9,27 @@ groups:
       # Planned points per sprint (from OTel metric emitted by TaskTracker)
       - record: "project_sprint:contextcore_sprint_planned_points:last"
         expr: max by (project_id, sprint_id) (contextcore_sprint_planned_points)
+
+      # Task progress gauge - last reported percent_complete per task (from Loki-derived metric)
+      - record: "project:contextcore_task_percent_complete:max_over_time5m"
+        expr: max by (project_id, task_id, task_type, sprint_id) (
+          max_over_time(contextcore_task_percent_complete[5m])
+        )
+
+      # Average progress by sprint
+      - record: "project_sprint:contextcore_task_percent_complete:avg"
+        expr: avg by (project_id, sprint_id) (
+          project:contextcore_task_percent_complete:max_over_time5m{sprint_id!=""}
+        )
+
+      # Count of completed tasks (100%)
+      - record: "project_sprint:contextcore_task_completed:count"
+        expr: count by (project_id, sprint_id) (
+          project:contextcore_task_percent_complete:max_over_time5m == 100
+        )
+
+      # Task progress rate (change per hour)
+      - record: "project_task:contextcore_task_progress:rate1h"
+        expr: sum by (project_id, task_id) (
+          rate(contextcore_task_percent_complete[1h])
+        )
