@@ -67,6 +67,9 @@ contextcore-coyote = "contextcore_coyote.cli:main"
 coyote = "contextcore_coyote.cli:main"
 pup = "contextcore_coyote.pup_cli:main"
 
+[tool.uv.sources]
+contextcore = { workspace = true }
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
