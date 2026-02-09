@@ -75,7 +75,7 @@ Provide structured lessons:
 ## {incident_id}: {title}
 
 **Date**: {date}
-**Category**: {category}
+**Category**: {{category}}
 
 ### What Happened
 [Description]
