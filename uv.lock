@@ -535,6 +535,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+coyote = [
+    { name = "contextcore-coyote" },
+]
 dev = [
     { name = "mypy" },
     { name = "pytest" },
@@ -544,6 +547,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "contextcore-coyote", marker = "extra == 'coyote'", editable = "contextcore-coyote" },
     { name = "flask", specifier = ">=2.0" },
     { name = "flask-cors", specifier = ">=4.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0" },
@@ -551,7 +555,7 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1" },
 ]
-provides-extras = ["dev", "beaver"]
+provides-extras = ["dev", "beaver", "coyote"]
 
 [[package]]
 name = "coverage"

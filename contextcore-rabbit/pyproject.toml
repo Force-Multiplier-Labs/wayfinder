@@ -20,6 +20,9 @@ dev = [
 beaver = [
     # For Beaver workflow integration (uses Prime Contractor from main ContextCore)
 ]
+coyote = [
+    "contextcore-coyote>=0.1.0",
+]
 
 [project.scripts]
 contextcore-rabbit = "contextcore_rabbit.cli:main"
@@ -31,6 +34,9 @@ Documentation = "https://github.com/Force-Multiplier-Labs/contextcore-rabbit#rea
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.uv.sources]
+contextcore-coyote = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/contextcore_rabbit"]

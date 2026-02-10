@@ -37,6 +37,7 @@ dependencies = [
 [project.optional-dependencies]
 contextcore = ["contextcore>=0.1.0"]
 llm = ["anthropic>=0.18"]
+# beaver = ["startd8-sdk>=0.3.0"]  # Uncomment when startd8-sdk is published
 github = ["pygithub>=2.0"]
 otel = [
     "opentelemetry-api>=1.20",

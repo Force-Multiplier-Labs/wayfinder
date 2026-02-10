@@ -187,12 +187,33 @@ class Stage(ABC):
         Returns:
             LLM response
         """
+        if self.config.use_startd8:
+            return self._call_via_startd8(prompt)
         if self.config.llm_provider == "anthropic":
             return self._call_anthropic(prompt)
         elif self.config.llm_provider == "openai":
             return self._call_openai(prompt)
         else:
             raise ValueError(f"Unknown LLM provider: {self.config.llm_provider}")
+
+    def _call_via_startd8(self, prompt: str) -> str:
+        """Call LLM via startd8 ProviderRegistry (Beaver integration)."""
+        try:
+            from startd8.providers import ProviderRegistry
+
+            ProviderRegistry.discover()
+            agent = ProviderRegistry.create_agent(
+                provider_name=self.config.llm_provider,
+                model=self.config.llm_model,
+            )
+            response = agent.generate(prompt)
+            return response.text
+
+        except ImportError:
+            raise RuntimeError(
+                "startd8-sdk not installed. Run: pip install startd8-sdk "
+                "or set COYOTE_USE_STARTD8=false"
+            )
 
     def _call_anthropic(self, prompt: str) -> str:
         """Call Anthropic API."""

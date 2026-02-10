@@ -41,6 +41,9 @@ class CoyoteConfig:
     github_token: Optional[str] = None
     github_repo: Optional[str] = None
 
+    # Beaver/startd8 integration
+    use_startd8: bool = False  # Feature flag for startd8 provider
+
     # Knowledge base
     lessons_file: str = "LESSONS_LEARNED.md"
 
@@ -68,6 +71,7 @@ class CoyoteConfig:
             otel_service_name=os.getenv("COYOTE_OTEL_SERVICE_NAME", "contextcore-coyote"),
             github_token=os.getenv("GITHUB_TOKEN"),
             github_repo=os.getenv("GITHUB_REPOSITORY"),
+            use_startd8=os.getenv("COYOTE_USE_STARTD8", "false").lower() == "true",
             lessons_file=os.getenv("COYOTE_LESSONS_FILE", "LESSONS_LEARNED.md"),
             log_level=os.getenv("COYOTE_LOG_LEVEL", "INFO"),
         )
