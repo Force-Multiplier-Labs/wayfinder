@@ -42,6 +42,7 @@ github = ["pygithub>=2.0"]
 otel = [
     "opentelemetry-api>=1.20",
     "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.20",
 ]
 all = [
     "contextcore>=0.1.0",
@@ -49,6 +50,7 @@ all = [
     "pygithub>=2.0",
     "opentelemetry-api>=1.20",
     "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.20",
 ]
 dev = [
     "pytest>=7.0",

@@ -4,11 +4,15 @@ Configuration management for ContextCore Coyote.
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Any, Optional, List
+
+logger = logging.getLogger(__name__)
 
 _config: Optional["CoyoteConfig"] = None
+_tracer_provider: Any = None  # TracerProvider instance (typed as Any to avoid import)
 
 
 @dataclass
@@ -143,7 +147,69 @@ def configure(
             setattr(config, key, value)
 
     _config = config
+
+    # Wire up OTel TracerProvider when telemetry is enabled
+    if config.contextcore_enabled:
+        _setup_tracer_provider(config)
+
     return config
+
+
+def _setup_tracer_provider(config: CoyoteConfig) -> None:
+    """Initialize OTel TracerProvider with OTLP exporter."""
+    global _tracer_provider
+
+    try:
+        from opentelemetry import trace
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    except ImportError as exc:
+        logger.warning(
+            "OTel packages not installed — spans will not be exported. "
+            "Install with: pip install 'contextcore-coyote[otel]' "
+            "opentelemetry-exporter-otlp-proto-grpc  (%s)",
+            exc,
+        )
+        return
+
+    # Shut down previous provider if reconfiguring
+    if _tracer_provider is not None:
+        try:
+            _tracer_provider.shutdown()
+        except Exception:
+            pass
+
+    resource = Resource.create({
+        "service.name": config.otel_service_name,
+        "service.namespace": "contextcore",
+    })
+    exporter = OTLPSpanExporter(
+        endpoint=config.otel_endpoint,
+        insecure=True,
+    )
+    provider = TracerProvider(resource=resource)
+    provider.add_span_processor(BatchSpanProcessor(exporter))
+    trace.set_tracer_provider(provider)
+    _tracer_provider = provider
+
+    logger.info(
+        "OTel tracing enabled — exporting to %s as %s",
+        config.otel_endpoint,
+        config.otel_service_name,
+    )
+
+
+def shutdown_tracer() -> None:
+    """Flush and shut down the TracerProvider. Call on process exit."""
+    global _tracer_provider
+    if _tracer_provider is not None:
+        try:
+            _tracer_provider.shutdown()
+        except Exception:
+            pass
+        _tracer_provider = None
 
 
 def get_config() -> CoyoteConfig:

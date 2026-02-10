@@ -19,10 +19,18 @@ import contextcore_coyote.config as config_module
 
 @pytest.fixture(autouse=True)
 def reset_global_config():
-    """Reset global config between tests."""
+    """Reset global config and tracer provider between tests."""
     config_module._config = None
+    config_module._tracer_provider = None
     yield
+    # Shut down any tracer provider created during the test
+    if config_module._tracer_provider is not None:
+        try:
+            config_module._tracer_provider.shutdown()
+        except Exception:
+            pass
     config_module._config = None
+    config_module._tracer_provider = None
 
 
 @pytest.fixture

@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from contextcore_coyote.config import CoyoteConfig, configure, get_config
+from contextcore_coyote.config import (
+    CoyoteConfig,
+    configure,
+    get_config,
+    shutdown_tracer,
+)
 import contextcore_coyote.config as config_module
 
 
@@ -153,3 +158,48 @@ class TestGetConfig:
         c1 = get_config()
         c2 = get_config()
         assert c1 is c2
+
+
+class TestTelemetryWiring:
+    """Test that configure() sets up OTel TracerProvider when enabled."""
+
+    def test_configure_with_contextcore_enabled_sets_tracer_provider(self):
+        """TracerProvider is created when contextcore_enabled=True."""
+        from opentelemetry import trace
+
+        configure(contextcore_enabled=True, otel_endpoint="localhost:4317")
+
+        assert config_module._tracer_provider is not None
+        provider = trace.get_tracer_provider()
+        # Should be a real TracerProvider, not the default ProxyTracerProvider
+        assert type(provider).__name__ == "TracerProvider"
+
+    def test_configure_without_contextcore_enabled_no_tracer_provider(self):
+        """No TracerProvider when contextcore_enabled=False (default)."""
+        configure(auto_proceed=True)
+        assert config_module._tracer_provider is None
+
+    def test_reconfigure_shuts_down_previous_provider(self):
+        """Reconfiguring shuts down the previous TracerProvider."""
+        configure(contextcore_enabled=True, otel_endpoint="localhost:4317")
+        first_provider = config_module._tracer_provider
+        assert first_provider is not None
+
+        configure(contextcore_enabled=True, otel_endpoint="localhost:4317")
+        second_provider = config_module._tracer_provider
+        assert second_provider is not None
+        assert second_provider is not first_provider
+
+    def test_shutdown_tracer_clears_provider(self):
+        """shutdown_tracer() flushes and clears the provider."""
+        configure(contextcore_enabled=True, otel_endpoint="localhost:4317")
+        assert config_module._tracer_provider is not None
+
+        shutdown_tracer()
+        assert config_module._tracer_provider is None
+
+    def test_shutdown_tracer_noop_when_no_provider(self):
+        """shutdown_tracer() is safe to call when no provider exists."""
+        assert config_module._tracer_provider is None
+        shutdown_tracer()  # Should not raise
+        assert config_module._tracer_provider is None

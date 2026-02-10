@@ -23,6 +23,7 @@ Commands:
     contextcore ops         Operational health and backup
     contextcore install     Installation verification
     contextcore graph       Knowledge graph commands (Phase 3)
+    contextcore dev         Developer mode utilities (local auto-repair)
 """
 
 import click
@@ -52,6 +53,9 @@ from .slo_tests import slo_tests
 
 # Phase 3 commands
 from .graph import graph
+
+# Dev mode commands
+from .dev import dev
 
 # TUI commands
 from .tui import tui
@@ -101,6 +105,9 @@ main.add_command(slo_tests, name="slo-tests")
 
 # Phase 3 command groups
 main.add_command(graph)
+
+# Dev mode command group
+main.add_command(dev)
 
 # TUI command group
 main.add_command(tui)
