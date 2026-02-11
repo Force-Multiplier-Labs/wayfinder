@@ -1,0 +1,92 @@
+[project]
+name = "contextcore-squirrel"
+version = "0.1.0"
+description = "Squirrel (Ajidamoo) - Skills library for token-efficient agent discovery for ContextCore"
+readme = "README.md"
+license = {text = "Equitable Use License v1.0"}
+requires-python = ">=3.12"
+authors = [
+    {name = "ContextCore Contributors"}
+]
+keywords = [
+    "contextcore",
+    "skills",
+    "knowledge",
+    "lessons-learned",
+    "agent-discovery",
+    "observability",
+    "opentelemetry",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: System :: Monitoring",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "pyyaml>=6.0",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+contextcore = ["contextcore>=0.1.0"]
+otel = [
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.20",
+]
+all = [
+    "contextcore>=0.1.0",
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.20",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "mypy>=1.0",
+    "ruff>=0.1",
+    "black>=23.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Force-Multiplier-Labs/wayfinder"
+Documentation = "https://github.com/Force-Multiplier-Labs/wayfinder#readme"
+Repository = "https://github.com/Force-Multiplier-Labs/wayfinder"
+
+[project.scripts]
+contextcore-squirrel = "contextcore_squirrel.cli:main"
+
+[tool.uv.sources]
+contextcore = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/contextcore_squirrel"]
+
+[tool.hatch.build]
+include = [
+    "src/contextcore_squirrel/**/*.py",
+    "src/contextcore_squirrel/**/*.md",
+    "src/contextcore_squirrel/**/*.yaml",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true

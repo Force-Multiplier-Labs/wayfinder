@@ -12,6 +12,7 @@ members = [
     "contextcore-coyote",
     "contextcore-mole",
     "contextcore-rabbit",
+    "contextcore-squirrel",
     "wayfinder-fox",
 ]
 
@@ -560,6 +561,58 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1" },
 ]
 provides-extras = ["dev", "beaver", "coyote"]
+
+[[package]]
+name = "contextcore-squirrel"
+version = "0.1.0"
+source = { editable = "contextcore-squirrel" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "pyyaml" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "contextcore" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-otlp-proto-grpc" },
+    { name = "opentelemetry-sdk" },
+]
+contextcore = [
+    { name = "contextcore" },
+]
+dev = [
+    { name = "black" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "ruff" },
+]
+otel = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-otlp-proto-grpc" },
+    { name = "opentelemetry-sdk" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "black", marker = "extra == 'dev'", specifier = ">=23.0" },
+    { name = "contextcore", marker = "extra == 'all'", editable = "." },
+    { name = "contextcore", marker = "extra == 'contextcore'", editable = "." },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0" },
+    { name = "opentelemetry-api", marker = "extra == 'all'", specifier = ">=1.20" },
+    { name = "opentelemetry-api", marker = "extra == 'otel'", specifier = ">=1.20" },
+    { name = "opentelemetry-exporter-otlp-proto-grpc", marker = "extra == 'all'", specifier = ">=1.20" },
+    { name = "opentelemetry-exporter-otlp-proto-grpc", marker = "extra == 'otel'", specifier = ">=1.20" },
+    { name = "opentelemetry-sdk", marker = "extra == 'all'", specifier = ">=1.20" },
+    { name = "opentelemetry-sdk", marker = "extra == 'otel'", specifier = ">=1.20" },
+    { name = "pydantic", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1" },
+]
+provides-extras = ["contextcore", "otel", "all", "dev"]
 
 [[package]]
 name = "coverage"

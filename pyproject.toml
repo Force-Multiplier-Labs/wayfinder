@@ -99,6 +99,7 @@ members = [
     "contextcore-rabbit",
     "contextcore-mole",
     "contextcore-coyote",
+    "contextcore-squirrel",
 ]
 
 [tool.hatch.build.targets.wheel]
