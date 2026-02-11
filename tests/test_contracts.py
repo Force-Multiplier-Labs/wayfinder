@@ -18,6 +18,9 @@ from contextcore.contracts.queries import (
     TraceQLBuilder,
     generate_dashboard_queries,
     validate_query_against_schema,
+    extract_source_metrics_from_expr,
+    extract_metrics_from_rule_file,
+    validate_rule_file_metrics,
 )
 
 
@@ -354,3 +357,219 @@ class TestValidateQueryAgainstSchema:
         errors = validate_query_against_schema(query, lm1_schema)
         assert len(errors) >= 1
         assert "lm1_campaign" in errors[0]
+
+
+class TestExtractSourceMetricsFromExpr:
+    """Tests for PromQL expression metric extraction."""
+
+    def test_source_metric_extracted(self):
+        """Bare metric names should be extracted."""
+        expr = 'sum(rate(startd8_requests_total{status="success"}[5m]))'
+        result = extract_source_metrics_from_expr(expr, "startd8")
+        assert result == {"startd8_requests_total"}
+
+    def test_recording_rule_ref_ignored(self):
+        """Recording rule references (colon syntax) should not produce matches."""
+        expr = "service:startd8_availability:rate5m < 0.999"
+        result = extract_source_metrics_from_expr(expr, "startd8")
+        assert result == set()
+
+    def test_mixed_expr(self):
+        """Only source metrics extracted when mixed with recording rule refs."""
+        expr = "service:startd8_cost:rate1h / sum(rate(startd8_cost_total[1h]))"
+        result = extract_source_metrics_from_expr(expr, "startd8")
+        assert result == {"startd8_cost_total"}
+
+    def test_histogram_bucket_suffix(self):
+        """Histogram _bucket suffix should be preserved."""
+        expr = "histogram_quantile(0.99, sum(rate(startd8_response_time_ms_bucket[5m])) by (le))"
+        result = extract_source_metrics_from_expr(expr, "startd8")
+        assert result == {"startd8_response_time_ms_bucket"}
+
+    def test_multiple_metrics_same_expr(self):
+        """Multiple distinct source metrics in one expression."""
+        expr = (
+            "sum(rate(startd8_requests_total[5m])) / "
+            "sum(rate(startd8_truncations_total[5m]))"
+        )
+        result = extract_source_metrics_from_expr(expr, "startd8")
+        assert result == {"startd8_requests_total", "startd8_truncations_total"}
+
+    def test_no_match_different_prefix(self):
+        """Metrics with different prefix should not match."""
+        expr = 'sum(rate(other_requests_total[5m]))'
+        result = extract_source_metrics_from_expr(expr, "startd8")
+        assert result == set()
+
+    def test_empty_expr(self):
+        """Empty expression should return empty set."""
+        assert extract_source_metrics_from_expr("", "startd8") == set()
+
+
+class TestExtractMetricsFromRuleFile:
+    """Tests for structured rule file parsing."""
+
+    @pytest.fixture
+    def recording_rules(self):
+        """Minimal recording rules structure."""
+        return {
+            "groups": [
+                {
+                    "name": "my_availability",
+                    "interval": "1m",
+                    "rules": [
+                        {
+                            "record": "service:my_availability:rate5m",
+                            "expr": (
+                                'sum(rate(my_requests_total{status="success"}[5m]))'
+                                " / sum(rate(my_requests_total[5m]))"
+                            ),
+                        }
+                    ],
+                }
+            ]
+        }
+
+    @pytest.fixture
+    def alert_rules(self):
+        """Minimal alert rules referencing recording rules."""
+        return {
+            "groups": [
+                {
+                    "name": "my_alerts",
+                    "rules": [
+                        {
+                            "alert": "MyAvailabilityLow",
+                            "expr": "service:my_availability:rate5m < 0.999",
+                        }
+                    ],
+                }
+            ]
+        }
+
+    def test_source_metrics_extracted(self, recording_rules):
+        src, _, _ = extract_metrics_from_rule_file(recording_rules, "my")
+        assert src == {"my_requests_total"}
+
+    def test_recording_rules_defined(self, recording_rules):
+        _, defined, _ = extract_metrics_from_rule_file(recording_rules, "my")
+        assert "service:my_availability:rate5m" in defined
+
+    def test_no_false_positives_from_group_names(self, recording_rules):
+        """Group name 'my_availability' should not appear as source metric."""
+        src, _, _ = extract_metrics_from_rule_file(recording_rules, "my")
+        assert "my_availability" not in src
+
+    def test_alert_has_no_source_metrics(self, alert_rules):
+        """Alert referencing recording rules should have zero source metrics."""
+        src, _, referenced = extract_metrics_from_rule_file(alert_rules, "my")
+        assert src == set()
+        assert "service:my_availability:rate5m" in referenced
+
+    def test_alerts_recording_rule_referenced(self, alert_rules):
+        _, _, referenced = extract_metrics_from_rule_file(alert_rules, "my")
+        assert referenced == {"service:my_availability:rate5m"}
+
+
+class TestValidateRuleFileMetrics:
+    """Tests for end-to-end rule file validation."""
+
+    def test_all_metrics_resolve(self):
+        """No errors when all source metrics are known."""
+        rule_data = {
+            "groups": [
+                {
+                    "name": "test_group",
+                    "rules": [
+                        {
+                            "record": "service:test_avail:rate5m",
+                            "expr": 'sum(rate(test_requests_total[5m]))',
+                        }
+                    ],
+                }
+            ]
+        }
+        known = {"test_requests_total"}
+        errors = validate_rule_file_metrics(rule_data, known, "test")
+        assert errors == []
+
+    def test_missing_metric_flagged(self):
+        """Unknown source metric should produce an error."""
+        rule_data = {
+            "groups": [
+                {
+                    "name": "test_group",
+                    "rules": [
+                        {
+                            "record": "service:test_avail:rate5m",
+                            "expr": 'sum(rate(test_requests_total[5m]))',
+                        }
+                    ],
+                }
+            ]
+        }
+        known = set()  # nothing known
+        errors = validate_rule_file_metrics(rule_data, known, "test")
+        assert len(errors) == 1
+        assert "test_requests_total" in errors[0]
+
+    def test_recording_rule_cross_file_reference(self):
+        """Alert referencing recording rule from another file should resolve."""
+        alert_data = {
+            "groups": [
+                {
+                    "name": "alerts",
+                    "rules": [
+                        {
+                            "alert": "AvailLow",
+                            "expr": "service:test_avail:rate5m < 0.999",
+                        }
+                    ],
+                }
+            ]
+        }
+        companion_rules = {"service:test_avail:rate5m"}
+        errors = validate_rule_file_metrics(
+            alert_data, set(), "test",
+            recording_rules_from_other_files=companion_rules,
+        )
+        assert errors == []
+
+    def test_unresolved_recording_rule_reference(self):
+        """Referencing unknown recording rule should produce an error."""
+        alert_data = {
+            "groups": [
+                {
+                    "name": "alerts",
+                    "rules": [
+                        {
+                            "alert": "AvailLow",
+                            "expr": "service:test_avail:rate5m < 0.999",
+                        }
+                    ],
+                }
+            ]
+        }
+        errors = validate_rule_file_metrics(alert_data, set(), "test")
+        assert len(errors) == 1
+        assert "service:test_avail:rate5m" in errors[0]
+
+    def test_histogram_bucket_resolves_to_base(self):
+        """_bucket suffix should resolve against base metric name."""
+        rule_data = {
+            "groups": [
+                {
+                    "name": "latency",
+                    "rules": [
+                        {
+                            "record": "service:test_latency_p99:rate5m",
+                            "expr": "histogram_quantile(0.99, sum(rate(test_response_ms_bucket[5m])) by (le))",
+                        }
+                    ],
+                }
+            ]
+        }
+        # Only base name known (without _bucket)
+        known = {"test_response_ms"}
+        errors = validate_rule_file_metrics(rule_data, known, "test")
+        assert errors == []

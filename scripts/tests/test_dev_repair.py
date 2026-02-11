@@ -283,6 +283,120 @@ class TestRepairFromError:
 
 
 # ---------------------------------------------------------------------------
+# Tests: skip filter
+# ---------------------------------------------------------------------------
+
+class TestSkipFilter:
+    """Tests for check_skip_filter — errors that shouldn't trigger repair."""
+
+    def test_401_skipped(self):
+        reason = dev_repair.check_skip_filter("HTTP 401 Unauthorized from api.example.com")
+        assert reason is not None
+        assert "auth" in reason
+
+    def test_403_skipped(self):
+        reason = dev_repair.check_skip_filter("403 Forbidden: insufficient permissions")
+        assert reason is not None
+        assert "auth" in reason
+
+    def test_authentication_failed_skipped(self):
+        reason = dev_repair.check_skip_filter("Authentication failed for user admin")
+        assert reason is not None
+        assert "auth" in reason
+
+    def test_expired_token_skipped(self):
+        reason = dev_repair.check_skip_filter("JWT expired token at 2026-02-09T12:00:00Z")
+        assert reason is not None
+        assert "auth" in reason
+
+    def test_429_rate_limit_skipped(self):
+        reason = dev_repair.check_skip_filter("429 Too Many Requests - rate limit exceeded")
+        assert reason is not None
+        assert "rate_limit" in reason
+
+    def test_connection_refused_skipped(self):
+        reason = dev_repair.check_skip_filter("Connection refused to localhost:5432")
+        assert reason is not None
+        assert "infrastructure" in reason
+
+    def test_connection_timeout_skipped(self):
+        reason = dev_repair.check_skip_filter("Connection timed out after 30s")
+        assert reason is not None
+        assert "infrastructure" in reason
+
+    def test_503_service_unavailable_skipped(self):
+        reason = dev_repair.check_skip_filter("503 Service Unavailable")
+        assert reason is not None
+        assert "infrastructure" in reason
+
+    def test_dns_resolution_skipped(self):
+        reason = dev_repair.check_skip_filter("DNS resolution failed for api.internal")
+        assert reason is not None
+        assert "infrastructure" in reason
+
+    def test_certificate_error_skipped(self):
+        reason = dev_repair.check_skip_filter("SSL certificate verify failed: self-signed")
+        assert reason is not None
+        assert "tls" in reason
+
+    def test_oom_skipped(self):
+        reason = dev_repair.check_skip_filter("Container killed: OOMKill (limit 512Mi)")
+        assert reason is not None
+        assert "resources" in reason
+
+    def test_disk_full_skipped(self):
+        reason = dev_repair.check_skip_filter("No space left on device")
+        assert reason is not None
+        assert "resources" in reason
+
+    def test_nullpointer_not_skipped(self):
+        """Real code bugs should pass through the filter."""
+        reason = dev_repair.check_skip_filter("NullPointerException in UserService.getProfile")
+        assert reason is None
+
+    def test_import_error_not_skipped(self):
+        reason = dev_repair.check_skip_filter("ModuleNotFoundError: No module named 'jwt'")
+        assert reason is None
+
+    def test_syntax_error_not_skipped(self):
+        reason = dev_repair.check_skip_filter("SyntaxError: unexpected token at line 42")
+        assert reason is None
+
+    def test_type_error_not_skipped(self):
+        reason = dev_repair.check_skip_filter("TypeError: cannot unpack non-sequence NoneType")
+        assert reason is None
+
+    def test_assertion_error_not_skipped(self):
+        reason = dev_repair.check_skip_filter("AssertionError: expected 3 but got 5")
+        assert reason is None
+
+
+class TestRepairFromErrorSkipFilter:
+    """Tests for skip filter integration in repair_from_error."""
+
+    def test_skipped_error_returns_skipped_result(self):
+        result = dev_repair.repair_from_error("HTTP 401 Unauthorized")
+        assert result["success"] is False
+        assert result["skipped"] is True
+        assert "auth" in result["reason"]
+        assert result["run_id"] is None
+
+    def test_force_bypasses_filter(self):
+        """force=True runs pipeline even for filtered errors."""
+        # This will try to import coyote (and succeed since it's installed),
+        # so we mock to avoid actual LLM calls
+        mocks = TestRepairFromError()._mock_coyote_modules()
+        with patch.dict(sys.modules, mocks):
+            _spec.loader.exec_module(dev_repair)
+            result = dev_repair.repair_from_error(
+                "HTTP 401 Unauthorized",
+                force=True,
+            )
+        assert result["success"] is True
+        assert "skipped" not in result
+
+
+# ---------------------------------------------------------------------------
 # Tests: coyote_repair_callback
 # ---------------------------------------------------------------------------
 
@@ -456,6 +570,39 @@ class TestCLIDevRepair:
 
         assert result.exit_code != 0
         assert "provide --error or --log-file" in result.output
+
+    def test_dev_repair_skipped_by_filter(self):
+        """CLI shows skip message for auth errors."""
+        from click.testing import CliRunner
+        from contextcore.cli.dev import dev
+
+        runner = CliRunner()
+
+        with patch("importlib.util.spec_from_file_location") as mock_spec:
+            fake_mod = MagicMock()
+            fake_mod.repair_from_error.return_value = {
+                "success": False,
+                "skipped": True,
+                "reason": "Skipped (auth): \"401\" suggests this is not a code bug. Use --force to override.",
+                "run_id": None,
+                "incident_id": None,
+                "stages": [],
+                "code_changes_count": 0,
+            }
+            mock_loader = MagicMock()
+            mock_loader.exec_module = MagicMock(side_effect=lambda m: None)
+            mock_spec_obj = MagicMock()
+            mock_spec_obj.loader = mock_loader
+            mock_spec.return_value = mock_spec_obj
+
+            with patch("importlib.util.module_from_spec", return_value=fake_mod):
+                result = runner.invoke(dev, [
+                    "repair", "--error", "HTTP 401 Unauthorized",
+                ])
+
+        assert result.exit_code == 0
+        assert "Skipped" in result.output
+        assert "--force" in result.output
 
     def test_dev_repair_json_output(self):
         """Verify --output json produces valid JSON."""

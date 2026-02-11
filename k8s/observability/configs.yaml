@@ -26,7 +26,8 @@ data:
 
     compactor:
       compaction:
-        block_retention: 48h
+        # Retain traces for 40 years
+        block_retention: 350400h
 
     storage:
       trace:
@@ -99,6 +100,8 @@ data:
       max_global_series_per_user: 1000000
       ingestion_rate: 100000
       ingestion_burst_size: 200000
+      # Retain data for 40 years before compactor garbage-collects blocks
+      compactor_blocks_retention_period: 14600d
 ---
 # Alloy Configuration
 apiVersion: v1
@@ -124,8 +127,12 @@ data:
       }
     }
 
-    // Batch Processor
+    // Batch Processor — cap at 200 spans per batch to stay under gRPC 4MB limit
     otelcol.processor.batch "default" {
+      send_batch_size = 200
+      send_batch_max_size = 200
+      timeout = "5s"
+
       output {
         metrics = [otelcol.exporter.prometheus.mimir.input]
         logs    = [otelcol.exporter.loki.default.input]
@@ -223,8 +230,11 @@ data:
       ingestion_burst_size_mb: 20
       max_streams_per_user: 0
       max_line_size: 256kb
-      reject_old_samples: true
-      reject_old_samples_max_age: 168h
+      reject_old_samples: false
+      # Allow ingestion of historical data up to 40 years old
+      reject_old_samples_max_age: 350400h
+      # Retain logs for 40 years
+      retention_period: 350400h
 
     storage_config:
       tsdb_shipper:
@@ -263,17 +273,25 @@ data:
           - record: "project_sprint:contextcore_task_percent_complete:avg"
             expr: |
               avg by (project_id, sprint_id) (
-                project:contextcore_task_percent_complete:max_over_time5m{sprint_id!=""}
+                max_over_time(
+                  {service="contextcore"} | json
+                  | event = "task.progress_updated"
+                  | unwrap percent_complete [5m]
+                )
               )
             labels:
-              source: derived
+              source: loki
           - record: "project_sprint:contextcore_task_completed:count"
             expr: |
               count by (project_id, sprint_id) (
-                project:contextcore_task_percent_complete:max_over_time5m == 100
+                max_over_time(
+                  {service="contextcore"} | json
+                  | event = "task.progress_updated"
+                  | unwrap percent_complete [5m]
+                ) == 100
               )
             labels:
-              source: derived
+              source: loki
           - record: "project_task:contextcore_task_progress:rate1h"
             expr: |
               sum by (project_id, task_id) (
@@ -290,8 +308,8 @@ data:
         rules:
           - record: "project:contextcore_task_count:count_by_status"
             expr: |
-              count by (project_id, to_status) (
-                last_over_time(
+              sum by (project_id, to_status) (
+                count_over_time(
                   {service="contextcore"} | json
                   | event = "task.status_changed" [5m]
                 )
@@ -330,6 +348,58 @@ data:
               runbook_url: "docs/OPERATIONAL_RUNBOOK.md#span-state-loss"
       # NOTE: Task-stalled alert removed from Loki rules. The previous expression
       # used PromQL-only functions (time(), timestamp()) which are invalid in LogQL.
+  startd8-rules.yaml: |
+    groups:
+      - name: startd8_log_errors
+        interval: 1m
+        rules:
+          - record: "service:startd8_error_logs:rate5m"
+            expr: |
+              sum(rate(
+                {app="startd8-agent-runtime"} | json | level = "error" [5m]
+              ))
+            labels:
+              source: loki
+          - record: "provider:startd8_provider_errors:rate5m"
+            expr: |
+              sum by (provider) (rate(
+                {app="startd8-agent-runtime"} | json
+                | level = "error"
+                | provider != "" [5m]
+              ))
+            labels:
+              source: loki
+      - name: startd8_log_cost
+        interval: 1m
+        rules:
+          - record: "model:startd8_log_cost:sum1h"
+            expr: |
+              sum by (model) (sum_over_time(
+                {app="startd8-agent-runtime"} | json
+                | event = "request.completed"
+                | unwrap cost_usd [1h]
+              ))
+            labels:
+              source: loki
+      - name: startd8_log_truncation
+        interval: 1m
+        rules:
+          - record: "service:startd8_log_truncations:count5m"
+            expr: |
+              count_over_time(
+                {app="startd8-agent-runtime"} | json
+                | event = "context.truncated" [5m]
+              )
+            labels:
+              source: loki
+          - record: "service:startd8_sessions:count5m"
+            expr: |
+              count_over_time(
+                {app="startd8-agent-runtime"} | json
+                | event =~ "session.started|session.ended" [5m]
+              )
+            labels:
+              source: loki
 ---
 # Mimir Recording Rules
 apiVersion: v1
@@ -370,6 +440,136 @@ data:
             annotations:
               summary: "Task stalled > 24h"
               runbook_url: "docs/OPERATIONAL_RUNBOOK.md#task-stalled"
+  startd8-rules.yaml: |
+    groups:
+      - name: startd8_availability
+        interval: 1m
+        rules:
+          - record: "service:startd8_availability:rate5m"
+            expr: |
+              sum(rate(startd8_requests_total{status="success"}[5m]))
+              /
+              sum(rate(startd8_requests_total[5m]))
+          - record: "model:startd8_availability:rate5m"
+            expr: |
+              sum by (model) (rate(startd8_requests_total{status="success"}[5m]))
+              /
+              sum by (model) (rate(startd8_requests_total[5m]))
+      - name: startd8_latency
+        interval: 1m
+        rules:
+          - record: "service:startd8_latency_p99:rate5m"
+            expr: |
+              histogram_quantile(0.99,
+                sum(rate(startd8_response_time_ms_bucket[5m])) by (le)
+              )
+          - record: "service:startd8_latency_p50:rate5m"
+            expr: |
+              histogram_quantile(0.50,
+                sum(rate(startd8_response_time_ms_bucket[5m])) by (le)
+              )
+          - record: "model:startd8_latency_p99:rate5m"
+            expr: |
+              histogram_quantile(0.99,
+                sum by (le, model) (rate(startd8_response_time_ms_bucket[5m]))
+              )
+      - name: startd8_throughput
+        interval: 1m
+        rules:
+          - record: "service:startd8_requests:rate5m"
+            expr: |
+              sum(rate(startd8_requests_total[5m]))
+          - record: "model:startd8_requests:rate5m"
+            expr: |
+              sum by (model) (rate(startd8_requests_total[5m]))
+      - name: startd8_cost
+        interval: 1m
+        rules:
+          - record: "model:startd8_cost:rate1h"
+            expr: |
+              sum by (model) (rate(startd8_cost_total[1h])) * 3600
+          - record: "service:startd8_cost:rate1h"
+            expr: |
+              sum(rate(startd8_cost_total[1h])) * 3600
+      - name: startd8_tokens
+        interval: 1m
+        rules:
+          - record: "direction:startd8_tokens:rate5m"
+            expr: |
+              sum by (direction) (rate(startd8_tokens_total[5m]))
+          - record: "model:startd8_tokens:rate5m"
+            expr: |
+              sum by (model, direction) (rate(startd8_tokens_total[5m]))
+      - name: startd8_truncation
+        interval: 1m
+        rules:
+          - record: "service:startd8_truncations:rate5m"
+            expr: |
+              sum(rate(startd8_truncations_total[5m]))
+              /
+              sum(rate(startd8_requests_total[5m]))
+  startd8-alerts.yaml: |
+    groups:
+      - name: startd8_slo_alerts
+        rules:
+          - alert: StartD8AgentRuntimeAvailabilityLow
+            expr: |
+              service:startd8_availability:rate5m < 0.999
+            for: 5m
+            labels:
+              severity: P2
+              service: startd8-agent-runtime
+              namespace: agents
+            annotations:
+              summary: "StartD8 agent runtime availability below 99.9% SLO"
+              description: >
+                Success rate is {{ $value | humanizePercentage }} over the last 5 minutes,
+                below the 99.9% availability target.
+              runbook_url: "runbooks/startd8-agent-runtime-runbook.md#availabilitylow-alert"
+          - alert: StartD8AgentRuntimeLatencyHigh
+            expr: |
+              service:startd8_latency_p99:rate5m > 500
+            for: 5m
+            labels:
+              severity: P2
+              service: startd8-agent-runtime
+              namespace: agents
+            annotations:
+              summary: "StartD8 agent runtime P99 latency exceeds 500ms SLO"
+              description: >
+                P99 response time is {{ $value | humanizeDuration }}ms over the last 5 minutes,
+                exceeding the 500ms latency target.
+              runbook_url: "runbooks/startd8-agent-runtime-runbook.md#latencyhigh-alert"
+      - name: startd8_operational_alerts
+        rules:
+          - alert: StartD8TruncationHigh
+            expr: |
+              service:startd8_truncations:rate5m > 0.05
+            for: 10m
+            labels:
+              severity: P3
+              service: startd8-agent-runtime
+              namespace: agents
+            annotations:
+              summary: "StartD8 context truncation rate exceeds 5%"
+              description: >
+                {{ $value | humanizePercentage }} of requests are experiencing context
+                truncation. This may cause degraded agent output quality.
+              runbook_url: "runbooks/startd8-agent-runtime-runbook.md#truncation-response"
+          - alert: StartD8CostBudgetBurn
+            expr: |
+              service:startd8_cost:rate1h > 10
+            for: 15m
+            labels:
+              severity: P3
+              service: startd8-agent-runtime
+              namespace: agents
+            annotations:
+              summary: "StartD8 cost burn rate exceeds $10/hour"
+              description: >
+                Current cost burn rate is ${{ $value | printf "%.2f" }}/hour, sustained
+                for 15 minutes. Review model usage patterns and consider provider fallback.
+              runbook_url: "runbooks/startd8-agent-runtime-runbook.md#cost-anomaly-response"
 ---
 # Grafana Datasources
 apiVersion: v1

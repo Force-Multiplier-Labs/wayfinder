@@ -48,12 +48,19 @@ def dev():
     default="text",
     help="Output format (default: text).",
 )
+@click.option(
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Bypass skip filter (run pipeline even for auth/infra errors).",
+)
 def dev_repair(
     error: Optional[str],
     log_file: Optional[str],
     severity: str,
     auto_apply: bool,
     output_format: str,
+    force: bool,
 ):
     """Run Coyote incident pipeline on an error (no Rabbit/HTTP required).
 
@@ -100,10 +107,16 @@ def dev_repair(
         error_message=error_message,
         severity=severity,
         auto_apply=auto_apply,
+        force=force,
     )
 
     if output_format == "json":
         click.echo(json.dumps(result, indent=2, default=str))
+        return
+
+    # Skipped by filter
+    if result.get("skipped"):
+        click.echo(result["reason"])
         return
 
     # Text output

@@ -26,6 +26,66 @@ logger = logging.getLogger(__name__)
 # Default output directory (matches coyote_bridge convention)
 DEFAULT_GENERATED_DIR = Path("generated/coyote")
 
+# ---------------------------------------------------------------------------
+# Skip filter — errors unlikely to benefit from a code fix
+# ---------------------------------------------------------------------------
+# Each entry: (category, compiled regex pattern)
+# Patterns are matched case-insensitively against the full error message.
+
+SKIP_PATTERNS: List[tuple] = [
+    # Auth / authz — needs credentials or policy changes, not code
+    ("auth", re.compile(
+        r"(401\b|403\b|unauthorized|forbidden|authentication failed"
+        r"|invalid.?token|expired.?token|access.?denied"
+        r"|invalid.?credentials|login.?failed|not.?authenticated"
+        r"|permission.?denied.*(?:role|policy|rbac))",
+        re.IGNORECASE,
+    )),
+    # Rate limiting — back off, don't patch code
+    ("rate_limit", re.compile(
+        r"(429\b|rate.?limit|too.?many.?requests|throttl|quota.?exceeded)",
+        re.IGNORECASE,
+    )),
+    # Infrastructure / connectivity — not a code bug
+    ("infrastructure", re.compile(
+        r"(connection.?refused|connection.?timed?\s*out|ECONNREFUSED"
+        r"|ETIMEDOUT|dns.?resolution|name.?resolution"
+        r"|no.?route.?to.?host|network.?unreachable"
+        r"|502\b|503\b|504\b|service.?unavailable|bad.?gateway)",
+        re.IGNORECASE,
+    )),
+    # TLS / certificate — config issue
+    ("tls", re.compile(
+        r"(certificate.?(?:verify|expired|invalid|error|revoked)"
+        r"|ssl.?error|tls.?handshake|CERT_|self.?signed)",
+        re.IGNORECASE,
+    )),
+    # Resource exhaustion — needs ops, not code
+    ("resources", re.compile(
+        r"(out.?of.?memory|OOMKill|cannot.?allocate.?memory"
+        r"|disk.?(?:full|space)|no.?space.?left"
+        r"|too.?many.?open.?files|EMFILE|ENFILE)",
+        re.IGNORECASE,
+    )),
+]
+
+
+def check_skip_filter(error_message: str) -> Optional[str]:
+    """
+    Check if an error should skip the repair pipeline.
+
+    Returns:
+        Reason string if the error should be skipped, None if repair should proceed.
+    """
+    for category, pattern in SKIP_PATTERNS:
+        match = pattern.search(error_message)
+        if match:
+            return (
+                f"Skipped ({category}): \"{match.group(0)}\" suggests this is not a code bug. "
+                f"Use --force to override."
+            )
+    return None
+
 
 def coyote_repair_callback(
     feature: "FeatureSpec",
@@ -92,6 +152,7 @@ def repair_from_error(
     context: Optional[Dict[str, Any]] = None,
     auto_apply: bool = False,
     output_dir: Optional[Path] = None,
+    force: bool = False,
 ) -> Dict[str, Any]:
     """
     Run Coyote incident resolution pipeline on an error message.
@@ -102,11 +163,28 @@ def repair_from_error(
         context: Optional dict with labels, affected_files, etc.
         auto_apply: If True, save generated code to generated/coyote/.
         output_dir: Override output directory (default: generated/coyote).
+        force: If True, bypass the skip filter and run pipeline anyway.
 
     Returns:
         Dict with: success, run_id, incident_id, stages,
                    code_changes_count, generated_dir (if auto_apply).
+                   If skipped: success=False, skipped=True, reason=str.
     """
+    # Check skip filter (unless forced)
+    if not force:
+        skip_reason = check_skip_filter(error_message)
+        if skip_reason:
+            logger.info("Repair skipped: %s", skip_reason)
+            return {
+                "success": False,
+                "skipped": True,
+                "reason": skip_reason,
+                "run_id": None,
+                "incident_id": None,
+                "stages": [],
+                "code_changes_count": 0,
+            }
+
     try:
         from contextcore_coyote.models import Incident, IncidentSeverity
         from contextcore_coyote.pipeline import Pipeline

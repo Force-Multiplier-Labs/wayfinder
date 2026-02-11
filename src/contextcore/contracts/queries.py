@@ -7,8 +7,9 @@ that ensure correct metric/label naming based on schema contracts.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Set, Tuple
 
 from contextcore.contracts.metrics import (
     EventType,
@@ -366,8 +367,6 @@ def validate_query_against_schema(
     if schema.metric_prefix and not query.startswith("{"):
         # Looks like PromQL with a metric name
         if not any(query.startswith(schema.metric_prefix) for _ in [1]):
-            # More sophisticated check
-            import re
             metrics_pattern = rf"^{schema.metric_prefix}[a-z_]+"
             if not re.search(metrics_pattern, query):
                 # Check if any known metric is in the query
@@ -381,5 +380,171 @@ def validate_query_against_schema(
                     errors.append(
                         f"Query metric should use prefix '{schema.metric_prefix}'"
                     )
+
+    return errors
+
+
+# ---------------------------------------------------------------------------
+# Rule file metric extraction and validation
+# ---------------------------------------------------------------------------
+
+# Recording rule name pattern: "aggregation:base_metric:function"
+_RECORDING_RULE_RE = re.compile(r"\w+:\w+:\w+")
+
+
+def extract_source_metrics_from_expr(expr: str, prefix: str) -> Set[str]:
+    """
+    Extract source (raw) metric names from a PromQL expression.
+
+    Distinguishes between:
+    - Source metrics: ``startd8_requests_total`` (need to exist in code)
+    - Recording rule references: ``service:startd8_availability:rate5m`` (derived)
+
+    The key insight: source metrics appear as bare identifiers, while recording
+    rule references use ``aggregation:metric:function`` colon syntax.  A naive
+    ``prefix_\\w+`` regex matches substrings of recording rule names, producing
+    false positives.
+
+    Algorithm:
+    1. Find all ``aggregation:metric:function`` tokens and mask them out.
+    2. Match ``prefix_\\w+`` on the remaining text — these are source metrics.
+
+    Args:
+        expr: PromQL or LogQL expression string.
+        prefix: Metric prefix to search for (e.g., ``"startd8"``).
+
+    Returns:
+        Set of source metric names found in the expression.
+
+    Example:
+        >>> expr = "service:startd8_availability:rate5m < 0.999"
+        >>> extract_source_metrics_from_expr(expr, "startd8")
+        set()
+        >>> expr = "sum(rate(startd8_requests_total{status=\\"success\\"}[5m]))"
+        >>> extract_source_metrics_from_expr(expr, "startd8")
+        {'startd8_requests_total'}
+    """
+    # Step 1: Mask recording rule references so they can't produce false matches
+    masked = _RECORDING_RULE_RE.sub(" ", expr)
+
+    # Step 2: Match bare metric names in the cleaned text
+    pattern = re.compile(rf"(?<![:\w]){re.escape(prefix)}_[a-z_0-9]+(?![:\w])")
+    return set(pattern.findall(masked))
+
+
+def extract_metrics_from_rule_file(
+    rule_data: Dict[str, Any],
+    prefix: str,
+) -> Tuple[Set[str], Set[str], Set[str]]:
+    """
+    Parse a Prometheus/Loki rule file and classify all metric references.
+
+    Returns three disjoint sets:
+    - **source_metrics**: Raw metrics referenced in ``expr:`` fields that must
+      exist in application source code.
+    - **recording_rules_defined**: Recording rule names declared in ``record:``
+      fields (these are created by the rules, not pre-existing).
+    - **recording_rules_referenced**: Recording rule names used inside ``expr:``
+      fields (must match a ``record:`` definition, either in this file or another).
+
+    Args:
+        rule_data: Parsed YAML dict with Prometheus rule group structure.
+        prefix: Metric prefix (e.g., ``"startd8"``).
+
+    Returns:
+        Tuple of (source_metrics, recording_rules_defined, recording_rules_referenced).
+
+    Example:
+        >>> import yaml
+        >>> data = yaml.safe_load(open("rules/mimir/startd8-recording-rules.yaml"))
+        >>> src, defined, referenced = extract_metrics_from_rule_file(data, "startd8")
+        >>> "startd8_requests_total" in src
+        True
+        >>> "service:startd8_availability:rate5m" in defined
+        True
+    """
+    source_metrics: Set[str] = set()
+    recording_rules_defined: Set[str] = set()
+    recording_rules_referenced: Set[str] = set()
+
+    prefix_pattern = re.compile(
+        rf"\w+:{re.escape(prefix)}_\w+:\w+"
+    )
+
+    for group in rule_data.get("groups", []):
+        for rule in group.get("rules", []):
+            # Collect recording rule definitions
+            if "record" in rule:
+                recording_rules_defined.add(rule["record"])
+
+            # Analyse expr
+            expr = rule.get("expr", "")
+            if not expr:
+                continue
+
+            # Find recording rule references in the expression
+            for match in prefix_pattern.finditer(expr):
+                recording_rules_referenced.add(match.group())
+
+            # Extract source metrics (with recording rule names masked out)
+            source_metrics.update(
+                extract_source_metrics_from_expr(expr, prefix)
+            )
+
+    return source_metrics, recording_rules_defined, recording_rules_referenced
+
+
+def validate_rule_file_metrics(
+    rule_data: Dict[str, Any],
+    known_source_metrics: Set[str],
+    prefix: str,
+    recording_rules_from_other_files: Optional[Set[str]] = None,
+) -> List[str]:
+    """
+    Validate that all metric references in a Prometheus/Loki rule file resolve.
+
+    Checks:
+    1. Every source metric in ``expr:`` exists in *known_source_metrics*.
+    2. Every recording rule referenced in ``expr:`` is either defined in this
+       file or in *recording_rules_from_other_files*.
+
+    Args:
+        rule_data: Parsed YAML dict with Prometheus rule group structure.
+        known_source_metrics: Set of metric names that exist in application code.
+        prefix: Metric prefix (e.g., ``"startd8"``).
+        recording_rules_from_other_files: Optional set of recording rule names
+            defined in companion rule files.
+
+    Returns:
+        List of error strings (empty if all references resolve).
+
+    Example:
+        >>> errors = validate_rule_file_metrics(
+        ...     rule_data=yaml.safe_load(open("startd8-alerts.yaml")),
+        ...     known_source_metrics={"startd8_requests_total", "startd8_response_time_ms"},
+        ...     prefix="startd8",
+        ...     recording_rules_from_other_files={"service:startd8_availability:rate5m"},
+        ... )
+        >>> errors
+        []
+    """
+    errors: List[str] = []
+
+    src, defined, referenced = extract_metrics_from_rule_file(
+        rule_data, prefix
+    )
+
+    # Check source metrics exist
+    for metric in sorted(src):
+        # Strip _bucket suffix — Prometheus histograms auto-generate it
+        base = metric.removesuffix("_bucket")
+        if metric not in known_source_metrics and base not in known_source_metrics:
+            errors.append(f"Unknown source metric: {metric}")
+
+    # Check recording rule references resolve
+    all_defined = defined | (recording_rules_from_other_files or set())
+    for ref in sorted(referenced):
+        if ref not in all_defined:
+            errors.append(f"Unresolved recording rule reference: {ref}")
 
     return errors
