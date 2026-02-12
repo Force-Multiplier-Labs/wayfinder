@@ -79,6 +79,7 @@ This checks:
 - `artifacts.project_context_path` exists and matches `project_context_checksum`
 
 Use `--output-dir PATH` to validate a seed from a different output directory.
+Use `--project-root PATH` when the seed's paths are relative to a different project root.
 
 ---
 

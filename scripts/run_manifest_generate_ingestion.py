@@ -257,12 +257,29 @@ def parse_args():
         action="store_true",
         help="Validate seed: artifact manifest and project context exist and match checksums (item 13)",
     )
+    parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=None,
+        help="Project root for --validate-pre-generation (default: wayfinder repo root)",
+    )
     return parser.parse_args()
 
 
 def on_progress(current: int, total: int, msg: str) -> None:
     """Progress callback for workflow steps."""
     print(f"  [{current}/{total}] {msg}")
+
+
+def _file_checksum(path: Path) -> str:
+    """Compute SHA-256 checksum of a file."""
+    import hashlib
+
+    hasher = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
 
 
 def validate_artifact_manifest_schema(manifest_path: Path) -> tuple[bool, list[str]]:
@@ -329,20 +346,15 @@ def capture_ingestion_provenance(
     Returns:
         Dict with provenance metadata suitable for JSON serialization.
     """
-    import hashlib
     import socket
     import getpass
     import subprocess
     from datetime import datetime
     
-    def get_file_checksum(file_path: str) -> str:
-        """Compute SHA-256 checksum of a file."""
+    def get_file_checksum(file_path: str) -> str | None:
+        """Compute SHA-256 checksum of a file. Returns None on I/O error."""
         try:
-            hasher = hashlib.sha256()
-            with open(file_path, "rb") as f:
-                for chunk in iter(lambda: f.read(8192), b""):
-                    hasher.update(chunk)
-            return hasher.hexdigest()
+            return _file_checksum(Path(file_path))
         except Exception:
             return None
     
@@ -567,7 +579,7 @@ def write_provenance(provenance: dict, output_dir: Path) -> str:
 def validate_pre_generation(
     seed_path: Path,
     project_root: Path,
-) -> tuple[bool, list[str]]:
+) -> tuple[bool, list[str], list[str]]:
     """
     Validate artifact manifest and project context exist and match checksums (item 13).
 
@@ -576,19 +588,20 @@ def validate_pre_generation(
     - project_context_path exists
     - If checksums in seed, they match the files
 
-    Returns (is_valid, errors).
+    Returns (is_valid, errors, summary_lines). summary_lines describes what was checked.
     """
-    import hashlib
     import json
 
     errors: list[str] = []
+    summary_lines: list[str] = []
+
     if not seed_path.exists():
-        return False, [f"Seed not found: {seed_path}"]
+        return False, [f"Seed not found: {seed_path}"], []
 
     try:
         seed_data = json.loads(seed_path.read_text(encoding="utf-8"))
     except Exception as e:
-        return False, [f"Failed to load seed: {e}"]
+        return False, [f"Failed to load seed: {e}"], []
 
     artifacts = seed_data.get("artifacts") or {}
     manifest_path = artifacts.get("artifact_manifest_path")
@@ -603,14 +616,14 @@ def validate_pre_generation(
         else:
             expected = artifacts.get("artifact_manifest_checksum")
             if expected:
-                hasher = hashlib.sha256()
-                with open(full_path, "rb") as f:
-                    for chunk in iter(lambda: f.read(8192), b""):
-                        hasher.update(chunk)
-                if hasher.hexdigest() != expected:
+                if _file_checksum(full_path) != expected:
                     errors.append(
                         f"Artifact manifest checksum mismatch: {manifest_path}"
                     )
+                else:
+                    summary_lines.append("Artifact manifest: exists, checksum OK")
+            else:
+                summary_lines.append("Artifact manifest: exists (no checksum in seed)")
 
     if not context_path:
         errors.append("Seed missing artifacts.project_context_path")
@@ -621,16 +634,16 @@ def validate_pre_generation(
         else:
             expected = artifacts.get("project_context_checksum")
             if expected:
-                hasher = hashlib.sha256()
-                with open(full_path, "rb") as f:
-                    for chunk in iter(lambda: f.read(8192), b""):
-                        hasher.update(chunk)
-                if hasher.hexdigest() != expected:
+                if _file_checksum(full_path) != expected:
                     errors.append(
                         f"Project context checksum mismatch: {context_path}"
                     )
+                else:
+                    summary_lines.append("Project context: exists, checksum OK")
+            else:
+                summary_lines.append("Project context: exists (no checksum in seed)")
 
-    return len(errors) == 0, errors
+    return len(errors) == 0, errors, summary_lines
 
 
 def add_provenance_ref_to_seed(
@@ -644,7 +657,6 @@ def add_provenance_ref_to_seed(
     Enables traceability from seed back to ingestion run.
     Returns True if updated.
     """
-    import hashlib
     import json
 
     try:
@@ -653,12 +665,7 @@ def add_provenance_ref_to_seed(
         if not provenance_file.exists():
             return False
 
-        # Checksum for verification
-        hasher = hashlib.sha256()
-        with open(provenance_file, "rb") as f:
-            for chunk in iter(lambda: f.read(8192), b""):
-                hasher.update(chunk)
-        checksum = hasher.hexdigest()
+        checksum = _file_checksum(provenance_file)
 
         # Relative path from wayfinder root for portability
         try:
@@ -695,11 +702,12 @@ def main():
     # Pre-generation validation (item 13)
     if args.validate_pre_generation:
         seed_path = args.output_dir / "artisan-context-seed.json"
-        valid, errors = validate_pre_generation(seed_path, WAYFINDER_ROOT)
+        project_root = args.project_root or WAYFINDER_ROOT
+        valid, errors, summary_lines = validate_pre_generation(seed_path, project_root)
         if valid:
             print(f"Pre-generation validation passed: {seed_path}")
-            print("  Artifact manifest: exists, checksum OK")
-            print("  Project context: exists, checksum OK")
+            for line in summary_lines:
+                print(f"  {line}")
             sys.exit(0)
         print(f"Pre-generation validation failed: {seed_path}")
         for err in errors:
