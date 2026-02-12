@@ -66,6 +66,22 @@ Expected when using a template plan with project-specific context. The plan desc
 
 ---
 
+## Pre-Generation Validation
+
+Before running `contextcore manifest generate` (or any artifact generation), validate that the seed's context files exist and match checksums:
+
+```bash
+python3 scripts/run_manifest_generate_ingestion.py --validate-pre-generation
+```
+
+This checks:
+- `artifacts.artifact_manifest_path` exists and matches `artifact_manifest_checksum`
+- `artifacts.project_context_path` exists and matches `project_context_checksum`
+
+Use `--output-dir PATH` to validate a seed from a different output directory.
+
+---
+
 ## Context File Not Found
 
 ### Symptom

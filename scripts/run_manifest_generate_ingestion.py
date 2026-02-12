@@ -248,6 +248,11 @@ def parse_args():
         action="store_true",
         help="Skip cost estimate confirmation (proceed without prompting)",
     )
+    parser.add_argument(
+        "--validate-pre-generation",
+        action="store_true",
+        help="Validate seed: artifact manifest and project context exist and match checksums (item 13)",
+    )
     return parser.parse_args()
 
 
@@ -515,12 +520,14 @@ def merge_onboarding_into_seed(
     if plan_vs_context_note:
         seed_data["plan_vs_context_note"] = plan_vs_context_note
 
-    # Add onboarding section for generators
+    # Add onboarding section for generators (item 12: default_output_dir from conventions)
+    output_conventions = onboarding_data.get("output_path_conventions", {})
+    # Derive default output dir: out/generated contains grafana/, prometheus/, k8s/, etc.
+    default_output_dir = "out/generated" if output_conventions else None
+
     seed_data["onboarding"] = {
         "artifact_types": onboarding_data.get("artifact_types", {}),
-        "output_path_conventions": onboarding_data.get(
-            "output_path_conventions", {}
-        ),
+        "output_path_conventions": output_conventions,
         "parameter_schema": onboarding_data.get("parameter_schema", {}),
         "semantic_conventions": onboarding_data.get(
             "semantic_conventions"
@@ -533,6 +540,8 @@ def merge_onboarding_into_seed(
             "project_context_checksum"
         ),
     }
+    if default_output_dir:
+        seed_data["onboarding"]["default_output_dir"] = default_output_dir
 
     Path(seed_path).write_text(
         json.dumps(seed_data, indent=2, default=str), encoding="utf-8"
@@ -549,6 +558,75 @@ def write_provenance(provenance: dict, output_dir: Path) -> str:
         json.dump(provenance, f, indent=2, default=str)
     
     return str(provenance_path)
+
+
+def validate_pre_generation(
+    seed_path: Path,
+    project_root: Path,
+) -> tuple[bool, list[str]]:
+    """
+    Validate artifact manifest and project context exist and match checksums (item 13).
+
+    Before running manifest generate, ensures:
+    - artifact_manifest_path exists
+    - project_context_path exists
+    - If checksums in seed, they match the files
+
+    Returns (is_valid, errors).
+    """
+    import hashlib
+    import json
+
+    errors: list[str] = []
+    if not seed_path.exists():
+        return False, [f"Seed not found: {seed_path}"]
+
+    try:
+        seed_data = json.loads(seed_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        return False, [f"Failed to load seed: {e}"]
+
+    artifacts = seed_data.get("artifacts") or {}
+    manifest_path = artifacts.get("artifact_manifest_path")
+    context_path = artifacts.get("project_context_path")
+
+    if not manifest_path:
+        errors.append("Seed missing artifacts.artifact_manifest_path")
+    else:
+        full_path = (project_root / manifest_path).resolve()
+        if not full_path.exists():
+            errors.append(f"Artifact manifest not found: {full_path}")
+        else:
+            expected = artifacts.get("artifact_manifest_checksum")
+            if expected:
+                hasher = hashlib.sha256()
+                with open(full_path, "rb") as f:
+                    for chunk in iter(lambda: f.read(8192), b""):
+                        hasher.update(chunk)
+                if hasher.hexdigest() != expected:
+                    errors.append(
+                        f"Artifact manifest checksum mismatch: {manifest_path}"
+                    )
+
+    if not context_path:
+        errors.append("Seed missing artifacts.project_context_path")
+    else:
+        full_path = (project_root / context_path).resolve()
+        if not full_path.exists():
+            errors.append(f"Project context not found: {full_path}")
+        else:
+            expected = artifacts.get("project_context_checksum")
+            if expected:
+                hasher = hashlib.sha256()
+                with open(full_path, "rb") as f:
+                    for chunk in iter(lambda: f.read(8192), b""):
+                        hasher.update(chunk)
+                if hasher.hexdigest() != expected:
+                    errors.append(
+                        f"Project context checksum mismatch: {context_path}"
+                    )
+
+    return len(errors) == 0, errors
 
 
 def add_provenance_ref_to_seed(
@@ -607,6 +685,20 @@ def main():
     # Validate inputs
     if not PLAN_FILE.exists():
         print(f"Error: Plan file not found: {PLAN_FILE}")
+        sys.exit(1)
+
+    # Pre-generation validation (item 13)
+    if args.validate_pre_generation:
+        seed_path = args.output_dir / "artisan-context-seed.json"
+        valid, errors = validate_pre_generation(seed_path, WAYFINDER_ROOT)
+        if valid:
+            print(f"Pre-generation validation passed: {seed_path}")
+            print("  Artifact manifest: exists, checksum OK")
+            print("  Project context: exists, checksum OK")
+            sys.exit(0)
+        print(f"Pre-generation validation failed: {seed_path}")
+        for err in errors:
+            print(f"  - {err}")
         sys.exit(1)
 
     # Collect existing context files (include onboarding-metadata.json when present)
