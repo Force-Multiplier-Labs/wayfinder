@@ -1,3 +1,16 @@
+###############################################################################
+# WARNING: DO NOT APPLY THIS FILE TO THE CLUSTER
+#
+# These manifests use emptyDir volumes which DESTROY persistent data.
+# The canonical observability manifests live in:
+#   ~/Documents/Deploy/observability/*/deployment.yaml
+#
+# To deploy/update the observability stack, run:
+#   cd ~/Documents/Deploy && make up-observability
+#
+# This file is kept for reference only. Applying it will be blocked by
+# the pvc-guard webhook and the o11y-pvc-guard hook.
+###############################################################################
 ---
 # Mimir Deployment
 apiVersion: apps/v1
@@ -18,14 +31,12 @@ spec:
         app: mimir
     spec:
       initContainers:
-        - name: copy-rules
+        - name: create-dirs
           image: busybox:1.36
-          command: ['sh', '-c', 'mkdir -p /data/mimir/rules/anonymous && cp /etc/mimir-rules/*.yaml /data/mimir/rules/anonymous/ 2>/dev/null || true']
+          command: ['sh', '-c', 'mkdir -p /data/mimir/rules /data/mimir/rules-tmp']
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: rules-staging
-              mountPath: /etc/mimir-rules
       containers:
         - name: mimir
           image: grafana/mimir:2.14.0
@@ -64,10 +75,6 @@ spec:
         - name: config
           configMap:
             name: mimir-config
-        - name: rules-staging
-          configMap:
-            name: mimir-rules
-            optional: true
         - name: data
           emptyDir: {}
 ---

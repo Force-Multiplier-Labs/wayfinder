@@ -23,7 +23,7 @@ See @terminology/MANIFEST.yaml for authoritative definitions. Key distinctions:
 
 | Term | Type | What it is |
 |------|------|------------|
-| **ContextCore** | Standard | The metadata model/specification (separate `contextcore-spec` repo) |
+| **ContextCore** | Standard + Library | The metadata model/specification AND reference library (models, types, validators, contracts) |
 | **Wayfinder** | Implementation | The reference implementation suite (this repo) |
 | **Business Observability** | Paradigm | Grounding observability in business context |
 | **Language Model 1.0** | Era | Current computing era defined by conversational interfaces |
@@ -32,12 +32,16 @@ Use `contextcore terminology lookup <term>` for full definitions.
 
 ### History: Separation from ContextCore Monorepo
 
-This repo was extracted from the original `ContextCore` monorepo (at `~/Documents/dev/ContextCore`) which combined both the spec and the implementation. Per [ADR-002](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/adr/002-naming-wayfinder.md):
+This repo was extracted from the original `ContextCore` monorepo (at `~/Documents/dev/ContextCore`). Per [ADR-002](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/adr/002-naming-wayfinder.md) (Model C):
 
-- **ContextCore** = the standard/specification (schemas, semantic conventions, protocols) — now in `contextcore-spec` repo
-- **Wayfinder** = Force Multiplier Labs' reference implementation — this repo
+- **ContextCore** = the standard/specification AND reference library (models, types, validators, contracts, semantic conventions) — `contextcore-spec` repo. Ships the `contextcore` Python package with reusable code any implementation can import.
+- **Wayfinder** = Force Multiplier Labs' reference deployment suite — this repo. Consumes ContextCore; provides runtime wiring, dashboards, K8s manifests, expansion pack orchestration.
 
-The separation enables ecosystem growth and clarifies that the metadata model has value independent of specific tooling. Package names (`contextcore`, `contextcore-rabbit`, etc.) remain unchanged because they implement the ContextCore standard. The `contextcore` CLI command and `contextcore.io` CRD API group also remain unchanged.
+**Litmus test (from ADR-002):** "Would a third-party developer building their own implementation need this?" If yes → ContextCore. If no → Wayfinder.
+
+The ContextCore repo is **actively developed** — the `archived-post-separation` git tag marks completion of the monorepo split (2026-02-01), not a code freeze. New contracts, types, and models belong in ContextCore, not here.
+
+Package names (`contextcore`, `contextcore-rabbit`, etc.) remain unchanged because they implement the ContextCore standard. The `contextcore` CLI command and `contextcore.io` CRD API group also remain unchanged.
 
 ## Tech Stack
 
@@ -55,7 +59,7 @@ The separation enables ecosystem growth and clarifies that the metadata model ha
 
 ## Repository Layout
 
-This is the **Wayfinder implementation repo**. The ContextCore specification (schemas, semantic conventions, protocols, terminology) lives in the separate `contextcore-spec` repo.
+This is the **Wayfinder deployment suite repo**. The ContextCore standard + library (schemas, semantic conventions, models, types, validators, contracts) lives in the separate `contextcore-spec` repo. Wayfinder consumes ContextCore; it should not duplicate or redefine types that originate there.
 
 ```
 wayfinder/
@@ -401,7 +405,7 @@ All domain types are in `src/contextcore/contracts/types.py`:
 | ADR | Decision | Confidence |
 |-----|----------|------------|
 | [001](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/adr/001-tasks-as-spans.md) | Model tasks as OpenTelemetry spans | 0.95 |
-| [002](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/adr/002-naming-wayfinder.md) | Separate naming: ContextCore (standard) vs Wayfinder (implementation) | Accepted |
+| [002](https://github.com/Force-Multiplier-Labs/contextcore-spec/blob/main/docs/adr/002-naming-wayfinder.md) | Naming + Model C: ContextCore (standard + library) vs Wayfinder (deployment suite) | Accepted |
 
 ## Must Do
 
@@ -415,6 +419,8 @@ All domain types are in `src/contextcore/contracts/types.py`:
 
 ## Must Avoid
 
+- **Applying `k8s/observability/` manifests to the cluster** -- these use `emptyDir` and will destroy persistent data. The canonical manifests are in `~/Documents/Deploy/observability/`
+- **Constructing deployment YAML from scratch** for any observability component -- always edit the on-disk files in the Deploy project
 - Duplicating context in multiple places
 - Manual annotation of K8s resources (use controller)
 - Storing sensitive data in ProjectContext
@@ -425,8 +431,8 @@ All domain types are in `src/contextcore/contracts/types.py`:
 ## Naming Conventions
 
 When referring to the project:
-- **"ContextCore"** = the standard, specification, semantic conventions, CRD API group
-- **"Wayfinder"** = the suite of tools, the fleet, the reference implementation
+- **"ContextCore"** = the standard + library (specification, semantic conventions, models, types, validators, contracts, CRD API group). Ships reusable code.
+- **"Wayfinder"** = the deployment suite (runtime wiring, dashboards, K8s manifests, expansion pack orchestration)
 - Package names (`contextcore`, `contextcore-rabbit`) stay lowercase — they implement the standard
 - The `contextcore` CLI command and `contextcore.io` CRD API group are unchanged
 
@@ -501,12 +507,37 @@ Wayfinder is migrating to [OTel GenAI Semantic Conventions](https://opentelemetr
 
 ## Kubernetes Deployment
 
+**CRITICAL: The observability stack is managed by the Deploy project, NOT this repo.**
+
+The canonical observability manifests live at `~/Documents/Deploy/observability/` and use
+PersistentVolumeClaims for data persistence. The `k8s/observability/` directory in THIS repo
+is a simplified, development-only copy that uses `emptyDir` -- applying it to the shared
+cluster **will destroy all metrics, logs, traces, and dashboards**.
+
 ```bash
-kubectl apply -k k8s/observability/
-contextcore install init --endpoint tempo.observability:4317
+# CORRECT: Deploy/update the observability stack from the canonical source
+cd ~/Documents/Deploy && make up-observability
+
+# CORRECT: Reload only ConfigMaps (dashboards, datasources, recording rules)
+cd ~/Documents/Deploy && make reload-configs
+
+# CORRECT: Check if the stack is healthy
+cd ~/Documents/Deploy && make health
+
+# CORRECT: Check for PVC drift (emptyDir replacing PVCs)
+cd ~/Documents/Deploy && make drift-check
+
+# WRONG -- DO NOT RUN:
+# kubectl apply -k k8s/observability/           ← uses emptyDir, destroys data
+# kubectl apply -f k8s/observability/*.yaml     ← same problem
 ```
 
-Deploys: Grafana, Tempo, Mimir, Loki, Alloy (OTLP collector).
+To load wayfinder artifacts (recording rules, dashboards) into the running stack, use
+the contextcore CLI -- not kubectl apply on this repo's manifests:
+```bash
+contextcore install init --endpoint tempo.observability:4317
+contextcore dashboards provision
+```
 
 ## Documentation
 

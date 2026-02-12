@@ -1,70 +1,187 @@
-# Wayfinder Project Context
+# Wayfinder Project Context — v2 (Active Control Plane)
 # Reference implementation of the ContextCore metadata standard
-# Updated: 2026-02-01
+# Migrated: 2026-02-11 (v1 → v2)
+# Updated: 2026-02-11
 
-project:
-  id: "wayfinder"
-  name: "Wayfinder"
-  epic: "PROJECT-O11Y"
-  description: |
-    Reference implementation of the ContextCore metadata standard.
-    Project management observability framework modeling tasks as OpenTelemetry spans.
-    Dual-telemetry architecture: spans to Tempo (hierarchy, timing, TraceQL) and
-    structured logs to Loki (events, status changes, metrics derivation via recording rules).
+apiVersion: contextcore.io/v1alpha2
+kind: ContextManifest
 
-status:
-  phase: "Post-separation from monorepo"
+metadata:
+  name: wayfinder
+  owners:
+    - team: observability-team
+  changelog:
+    - date: "2026-02-01"
+      version: "1.0"
+      actor: human:neil
+      summary: "Initial v1 manifest with project, business, and requirements"
+    - date: "2026-02-11"
+      version: "2.0"
+      actor: agent:claude
+      summary: "Migrate to v2 with strategy objectives and agent guidance"
 
-business:
-  criticality: critical
-  owner: "observability-team"
-  value: "Eliminates manual status reporting by deriving project health from artifact metadata"
-  costCenter: "platform-engineering"
+# Operational Context (synced to Kubernetes CRD)
+spec:
+  project:
+    id: "wayfinder"
+    name: "Wayfinder"
+    description: |
+      Reference implementation of the ContextCore metadata standard.
+      Project management observability framework modeling tasks as OpenTelemetry spans.
+      Dual-telemetry architecture: spans to Tempo (hierarchy, timing, TraceQL) and
+      structured logs to Loki (events, status changes, metrics derivation via recording rules).
+  business:
+    criticality: critical
+    owner: "observability-team"
+    value: enabler  # Eliminates manual status reporting by deriving project health from artifact metadata
+  requirements:
+    availability: "99.9"
+    latencyP99: "500ms"
+    latencyP50: "100ms"
+    dataRetention: "30 days"
+    throughput: "1000rps"
+    errorBudget: "0.1"
+  targets:
+    - kind: Service
+      name: wayfinder-core
+      namespace: observability
+      metricsEndpoint: "/metrics"
 
-requirements:
-  availability: "99.9%"
-  latencyP99: "500ms"
-  latencyP50: "100ms"
-  dataRetention: "30 days"
-  throughput: "1000 spans/second"
-  errorBudget: "0.1%"
+# Strategic Context (the "Why")
+strategy:
+  objectives:
+    - id: OBJ-MANIFEST-GENERATE
+      description: "Implement contextcore manifest generate command — consume artifact manifests to produce real observability files"
+      keyResults:
+        - metricKey: artifact_types_covered
+          unit: count
+          target: 7
+          targetOperator: gte
+          baseline: 0
+          window: "30d"
+        - metricKey: generator_test_coverage
+          unit: "%"
+          target: 80
+          targetOperator: gte
+          baseline: 0
+          window: "30d"
 
-ecosystem:
-  namingConvention: "animal-anishinaabe"
-  packages:
-    - name: "contextcore"
-      animal: "Spider"
-      anishinaabe: "Asabikeshiinh"
-      purpose: "Core framework—tasks as spans, agent insights, observability"
-      status: "beta"
-    - name: "contextcore-rabbit"
-      animal: "Rabbit"
-      anishinaabe: "Waabooz"
-      purpose: "Alert-triggered automation"
-      status: "beta"
-    - name: "contextcore-fox"
-      animal: "Fox"
-      anishinaabe: "Waagosh"
-      purpose: "Context enrichment for alert automation"
-      status: "beta"
-    - name: "contextcore-coyote"
-      animal: "Coyote"
-      anishinaabe: "Wiisagi-ma'iingan"
-      purpose: "Multi-agent incident resolution pipeline"
-      status: "beta"
-    - name: "contextcore-beaver"
-      animal: "Beaver"
-      anishinaabe: "Amik"
-      purpose: "LLM provider abstraction with cost tracking"
-      status: "beta"
-    - name: "contextcore-squirrel"
-      animal: "Squirrel"
-      anishinaabe: "Ajidamoo"
-      purpose: "Skills library for token-efficient agent discovery"
-      status: "beta"
-    - name: "contextcore-owl"
-      animal: "Owl"
-      anishinaabe: "Gookooko'oo"
-      purpose: "Grafana plugins (internal)"
-      status: "internal"
-      userFacing: false
+    - id: OBJ-REGISTRY-ARCH
+      description: "Build a registry-based generator architecture with uniform function signatures and pluggable backends"
+      keyResults:
+        - metricKey: generators_registered
+          unit: count
+          target: 7
+          targetOperator: gte
+          baseline: 0
+          window: "30d"
+
+    - id: OBJ-INCREMENTAL
+      description: "Support incremental generation with coverage tracking and manifest updates"
+      keyResults:
+        - metricKey: incremental_generation_support
+          unit: count
+          target: 1
+          targetOperator: gte
+          baseline: 0
+
+    - id: OBJ-ROBUSTNESS
+      description: "Provide robust error handling with per-artifact failures, not abort-all"
+      keyResults:
+        - metricKey: graceful_failure_rate
+          unit: "%"
+          target: 100
+          targetOperator: gte
+          baseline: 0
+
+  tactics:
+    - id: TAC-GENERATOR-REGISTRY
+      description: "Create registry-based generator dispatch with uniform function signatures"
+      status: planned
+      linkedObjectives:
+        - OBJ-REGISTRY-ARCH
+        - OBJ-MANIFEST-GENERATE
+
+    - id: TAC-SEVEN-GENERATORS
+      description: "Implement generators for all 7 artifact types (ServiceMonitor, PrometheusRule, LokiRule, SLO, NotificationPolicy, Runbook, Dashboard)"
+      status: planned
+      linkedObjectives:
+        - OBJ-MANIFEST-GENERATE
+
+    - id: TAC-INCREMENTAL-TRACKING
+      description: "Add coverage tracking and manifest update for incremental generation"
+      status: planned
+      linkedObjectives:
+        - OBJ-INCREMENTAL
+
+    - id: TAC-SCHEMA-VALIDATION
+      description: "Validate generated artifacts against their schemas"
+      status: planned
+      linkedObjectives:
+        - OBJ-ROBUSTNESS
+
+# Governance Context (agent directives)
+guidance:
+  focus:
+    areas:
+      - observability artifact generation
+      - registry architecture
+      - schema validation
+    reason: "manifest generate command is the current sprint priority — all 55 features"
+    until: "2026-03-01"
+
+  constraints:
+    - id: C-NO-ABORT-ALL
+      rule: "Per-artifact errors must not abort the entire generation run — use per-artifact failure tracking"
+      severity: blocking
+      rationale: "A single bad artifact should not prevent 6 others from generating"
+      appliesTo:
+        - src/contextcore/generators/
+
+    - id: C-UNIFORM-SIGNATURES
+      rule: "All generator functions must accept (artifact_spec, context_manifest, output_dir) and return GenerationResult"
+      severity: blocking
+      rationale: "Registry dispatch requires uniform function signatures"
+      appliesTo:
+        - src/contextcore/generators/
+
+    - id: C-DERIVATION-TRACKING
+      rule: "Every generated artifact must include derivation_rules tracing config values back to manifest fields"
+      severity: warning
+      rationale: "Audit trail for how business context drives observability config"
+
+    - id: C-EXISTING-FILE-CHECK
+      rule: "Check for existing artifacts before overwriting — require --force flag for overwrites"
+      severity: warning
+      rationale: "Prevent accidental destruction of hand-tuned artifacts"
+      appliesTo:
+        - src/contextcore/cli/
+
+  preferences:
+    - id: PREF-YAML-OUTPUT
+      description: "Use YAML for generated Kubernetes resources, JSON for dashboards"
+      example: "PrometheusRule → YAML, Grafana Dashboard → JSON"
+
+    - id: PREF-JINJA-TEMPLATES
+      description: "Use Jinja2 templates for artifact generation rather than string interpolation"
+      example: "templates/prometheus_rule.yaml.j2"
+
+    - id: PREF-DRY-RUN
+      description: "Support --dry-run flag that shows what would be generated without writing files"
+
+  questions:
+    - id: Q-TEMPLATE-LOCATION
+      question: "Should generator templates live in src/contextcore/generators/templates/ or be embedded in generator code?"
+      status: open
+      priority: medium
+
+    - id: Q-DASHBOARD-FORMAT
+      question: "Should dashboard generation target Grafana provisioning format or Grafana API format?"
+      status: open
+      priority: high
+
+# Ecosystem metadata (preserved from v1, not part of v2 schema but kept for reference)
+# ecosystem:
+#   namingConvention: "animal-anishinaabe"
+#   packages: [contextcore, contextcore-rabbit, contextcore-fox, contextcore-coyote,
+#              contextcore-beaver, contextcore-squirrel, contextcore-owl]

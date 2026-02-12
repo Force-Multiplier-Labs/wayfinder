@@ -133,3 +133,14 @@ wayfinder-mixin/jsonnetfile.lock.json
 
 # Legacy directory remnants
 contextcore-grafana/
+
+# Startd8 generated state
+.startd8/
+.startd8_state/
+plans/.startd8/
+
+# Build/run output
+out/
+
+# Reflection logs
+reflection/
