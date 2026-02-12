@@ -331,6 +331,8 @@ def estimate_ingestion_cost(plan_path: Path, review_rounds: int) -> float:
     Heuristic based on typical LLM usage: parse + assess + transform + refine.
     Uses file size (bytes) as a proxy for character count.
     Plan size is capped at MAX_PLAN_SIZE_BYTES for sanity.
+    Actual cost may differ from this estimate depending on model pricing and
+    response length.
     """
     plan_size = plan_path.stat().st_size if plan_path.exists() else 0
     plan_size = min(plan_size, MAX_PLAN_SIZE_BYTES)
