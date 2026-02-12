@@ -1,14 +1,14 @@
 # Wayfinder Benefits Manifest
-# Version: 1.5.0
+# Version: 1.6.0
 # Created: 2026-01-28
-# Updated: 2026-02-05
+# Updated: 2026-02-11
 #
 # PURPOSE: First-class user benefits that drive capability creation.
 # Benefits with delivery_status: "gap" represent roadmap opportunities.
 
 manifest_id: wayfinder.benefits
 name: Wayfinder User Benefits
-version: "1.5.0"
+version: "1.6.0"
 description: |
   User benefits for ContextCore, articulated independently of implementation.
   Benefits drive capability design; gaps become roadmap items.
@@ -467,6 +467,7 @@ benefits:
       - contextcore.a2a.server
       - contextcore.a2a.client
       - contextcore.a2a.task_adapter
+      - contextcore.coyote.pipeline
     delivery_status: partial
 
     priority: medium
@@ -760,13 +761,96 @@ benefits:
       - "Decomposition triggered for over-limit requests"
       - "Truncation events emitted as telemetry"
 
+  # ============================================================================
+  # CATEGORY: INCIDENT AUTO-RESOLUTION
+  # ============================================================================
+
+  - benefit_id: incident.auto_repair
+    name: "Automated Incident Investigation and Repair"
+    value_statement: "Users can get AI-powered incident investigation and fix proposals automatically so they reduce MTTR without manual root-cause analysis"
+
+    personas:
+      - persona_id: developer
+        pain_point: "I spend hours manually investigating production errors before I can start fixing"
+        value_received: "Coyote pipeline investigates errors and produces fix proposals automatically"
+        importance: high
+      - persona_id: operator
+        pain_point: "Alert fires and I have to manually trace through logs, metrics, and code"
+        value_received: "Alerts trigger automated investigation via Rabbit-Coyote bridge"
+        importance: critical
+
+    measurable_outcome: "MTTR reduced by 50%+ for common error patterns"
+    measurement_method: "Time from error detection to fix proposal availability"
+    baseline: "30-120 minutes of manual investigation per incident"
+
+    origin:
+      type: design_decision
+      ref: "Coyote pipeline design — multi-agent incident resolution"
+      date: 2026-02-01
+
+    delivered_by:
+      - contextcore.coyote.pipeline
+      - contextcore.coyote.dev_repair
+      - contextcore.coyote.rabbit_bridge
+    delivery_status: delivered
+    delivered_at: "2026-02-10"
+
+    acceptance_criteria:
+      - "Dev repair CLI accepts error messages and produces fix proposals"
+      - "Coyote pipeline stages (triage, investigate, implement, verify) execute automatically"
+      - "Rabbit webhook actions trigger Coyote investigation from alerts"
+      - "Results include root cause analysis and proposed code changes"
+
+  # ============================================================================
+  # CATEGORY: KNOWLEDGE DISCOVERY
+  # ============================================================================
+
+  - benefit_id: knowledge.engineering_discovery
+    name: "Engineering Knowledge Discovery in Observability"
+    value_statement: "Users can search engineering knowledge and lessons learned in Grafana alongside metrics and traces so they don't need a separate wiki or documentation tool"
+
+    personas:
+      - persona_id: developer
+        pain_point: "Engineering lessons are in markdown files that agents and dashboards can't query"
+        value_received: "Knowledge and lessons queryable via TraceQL in Grafana Explore"
+        importance: high
+      - persona_id: ai_agent
+        pain_point: "I can't discover relevant engineering knowledge without reading entire files"
+        value_received: "Progressive disclosure: browse summaries (~50 tokens), drill into full content when needed"
+        importance: critical
+      - persona_id: engineering_leader
+        pain_point: "No visibility into what engineering knowledge exists across teams"
+        value_received: "Dashboard showing skills, processes, tools, and lessons across all projects"
+        importance: medium
+
+    measurable_outcome: "Knowledge lookup in <10 seconds vs minutes of file searching"
+    measurement_method: "Time to find relevant engineering lesson or skill definition"
+    baseline: "Search markdown files, grep through directories—2-5 minutes"
+
+    origin:
+      type: design_decision
+      ref: "Squirrel knowledge emission architecture"
+      date: 2026-02-01
+
+    delivered_by:
+      - contextcore.squirrel.knowledge_emit
+      - contextcore.squirrel.lessons_emit
+    delivery_status: delivered
+    delivered_at: "2026-02-10"
+
+    acceptance_criteria:
+      - "Knowledge items emitted as OTel spans to Tempo"
+      - "Lessons learned emitted with domain/leg/lesson hierarchy"
+      - "TraceQL queries return knowledge by type, domain, or tag"
+      - "Progressive disclosure: summaries first, full content on demand"
+
 # ==============================================================================
 # GAP SUMMARY
 # ==============================================================================
 
 gap_summary:
-  total_benefits: 14
-  delivered: 6
+  total_benefits: 16
+  delivered: 8
   partial: 2
   gaps: 6
 
@@ -798,13 +882,28 @@ gap_summary:
       - benefit_id: visibility.cycle_time_realtime
         note: "Sprint dashboard exists, recording rules pending"
       - benefit_id: ai.orchestration_multi
-        note: "A2A protocol foundation delivered (Phase 4), task routing and result aggregation pending"
+        note: "A2A protocol + Coyote pipeline delivered; general-purpose task routing and result aggregation pending"
 
 # ==============================================================================
 # CHANGELOG
 # ==============================================================================
 
 changelog:
+  - version: "1.6.0"
+    date: "2026-02-11"
+    changes:
+      - "Added incident.auto_repair benefit (delivered) — Coyote pipeline auto-investigation"
+      - "Added knowledge.engineering_discovery benefit (delivered) — Squirrel knowledge emission"
+      - "ai.orchestration_multi: Added contextcore.coyote.pipeline to delivered_by list"
+      - "New category: INCIDENT AUTO-RESOLUTION"
+      - "New category: KNOWLEDGE DISCOVERY"
+      - "16 total benefits: 8 delivered, 2 partial, 6 gaps"
+  - version: "1.5.0"
+    date: "2026-02-05"
+    changes:
+      - "Added context.unified_source_of_truth benefit (delivered)"
+      - "Added context.crd_without_bloat benefit (delivered)"
+      - "New category: CONTEXT MANAGEMENT"
   - version: "1.3.0"
     date: "2026-01-29"
     changes:

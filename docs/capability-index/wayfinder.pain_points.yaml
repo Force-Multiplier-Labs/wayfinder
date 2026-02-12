@@ -1,11 +1,16 @@
 # Wayfinder Pain Points Manifest
-# Version: 2.1.0
+# Version: 2.2.0
 # Created: 2026-01-30
-# Updated: 2026-02-05
+# Updated: 2026-02-11
 #
-# PURPOSE: Reverse-engineered from wayfinder.benefits.yaml v1.2.0.
+# PURPOSE: Reverse-engineered from wayfinder.benefits.yaml v1.6.0.
 # Captures the pain points, frictions, and costs that Wayfinder benefits address.
 # Organized by persona as the primary dimension.
+#
+# v2.2 ADDITIONS:
+# - New operator pain point: manual incident investigation (addressed by Coyote)
+# - New developer pain point: knowledge scattered in files (addressed by Squirrel)
+# - Updated by_delivery_status to include incident.auto_repair and knowledge.engineering_discovery
 #
 # v2.0 ADDITIONS:
 # - Order-of-magnitude ROI estimates for every pain point
@@ -16,7 +21,7 @@
 
 manifest_id: wayfinder.pain_points
 name: Wayfinder Pain Points
-version: "2.1.0"
+version: "2.2.0"
 description: |
   Pain points, frictions, and costs experienced by ContextCore personas,
   reverse-engineered from the benefits manifest. Each pain traces to
@@ -25,7 +30,7 @@ description: |
 
 owner: force-multiplier-labs
 
-benefits_manifest_ref: wayfinder.benefits v1.2.0
+benefits_manifest_ref: wayfinder.benefits v1.6.0
 
 # ==============================================================================
 # ORG-SIZE PROFILES
@@ -180,18 +185,18 @@ personas:
   developer:
     name: Developer
     description: Individual contributor writing code
-    total_pain_points: 9
+    total_pain_points: 10
 
     persona_roi_summary:
       method: sum of individual pain point estimates
       annual_cost_usd:
-        startup: 66_000
-        mid_market: 307_000
-        enterprise: 1_136_000
+        startup: 71_000
+        mid_market: 332_000
+        enterprise: 1_236_000
       magnitude:
-        startup: "~$70K"
-        mid_market: "~$310K"
-        enterprise: "~$1.1M"
+        startup: "~$71K"
+        mid_market: "~$332K"
+        enterprise: "~$1.2M"
       top_cost_drivers:
         - pain_id: dev.context_reexplanation
           pct_of_persona: 19     # $12.5K of $66K
@@ -654,6 +659,51 @@ personas:
         evidence_source:
           type: design_decision
           ref: "Context Manifest design session 2026-02-05"
+
+      - pain_id: dev.knowledge_in_files_only
+        name: "Engineering Knowledge Trapped in Markdown Files"
+        description: "Lessons learned and engineering knowledge live in markdown files that agents and dashboards can't query"
+        friction_category: context_fragmentation
+
+        severity: high
+        emotional_weight: frustration
+
+        cost_model:
+          frequency: 2
+          frequency_unit: per_week
+          unit_cost: 10
+          unit_cost_basis: minutes
+          affected_pct: 60
+          baseline_statement: "Search markdown files, grep through directories—2-5 minutes per lookup"
+          compounding: true
+
+        roi_estimate:
+          method: time_based
+          formula: "devs × 2/wk × 0.167hr × 50wk × 60% × $100/hr"
+          per_person_annual:
+            hours: 10.0
+            cost_usd: 1_000
+          annual_cost_usd:
+            startup: 5_000        # 5 devs × $1,000
+            mid_market: 25_000    # 25 devs × $1,000
+            enterprise: 100_000   # 100 devs × $1,000
+          magnitude:
+            startup: "~$5K"
+            mid_market: "~$25K"
+            enterprise: "~$100K"
+          confidence: medium
+          note: "Compounding: grows as knowledge base expands across more files and directories"
+
+        current_workaround: "Grep through markdown files, read index files, hope for good naming"
+        workaround_quality: acceptable
+
+        addressed_by:
+          - benefit_id: knowledge.engineering_discovery
+            relief: full
+
+        evidence_source:
+          type: design_decision
+          ref: "Squirrel knowledge emission architecture"
 
   # ============================================================================
   # PROJECT MANAGER
@@ -1196,23 +1246,25 @@ personas:
   operator:
     name: Operator / SRE
     description: Maintains production systems
-    total_pain_points: 3
+    total_pain_points: 4
 
     persona_roi_summary:
       method: sum of individual pain point estimates
       annual_cost_usd:
-        startup: 13_390
-        mid_market: 49_260
-        enterprise: 209_600
+        startup: 21_502
+        mid_market: 99_596
+        enterprise: 710_720
       magnitude:
-        startup: "~$13K"
-        mid_market: "~$49K"
-        enterprise: "~$210K"
+        startup: "~$22K"
+        mid_market: "~$100K"
+        enterprise: "~$711K"
       top_cost_drivers:
+        - pain_id: ops.manual_incident_investigation
+          pct_of_persona: 38     # New: investigation labor + downtime
         - pain_id: ops.undeclared_dependency_failures
-          pct_of_persona: 59     # Downtime cost dominates
+          pct_of_persona: 37
         - pain_id: ops.2am_no_context
-          pct_of_persona: 27
+          pct_of_persona: 17
 
     pain_points:
 
@@ -1270,6 +1322,60 @@ personas:
         evidence_source:
           type: incident
           ref: "Post-incident review 2025-11"
+
+      - pain_id: ops.manual_incident_investigation
+        name: "Manual Incident Root Cause Analysis"
+        description: "Every production error requires manual log/trace/code investigation before I can start fixing"
+        friction_category: crisis_friction
+
+        severity: high
+        emotional_weight: exhaustion
+
+        cost_model:
+          frequency: 2
+          frequency_unit: per_month
+          unit_cost: 60
+          unit_cost_basis: minutes
+          affected_pct: 80
+          baseline_statement: "30-120 minutes of manual investigation per incident"
+          compounding: false
+
+        roi_estimate:
+          method: time_plus_risk
+          rationale: |
+            Direct SRE labor: 1hr/incident investigating root cause.
+            MTTR impact: investigation delay × downtime cost/hr.
+          formula: "SREs × incidents/yr × (labor_cost + downtime_cost_per_incident)"
+          components:
+            direct_labor:
+              per_sre_annual_hours: 19.2    # 24 incidents × 0.8hr
+              per_sre_annual_usd: 2_112     # 19.2hr × $110
+            mttr_downtime:
+              per_incident_delay_hours: 0.5
+              startup: 250                  # 0.5hr × $500/hr
+              mid_market: 1_000             # 0.5hr × $2,000/hr
+              enterprise: 5_000             # 0.5hr × $10,000/hr
+          annual_cost_usd:
+            startup: 8_112        # 1 SRE × ($2,112 + 24 × $250)
+            mid_market: 50_336    # 3 SREs × ($2,112 + 48 × $1,000)
+            enterprise: 501_120   # 10 SREs × ($2,112 + 96 × $5,000)
+          magnitude:
+            startup: "~$8K"
+            mid_market: "~$50K"
+            enterprise: "~$501K"
+          confidence: medium
+          note: "Downtime cost dominates at enterprise scale. Coyote automates the investigation phase."
+
+        current_workaround: "Manually grep logs, search traces, read code to identify root cause"
+        workaround_quality: poor
+
+        addressed_by:
+          - benefit_id: incident.auto_repair
+            relief: partial
+
+        evidence_source:
+          type: design_decision
+          ref: "Coyote pipeline design — multi-agent incident resolution"
 
       - pain_id: ops.incompatible_agent_telemetry
         name: "Incompatible Agent Telemetry Formats"
@@ -1751,21 +1857,21 @@ personas:
 # ==============================================================================
 
 summary:
-  total_pain_points: 28
-  unique_pain_themes: 14
+  total_pain_points: 30
+  unique_pain_themes: 16
 
   by_friction_category:
     redundant_effort: 4
-    context_fragmentation: 3
+    context_fragmentation: 4
     delayed_feedback: 5
     blind_spots: 4
     interoperability_tax: 5
     trust_deficit: 2
-    crisis_friction: 3
+    crisis_friction: 4
 
   by_severity:
     critical: 8
-    high: 14
+    high: 16
     medium: 5
     low: 1
 
@@ -1801,9 +1907,9 @@ roi_rollup:
 
   by_persona:
     developer:
-      startup: 66_000
-      mid_market: 307_000
-      enterprise: 1_136_000
+      startup: 71_000
+      mid_market: 332_000
+      enterprise: 1_236_000
     project_manager:
       startup: 20_225
       mid_market: 62_175
@@ -1813,9 +1919,9 @@ roi_rollup:
       mid_market: 100_250
       enterprise: 372_500
     operator:
-      startup: 13_390
-      mid_market: 49_260
-      enterprise: 340_000       # Dominated by downtime costs at scale
+      startup: 21_502
+      mid_market: 99_596
+      enterprise: 710_720     # Dominated by downtime costs at scale
     compliance:
       startup: 15_200
       mid_market: 15_200
@@ -1831,14 +1937,14 @@ roi_rollup:
 
   total_annual_cost:
     startup:
-      usd: 163_000
-      magnitude: "~$160K"
+      usd: 176_000
+      magnitude: "~$176K"
     mid_market:
-      usd: 633_000
-      magnitude: "~$630K"
+      usd: 708_000
+      magnitude: "~$710K"
     enterprise:
-      usd: 2_546_000
-      magnitude: "~$2.5M"
+      usd: 3_148_000
+      magnitude: "~$3.1M"
 
   # --------------------------------------------------------------------------
   # BY FRICTION CATEGORY (approximate allocation)
@@ -1856,14 +1962,14 @@ roi_rollup:
         enterprise: 23
 
     context_fragmentation:
-      description: "Status compilation, tool-switching, portfolio assembly"
-      startup: 21_000
-      mid_market: 63_000
-      enterprise: 211_000
+      description: "Status compilation, tool-switching, portfolio assembly, knowledge in files"
+      startup: 26_000
+      mid_market: 88_000
+      enterprise: 311_000
       pct_of_total:
-        startup: 13
-        mid_market: 10
-        enterprise: 8
+        startup: 15
+        mid_market: 12
+        enterprise: 10
 
     delayed_feedback:
       description: "Late cycle time, deploy-time discovery, truncation"
@@ -1906,14 +2012,14 @@ roi_rollup:
         enterprise: 8
 
     crisis_friction:
-      description: "Incident context, audit evidence, team disruption"
-      startup: 35_000
-      mid_market: 89_000
-      enterprise: 452_000
+      description: "Incident context, investigation, audit evidence, team disruption"
+      startup: 43_000
+      mid_market: 139_000
+      enterprise: 953_000
       pct_of_total:
-        startup: 21
-        mid_market: 14
-        enterprise: 18
+        startup: 24
+        mid_market: 20
+        enterprise: 30
 
   # --------------------------------------------------------------------------
   # DELIVERED vs GAP SPLIT
@@ -1930,18 +2036,22 @@ roi_rollup:
         - compliance.audit_instant
         - ai.memory_persistent
         - interop.a2a_protocol
+        - context.unified_source_of_truth
+        - context.crd_without_bloat
+        - incident.auto_repair
+        - knowledge.engineering_discovery
       annual_cost_addressed:
-        startup: 92_000
-        mid_market: 326_000
-        enterprise: 1_431_000
+        startup: 105_000
+        mid_market: 407_000
+        enterprise: 1_632_000
       magnitude:
-        startup: "~$92K"
-        mid_market: "~$326K"
-        enterprise: "~$1.4M"
+        startup: "~$105K"
+        mid_market: "~$407K"
+        enterprise: "~$1.6M"
       pct_of_total:
-        startup: 56
-        mid_market: 52
-        enterprise: 56
+        startup: 58
+        mid_market: 55
+        enterprise: 57
 
     partial:
       description: "Pain points partially addressed"
@@ -2106,6 +2216,22 @@ roi_methodology:
 # ==============================================================================
 
 changelog:
+  - version: "2.2.0"
+    date: "2026-02-11"
+    changes:
+      - "Added ops.manual_incident_investigation pain point (crisis_friction, addressed by incident.auto_repair)"
+      - "Added dev.knowledge_in_files_only pain point (context_fragmentation, addressed by knowledge.engineering_discovery)"
+      - "Updated by_delivery_status: 10 delivered benefits (was 6), added context.*, incident.auto_repair, knowledge.engineering_discovery"
+      - "Updated benefits_manifest_ref to v1.6.0"
+      - "Updated operator persona: 4 pain points (was 3), ROI ~$22K/$100K/$711K"
+      - "Updated developer persona: 10 pain points (was 9), ROI ~$71K/$332K/$1.2M"
+      - "30 total pain points across 6 personas (was 28)"
+      - "Total annual cost of pain: ~$176K (startup) / ~$710K (mid) / ~$3.1M (enterprise)"
+  - version: "2.1.0"
+    date: "2026-02-05"
+    changes:
+      - "Added dev.context_scattered_across_tools and pm.strategy_config_disconnect pain points"
+      - "Addressed by context.unified_source_of_truth benefit"
   - version: "2.0.0"
     date: "2026-01-30"
     changes:

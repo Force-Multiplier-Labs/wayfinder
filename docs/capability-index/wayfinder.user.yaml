@@ -1,17 +1,18 @@
 # Wayfinder User-Facing Capability Index
-# Version: 1.2.0
+# Version: 1.3.0
 # Created: 2026-01-28
-# Updated: 2026-01-30
+# Updated: 2026-02-11
 # Audience: Users (primary), GTM (secondary)
 #
 # Complement to: wayfinder.agent.yaml (technical/agent-focused)
 
 manifest_id: wayfinder.user
 name: Wayfinder User-Facing Capabilities
-version: "1.2.0"
+version: "1.3.0"
 description: |
   User-facing capabilities for ContextCore, organized by value delivered.
   Project management as observability—eliminate the PM data silo by treating tasks as telemetry.
+  Multi-agent incident resolution (Coyote), knowledge discovery (Squirrel).
 
 owner: force-multiplier-labs
 repository: https://github.com/Force-Multiplier-Labs/contextcore
@@ -889,6 +890,158 @@ capabilities:
     personas: [engineering_leader, project_manager]
     measurable_outcome: "Roadmap decisions backed by quantified gap analysis"
 
+  # ============================================================================
+  # CATEGORY 7: INCIDENT AUTO-RESOLUTION
+  # ============================================================================
+
+  - capability_id: contextcore.incident.auto_repair
+    category: action
+    maturity: beta
+    summary: Automatically investigate and fix errors using multi-agent Coyote pipeline
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Run `contextcore dev repair --error "your error message"` to automatically
+        investigate and propose fixes. The Coyote pipeline runs structured agents:
+        - Triage: classify severity and affected components
+        - Investigate: find root cause via code analysis
+        - Implement: generate code fixes
+        - Verify: validate the fix
+        Smart skip filter avoids wasting time on auth/infra errors. Use `--auto-apply`
+        to save generated fixes to `generated/coyote/`.
+      gtm: |
+        AI-powered incident resolution. Point ContextCore at an error and it
+        investigates, finds the root cause, and generates a fix—all in one command.
+        Integrates with alert automation so production errors trigger automatic
+        investigation without human intervention.
+
+    user_benefit: |
+      Reduce mean time to fix from hours to minutes.
+      AI investigates and proposes fixes while you sleep.
+
+    triggers:
+      - "auto repair"
+      - "fix error"
+      - "investigate error"
+      - "coyote"
+      - "incident pipeline"
+
+    evidence:
+      - type: code
+        ref: src/contextcore/cli/dev.py
+        description: contextcore dev repair CLI command
+      - type: code
+        ref: scripts/dev_repair.py
+        description: repair_from_error() API and skip filter
+      - type: code
+        ref: contextcore-coyote/src/contextcore_coyote/pipeline/stage.py
+        description: Pipeline stages (triage, investigate, implement, verify)
+
+    confidence: 0.85
+
+    personas: [developer, operator]
+    measurable_outcome: "Automated root cause analysis and fix proposals for code errors"
+
+  - capability_id: contextcore.incident.alert_triggered
+    category: action
+    maturity: beta
+    summary: Alerts automatically trigger investigation via Rabbit-Coyote bridge
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        When Rabbit receives an alert webhook, it can automatically trigger a Coyote
+        investigation. The bridge connects alert metadata (labels, severity, annotations)
+        to the incident resolution pipeline. Results are written to disk with metadata
+        for integration with the Prime Contractor code generation workflow.
+      gtm: |
+        Close the loop from alert to fix. Production alerts don't just notify—they
+        trigger AI-powered investigation and repair. By the time you wake up, the
+        fix proposal is waiting for review.
+
+    user_benefit: |
+      Production alerts trigger automatic investigation.
+      Fix proposals ready for review without manual investigation.
+
+    triggers:
+      - "alert to fix"
+      - "rabbit coyote"
+      - "auto investigation"
+      - "alert triggered repair"
+
+    evidence:
+      - type: code
+        ref: contextcore-rabbit/src/contextcore_rabbit/actions/coyote_bridge.py
+        description: Rabbit-to-Coyote bridge action
+      - type: code
+        ref: contextcore-rabbit/src/contextcore_rabbit/actions/coyote_investigate.py
+        description: Alert-triggered investigation action
+
+    confidence: 0.8
+
+    personas: [operator, developer]
+    measurable_outcome: "Zero-touch alert investigation pipeline"
+
+  # ============================================================================
+  # CATEGORY 8: KNOWLEDGE DISCOVERY
+  # ============================================================================
+
+  - capability_id: contextcore.knowledge.discovery
+    category: query
+    maturity: beta
+    summary: Search engineering knowledge and lessons learned via Tempo with token-efficient progressive disclosure
+
+    audiences: [human, gtm]
+
+    description:
+      human: |
+        Squirrel emits structured knowledge (skills, processes, tools, endpoints) and
+        engineering lessons learned as OTel spans to Tempo. Query knowledge using TraceQL
+        in Grafana Explore:
+        - Find all skills: `{ service.name = "squirrel-knowledge" && span.knowledge.type = "skill" }`
+        - Find lessons by domain: `{ service.name = "squirrel-lessons" && span.lesson.domain = "observability" }`
+        - Find anti-patterns: `{ span.lesson.anti_pattern != "" }`
+        Progressive disclosure: browse summaries first (~50 tokens), drill into full content
+        when needed (~400-1000 tokens).
+      gtm: |
+        Your engineering knowledge base, queryable in the same tool as your metrics and
+        traces. Lessons learned, skills, and processes are searchable in Grafana—no
+        separate wiki or documentation tool needed. AI agents discover relevant knowledge
+        automatically using structured queries.
+
+    user_benefit: |
+      Engineering knowledge queryable in Grafana alongside metrics and traces.
+      AI agents discover relevant lessons automatically.
+
+    triggers:
+      - "knowledge search"
+      - "find lessons"
+      - "squirrel"
+      - "engineering knowledge"
+      - "lessons learned query"
+
+    evidence:
+      - type: code
+        ref: contextcore-squirrel/src/contextcore_squirrel/knowledge_emitter.py
+        description: Knowledge emission to Tempo
+      - type: code
+        ref: contextcore-squirrel/src/contextcore_squirrel/lessons_emitter.py
+        description: Lessons learned emission to Tempo
+      - type: doc
+        ref: contextcore-squirrel/docs/squirrel-knowledge-emission.md
+        description: Knowledge emission architecture and query guide
+      - type: doc
+        ref: contextcore-squirrel/docs/lessons-learned-emission.md
+        description: Lessons learned emission guide
+
+    confidence: 0.85
+
+    personas: [developer, ai_agent, engineering_leader]
+    measurable_outcome: "Knowledge discovery in <10 seconds via structured TraceQL queries"
+
 # ==============================================================================
 # SUCCESS METRICS
 # ==============================================================================
@@ -968,6 +1121,15 @@ gtm_guidelines:
 # ==============================================================================
 
 changelog:
+  - version: "1.3.0"
+    date: "2026-02-11"
+    changes:
+      - "Added Category 7: INCIDENT AUTO-RESOLUTION (2 new capabilities)"
+      - "Added Category 8: KNOWLEDGE DISCOVERY (1 new capability)"
+      - "contextcore.incident.auto_repair: Dev repair CLI via Coyote pipeline (beta)"
+      - "contextcore.incident.alert_triggered: Alert-to-fix via Rabbit-Coyote bridge (beta)"
+      - "contextcore.knowledge.discovery: Knowledge and lessons queryable in Grafana via Squirrel (beta)"
+      - "22 total capabilities: Status (2), Dashboard (4), Alerting (3), Agent (4), Audit (3), Value (3), Incident (2), Knowledge (1)"
   - version: "1.2.0"
     date: "2026-01-30"
     changes:

@@ -1,5 +1,16 @@
 """
-Core pipeline orchestration.
+HOWL Pipeline — Human-Orchestrated Watchdog Loop
+
+Core pipeline orchestration for Coyote's incident resolution workflow.
+
+When Coyote detects an error, it HOWLs — triggering a 5-stage AI pipeline:
+  1. Investigate — Root cause analysis
+  2. Design — Fix specification
+  3. Implement — Code generation
+  4. Test — Validation
+  5. Learn — Lessons extraction
+
+Human approval gates can be inserted between stages when auto_proceed=False.
 """
 
 from __future__ import annotations
@@ -7,7 +18,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable, List, Optional, TYPE_CHECKING
+from typing import Callable, Dict, List, Optional, TYPE_CHECKING
 
 from contextcore_coyote.models import Incident, StageResult, StageStatus
 from contextcore_coyote.config import get_config
@@ -85,10 +96,12 @@ class PipelineResult:
 
 class Pipeline:
     """
-    Multi-stage incident resolution pipeline.
+    HOWL Pipeline — Human-Orchestrated Watchdog Loop.
 
-    Orchestrates the execution of stages in sequence, with optional
-    human approval checkpoints between stages.
+    Multi-stage incident resolution pipeline that orchestrates AI agents
+    in sequence: Investigate → Design → Implement → Test → Learn.
+
+    Optional human approval checkpoints between stages when auto_proceed=False.
     """
 
     def __init__(
@@ -150,20 +163,47 @@ class Pipeline:
 
         return cls(stages=[Investigator(), Designer(), Implementer()])
 
-    def run(self, incident: Incident) -> PipelineResult:
+    def run(
+        self,
+        incident: Incident,
+        project_root: Optional[str] = None,
+        project_name: Optional[str] = None,
+        project_language: Optional[str] = None,
+        file_tree: Optional[str] = None,
+        key_files: Optional[Dict[str, str]] = None,
+        capability_index: Optional[str] = None,
+    ) -> PipelineResult:
         """
         Run the pipeline on an incident.
 
         Args:
             incident: The incident to process
+            project_root: Root directory of the codebase (for context)
+            project_name: Name of the project
+            project_language: Primary language (e.g., "python")
+            file_tree: Abbreviated directory structure
+            key_files: Dict of path -> content snippet for relevant files
+            capability_index: Summary of system capabilities from docs/capability-index/
 
         Returns:
             PipelineResult with all stage outcomes
         """
         result = PipelineResult(incident=incident)
-        ctx = StageContext(incident=incident)
+        ctx = StageContext(
+            incident=incident,
+            project_root=project_root,
+            project_name=project_name,
+            project_language=project_language,
+            file_tree=file_tree,
+            key_files=key_files or {},
+            capability_index=capability_index,
+        )
 
         logger.info(f"Starting pipeline for incident {incident.id}")
+        if project_root:
+            logger.info(f"Codebase context: {project_name or project_root}")
+        if capability_index:
+            logger.info("Capability index loaded for semantic understanding")
 
         # Execute with telemetry if enabled
         if self.config.contextcore_enabled:

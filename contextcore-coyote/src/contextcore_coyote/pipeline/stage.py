@@ -24,12 +24,33 @@ class StageContext:
     previous_results: List[StageResult] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    # Codebase context for grounding LLM responses
+    project_root: Optional[str] = None
+    project_name: Optional[str] = None
+    project_language: Optional[str] = None  # e.g., "python", "typescript"
+    file_tree: Optional[str] = None  # Abbreviated directory structure
+    key_files: Dict[str, str] = field(default_factory=dict)  # path -> content snippet
+
+    # Capability index: semantic understanding of what the system is supposed to do
+    # Loaded from docs/capability-index/*.yaml files
+    capability_index: Optional[str] = None
+
     def get_result(self, stage_name: str) -> Optional[StageResult]:
         """Get result from a previous stage."""
         for result in self.previous_results:
             if result.stage_name == stage_name:
                 return result
         return None
+
+    @property
+    def has_codebase_context(self) -> bool:
+        """Check if codebase context is available."""
+        return bool(self.project_root or self.file_tree)
+
+    @property
+    def has_capability_index(self) -> bool:
+        """Check if capability index is available."""
+        return bool(self.capability_index)
 
     @property
     def investigation_result(self) -> Optional[StageResult]:

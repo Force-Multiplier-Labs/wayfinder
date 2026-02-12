@@ -1,16 +1,17 @@
 # Wayfinder Agent Capability Index
-# Version: 1.4.0
+# Version: 1.5.0
 # Created: 2026-01-28
-# Updated: 2026-02-05
+# Updated: 2026-02-11
 # Audience: AI Agents (primary), Developers (secondary)
 
 manifest_id: wayfinder.agent
 name: Wayfinder Agent Capabilities
-version: "1.4.0"
+version: "1.5.0"
 description: |
   Agent-focused capabilities for ContextCore SDK.
   Tasks as OTel spans, insights as knowledge, handoffs as coordination.
   A2A protocol interoperability for cross-framework agent communication.
+  Multi-agent incident resolution (Coyote), knowledge emission (Squirrel).
 
 owner: force-multiplier-labs
 repository: https://github.com/Force-Multiplier-Labs/contextcore
@@ -1603,6 +1604,423 @@ capabilities:
 
     confidence: 0.9
 
+  # ============================================================================
+  # COYOTE INCIDENT RESOLUTION (Beta) — Multi-Agent Pipeline
+  # ============================================================================
+
+  - capability_id: contextcore.coyote.pipeline
+    category: action
+    maturity: beta
+    summary: Multi-agent incident resolution pipeline with investigate, implement, and verify stages
+
+    audiences: [agent, human]
+
+    description:
+      agent: |
+        Coyote pipeline. Pipeline.full() → Pipeline with stages: triage, investigate, implement, verify. pipeline.run(Incident) → PipelineResult with stage_results[], successful, failed_stage. Incident.from_error(error_message, severity, source). IncidentSeverity: LOW|MEDIUM|HIGH|CRITICAL. Stages produce root_cause, code_changes, summaries.
+      human: |
+        Multi-agent incident resolution pipeline that takes an error or incident,
+        runs it through structured stages (triage, investigate, implement, verify),
+        and produces root cause analysis and code fixes. Each stage is an independent
+        agent with its own expertise. Pipeline results include per-stage summaries,
+        code changes, and success status. Integrated with OTel for full pipeline tracing.
+
+    triggers:
+      - "coyote pipeline"
+      - "incident resolution"
+      - "auto repair"
+      - "investigate error"
+      - "multi-agent fix"
+
+    inputs:
+      type: object
+      required: [error_message, severity]
+      properties:
+        error_message:
+          type: string
+          description: Error message or stack trace to investigate
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          default: HIGH
+        source:
+          type: string
+          description: Source identifier (e.g., dev_repair, rabbit_bridge)
+        labels:
+          type: object
+          description: Additional context labels (feature_id, feature_name, etc.)
+        affected_files:
+          type: array
+          items: { type: string }
+          description: Files affected by the incident
+
+    outputs:
+      type: object
+      properties:
+        successful: { type: boolean }
+        run_id: { type: string }
+        stage_results:
+          type: array
+          items:
+            type: object
+            properties:
+              stage_name: { type: string }
+              status: { type: string }
+              summary: { type: string }
+              root_cause: { type: string }
+              code_changes: { type: object }
+        failed_stage: { type: object }
+
+    evidence:
+      - type: code
+        ref: contextcore-coyote/src/contextcore_coyote/pipeline/stage.py
+        description: Pipeline and Stage classes with run() method
+      - type: code
+        ref: contextcore-coyote/src/contextcore_coyote/models.py
+        description: Incident, IncidentSeverity, PipelineResult models
+      - type: code
+        ref: contextcore-coyote/src/contextcore_coyote/agents/knowledge.py
+        description: Knowledge agent for incident investigation
+      - type: code
+        ref: contextcore-coyote/src/contextcore_coyote/config.py
+        description: configure() with TracerProvider and OTLPSpanExporter wiring
+      - type: test
+        ref: contextcore-coyote/tests/
+        description: 193 tests covering agents, pipeline, stages, models, config
+
+    confidence: 0.85
+
+    anti_patterns:
+      - "Don't run pipeline on auth/infra/rate-limit errors—use skip filter"
+      - "Always call shutdown_tracer() after pipeline.run() to flush spans"
+
+  - capability_id: contextcore.coyote.dev_repair
+    category: action
+    maturity: beta
+    summary: CLI command for ad-hoc error investigation and repair using Coyote pipeline
+
+    audiences: [agent, human]
+
+    description:
+      agent: |
+        Dev repair CLI. contextcore dev repair --error "msg" [--severity HIGH] [--auto-apply] [--force]. Also: repair_from_error(error_message, severity, context, auto_apply, force) → {success, run_id, stages, code_changes_count, generated_dir}. Skip filter rejects auth/infra/rate-limit/TLS/resource errors unless --force. coyote_repair_callback(feature, checkpoint_results) for PrimeContractorWorkflow integration.
+      human: |
+        CLI command and Python API for running the Coyote incident resolution pipeline
+        on errors without requiring Rabbit/HTTP infrastructure. Provides two integration
+        styles: (1) `contextcore dev repair` CLI for ad-hoc investigation, and (2)
+        `coyote_repair_callback()` for PrimeContractorWorkflow.on_checkpoint_failed
+        integration. Includes a skip filter that rejects auth, infrastructure, rate-limit,
+        TLS, and resource exhaustion errors (overridable with --force). Auto-apply mode
+        saves generated code to `generated/coyote/`.
+
+    triggers:
+      - "dev repair"
+      - "fix error"
+      - "auto fix"
+      - "checkpoint failed"
+      - "coyote repair"
+
+    inputs:
+      type: object
+      required: [error_message]
+      properties:
+        error_message:
+          type: string
+          description: Error message or stack trace
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          default: HIGH
+        auto_apply:
+          type: boolean
+          default: false
+          description: Save generated code to generated/coyote/
+        force:
+          type: boolean
+          default: false
+          description: Bypass skip filter for auth/infra errors
+        context:
+          type: object
+          description: Feature context for Prime Contractor integration
+
+    outputs:
+      type: object
+      properties:
+        success: { type: boolean }
+        run_id: { type: string }
+        skipped: { type: boolean }
+        reason: { type: string }
+        stages: { type: array }
+        code_changes_count: { type: integer }
+        generated_dir: { type: string }
+
+    evidence:
+      - type: code
+        ref: src/contextcore/cli/dev.py
+        description: dev repair CLI command (145 LOC)
+      - type: code
+        ref: scripts/dev_repair.py
+        description: repair_from_error() and coyote_repair_callback() (336 LOC)
+      - type: test
+        ref: scripts/tests/test_dev_repair.py
+        description: 492 LOC of tests including skip filter and Prime Contractor callback
+
+    confidence: 0.85
+
+    anti_patterns:
+      - "Don't bypass skip filter without good reason—auth errors can't be fixed with code"
+
+  - capability_id: contextcore.coyote.rabbit_bridge
+    category: integration
+    maturity: beta
+    summary: Bridge Rabbit alert actions to Coyote pipeline for alert-triggered incident resolution
+
+    audiences: [agent, human]
+
+    description:
+      agent: |
+        Coyote bridge action for Rabbit. coyote_investigate(alert) triggers Coyote pipeline from Rabbit alert webhook. coyote_bridge connects alert metadata (labels, annotations, severity) to Incident model. Results written to generated/coyote/ with Prime Contractor metadata.
+      human: |
+        Connects the Rabbit alert automation system to the Coyote incident resolution
+        pipeline. When an alert fires and matches Rabbit webhook rules, the bridge
+        creates a Coyote Incident from alert metadata and runs the full pipeline.
+        Output includes root cause analysis and code fixes, written to disk with
+        metadata for Prime Contractor integration.
+
+    triggers:
+      - "rabbit coyote"
+      - "alert investigation"
+      - "alert to fix"
+      - "coyote bridge"
+
+    inputs:
+      type: object
+      required: [alert]
+      properties:
+        alert:
+          type: object
+          description: Rabbit alert object with labels, annotations, severity
+
+    outputs:
+      type: object
+      properties:
+        run_id: { type: string }
+        success: { type: boolean }
+        generated_dir: { type: string }
+
+    evidence:
+      - type: code
+        ref: contextcore-rabbit/src/contextcore_rabbit/actions/coyote_bridge.py
+        description: Bridge action connecting Rabbit alerts to Coyote pipeline
+      - type: code
+        ref: contextcore-rabbit/src/contextcore_rabbit/actions/coyote_investigate.py
+        description: Investigation action for alert-triggered Coyote runs
+      - type: test
+        ref: contextcore-rabbit/tests/test_actions_coyote.py
+        description: Coyote action tests
+      - type: test
+        ref: contextcore-rabbit/tests/test_actions_coyote_bridge.py
+        description: Bridge integration tests
+
+    confidence: 0.8
+
+  # ============================================================================
+  # SQUIRREL KNOWLEDGE EMISSION (Beta) — Token-Efficient Agent Discovery
+  # ============================================================================
+
+  - capability_id: contextcore.squirrel.knowledge_emit
+    category: action
+    maturity: beta
+    summary: Emit structured YAML knowledge items as OTel spans to Tempo for agent discovery
+
+    audiences: [agent, human]
+
+    description:
+      agent: |
+        Squirrel knowledge emission. KnowledgeEmitter(endpoint, service_name="squirrel-knowledge").emit_items(items) → spans in Tempo. KnowledgeParser.parse_directory(path) → items from YAML (skills, processes, endpoints, tools). Span attributes: knowledge.id, knowledge.type, knowledge.tags, knowledge.description. TraceQL: { service.name = "squirrel-knowledge" && span.knowledge.type = "skill" }.
+      human: |
+        Parses structured YAML knowledge files (skills, processes, endpoints, tools)
+        and emits them as OpenTelemetry spans to Tempo. Enables token-efficient agent
+        discovery — agents query span summaries (~50 tokens) first, then load full
+        content only when needed (~400-1000 tokens). Supports 7 knowledge categories
+        with semantic filtering via TraceQL.
+
+    triggers:
+      - "squirrel emit"
+      - "knowledge emission"
+      - "emit skills"
+      - "knowledge to tempo"
+      - "agent discovery"
+
+    inputs:
+      type: object
+      required: [knowledge_path]
+      properties:
+        knowledge_path:
+          type: string
+          description: Path to YAML knowledge directory
+        endpoint:
+          type: string
+          default: "http://localhost:4317"
+          description: OTLP gRPC endpoint
+        dry_run:
+          type: boolean
+          default: false
+
+    outputs:
+      type: object
+      properties:
+        items_emitted: { type: integer }
+        trace_id: { type: string }
+        categories: { type: array, items: { type: string } }
+
+    evidence:
+      - type: code
+        ref: contextcore-squirrel/src/contextcore_squirrel/knowledge_emitter.py
+        description: KnowledgeEmitter with OTel span creation
+      - type: code
+        ref: contextcore-squirrel/src/contextcore_squirrel/knowledge_parser.py
+        description: KnowledgeParser for YAML file ingestion
+      - type: test
+        ref: contextcore-squirrel/tests/test_knowledge_emitter.py
+        description: Knowledge emission tests
+      - type: test
+        ref: contextcore-squirrel/tests/test_knowledge_parser.py
+        description: Knowledge parsing tests
+      - type: doc
+        ref: contextcore-squirrel/docs/squirrel-knowledge-emission.md
+        description: Architecture and query guide
+
+    confidence: 0.85
+
+    traceql_examples:
+      - query: '{ service.name = "squirrel-knowledge" }'
+        description: Find all knowledge items
+      - query: '{ service.name = "squirrel-knowledge" && span.knowledge.type = "skill" }'
+        description: Find all skill definitions
+
+  - capability_id: contextcore.squirrel.lessons_emit
+    category: action
+    maturity: beta
+    summary: Parse markdown lessons learned and emit as OTel spans with progressive disclosure
+
+    audiences: [agent, human]
+
+    description:
+      agent: |
+        Squirrel lessons emission. LessonsEmitter(endpoint).emit_domain(domain) → spans in Tempo. LessonsParser.parse_domain(path) → LessonDomain with legs[].lessons[]. Span hierarchy: domain → leg → lesson. Attributes: lesson.id, lesson.title, lesson.domain, lesson.tags, lesson.heuristic, lesson.anti_pattern, lesson.has_code_example. Token budgets: summary (~50 tokens), full (~400-1000 tokens).
+      human: |
+        Parses engineering lessons learned from markdown files (Context/Problem/Solution
+        format) and emits them as OpenTelemetry spans to Tempo. Maintains span hierarchy
+        (domain → leg/topic → lesson) for structured navigation. Each lesson includes
+        token budget estimates for progressive disclosure — agents browse summaries first,
+        then load full content only when relevant.
+
+    triggers:
+      - "emit lessons"
+      - "lessons to tempo"
+      - "lessons learned emission"
+      - "squirrel lessons"
+
+    inputs:
+      type: object
+      required: [lessons_path]
+      properties:
+        lessons_path:
+          type: string
+          description: Path to Lessons_Learned directory
+        domain:
+          type: string
+          description: Specific domain to emit (e.g., observability, sdk)
+        endpoint:
+          type: string
+          default: "http://localhost:4317"
+        dry_run:
+          type: boolean
+          default: false
+
+    outputs:
+      type: object
+      properties:
+        domains_emitted: { type: integer }
+        lessons_emitted: { type: integer }
+        trace_id: { type: string }
+
+    evidence:
+      - type: code
+        ref: contextcore-squirrel/src/contextcore_squirrel/lessons_emitter.py
+        description: LessonsEmitter with hierarchical span creation
+      - type: code
+        ref: contextcore-squirrel/src/contextcore_squirrel/lessons_parser.py
+        description: LessonsParser for markdown lesson extraction (250 LOC)
+      - type: test
+        ref: contextcore-squirrel/tests/test_lessons_parser.py
+        description: Lessons parsing tests
+      - type: doc
+        ref: contextcore-squirrel/docs/lessons-learned-emission.md
+        description: Architecture and query guide
+
+    confidence: 0.85
+
+    traceql_examples:
+      - query: '{ service.name = "squirrel-lessons" && span.lesson.domain = "observability" }'
+        description: Find observability lessons
+      - query: '{ span.lesson.anti_pattern != "" }'
+        description: Find lessons with documented anti-patterns
+
+  # ============================================================================
+  # QUERY BUILDERS (Beta) — Type-Safe Telemetry Queries
+  # ============================================================================
+
+  - capability_id: contextcore.query.builder
+    category: query
+    maturity: beta
+    summary: Type-safe PromQL, LogQL, and TraceQL query builders with schema validation
+
+    audiences: [agent, human]
+
+    description:
+      agent: |
+        Query builders. PromQLBuilder(schema).metric(MetricName).label(k,v).sum_by(label).rate(range).build() → PromQL string. LogQLBuilder(schema).label(k,v).json().event(EventType).filter(field,value).build() → LogQL string. TraceQLBuilder(schema).span_attr(k,v).resource_attr(k,v).duration(op,dur).build() → TraceQL string. All builders inject project_id from schema automatically.
+      human: |
+        Type-safe query builders for PromQL (Mimir metrics), LogQL (Loki logs), and
+        TraceQL (Tempo traces) that enforce schema validation and correct metric/label
+        naming. All builders automatically inject the project_id label from the schema
+        configuration. Used by recording rules, dashboards, and CLI commands to ensure
+        query correctness.
+
+    triggers:
+      - "query builder"
+      - "promql builder"
+      - "logql builder"
+      - "traceql builder"
+      - "type-safe query"
+
+    inputs:
+      type: object
+      required: [schema]
+      properties:
+        schema:
+          type: object
+          description: ProjectSchema with project_id and metric naming convention
+
+    outputs:
+      type: string
+      description: Valid PromQL, LogQL, or TraceQL query string
+
+    evidence:
+      - type: code
+        ref: src/contextcore/contracts/queries.py
+        description: PromQLBuilder, LogQLBuilder, TraceQLBuilder classes
+      - type: code
+        ref: src/contextcore/contracts/metrics.py
+        description: MetricName, EventType, LabelName, ProjectSchema enums
+      - type: test
+        ref: tests/test_contracts.py
+        description: Query builder validation tests
+
+    confidence: 0.85
+
 # ==============================================================================
 # GLOBAL EVIDENCE
 # ==============================================================================
@@ -1648,6 +2066,20 @@ pivoted_work:
 # ==============================================================================
 
 changelog:
+  - version: "1.5.0"
+    date: "2026-02-11"
+    changes:
+      - "Added COYOTE INCIDENT RESOLUTION capabilities (3 new): coyote.pipeline, coyote.dev_repair, coyote.rabbit_bridge"
+      - "Added SQUIRREL KNOWLEDGE EMISSION capabilities (2 new): squirrel.knowledge_emit, squirrel.lessons_emit"
+      - "Added QUERY BUILDERS capability (1 new): query.builder"
+      - "New categories: COYOTE INCIDENT RESOLUTION, SQUIRREL KNOWLEDGE EMISSION, QUERY BUILDERS"
+      - "coyote.pipeline: Multi-agent incident resolution with triage/investigate/implement/verify stages (beta)"
+      - "coyote.dev_repair: CLI and API for ad-hoc error repair with skip filter (beta)"
+      - "coyote.rabbit_bridge: Alert-triggered investigation via Rabbit-Coyote bridge (beta)"
+      - "squirrel.knowledge_emit: YAML knowledge items to OTel spans in Tempo (beta)"
+      - "squirrel.lessons_emit: Markdown lessons learned to OTel spans with progressive disclosure (beta)"
+      - "query.builder: Type-safe PromQL/LogQL/TraceQL builders with schema validation (beta)"
+      - "31 total capabilities: insight (2), handoff (3), guidance (2), code_generation (1), size_estimation (1), a2a (4), api (1), aos (5), value (2), manifest (4), coyote (3), squirrel (2), query (1)"
   - version: "1.4.0"
     date: "2026-02-05"
     changes:
