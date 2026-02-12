@@ -168,6 +168,10 @@ ARTIFACT_MANIFEST_PATH = WAYFINDER_ROOT / "out" / "contextcore-export" / "wayfin
 # Default output directory
 DEFAULT_OUTPUT_DIR = WAYFINDER_ROOT / "out" / "manifest-generate-ingestion"
 
+# Cost estimation constants (heuristic: parse + assess + transform + refine)
+COST_PER_1K_CHARS = 0.02  # per 1k plan chars
+COST_PER_REVIEW_ROUND = 0.10  # per architectural review round
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -305,10 +309,10 @@ def estimate_ingestion_cost(plan_path: Path, review_rounds: int) -> float:
     Estimate ingestion cost in USD from plan size and review rounds.
 
     Heuristic based on typical LLM usage: parse + assess + transform + refine.
+    Uses file size (bytes) as a proxy for character count.
     """
-    plan_chars = len(plan_path.read_text(encoding="utf-8")) if plan_path.exists() else 0
-    # ~$0.02 per 1k plan chars (parse/assess/transform) + ~$0.10 per review round
-    return 0.02 * (plan_chars / 1000) + 0.10 * review_rounds
+    plan_size = plan_path.stat().st_size if plan_path.exists() else 0
+    return COST_PER_1K_CHARS * (plan_size / 1000) + COST_PER_REVIEW_ROUND * review_rounds
 
 
 def capture_ingestion_provenance(
@@ -672,7 +676,8 @@ def add_provenance_ref_to_seed(
             json.dumps(seed_data, indent=2, default=str), encoding="utf-8"
         )
         return True
-    except Exception:
+    except Exception as e:
+        print(f"  Warning: Could not add provenance ref to seed: {e}", file=sys.stderr)
         return False
 
 
