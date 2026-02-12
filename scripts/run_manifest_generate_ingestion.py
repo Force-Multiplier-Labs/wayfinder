@@ -33,7 +33,9 @@ import argparse
 import os
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 
 def setup_virtual_environment():
@@ -171,6 +173,7 @@ DEFAULT_OUTPUT_DIR = WAYFINDER_ROOT / "out" / "manifest-generate-ingestion"
 # Cost estimation constants (heuristic: parse + assess + transform + refine)
 COST_PER_1K_CHARS = 0.02  # per 1k plan chars
 COST_PER_REVIEW_ROUND = 0.10  # per architectural review round
+MAX_PLAN_SIZE_BYTES = 500_000  # cap for sanity (very large plans)
 
 
 def parse_args():
@@ -327,19 +330,21 @@ def estimate_ingestion_cost(plan_path: Path, review_rounds: int) -> float:
 
     Heuristic based on typical LLM usage: parse + assess + transform + refine.
     Uses file size (bytes) as a proxy for character count.
+    Plan size is capped at MAX_PLAN_SIZE_BYTES for sanity.
     """
     plan_size = plan_path.stat().st_size if plan_path.exists() else 0
+    plan_size = min(plan_size, MAX_PLAN_SIZE_BYTES)
     return COST_PER_1K_CHARS * (plan_size / 1000) + COST_PER_REVIEW_ROUND * review_rounds
 
 
 def capture_ingestion_provenance(
-    args,
-    context_files: list,
-    config: dict,
-    venv_info: dict,
-    start_time,
-    result=None,
-) -> dict:
+    args: argparse.Namespace,
+    context_files: list[str],
+    config: dict[str, Any],
+    venv_info: dict[str, Any],
+    start_time: datetime | None,
+    result: Any = None,
+) -> dict[str, Any]:
     """
     Capture comprehensive provenance metadata for the ingestion run.
     
@@ -349,8 +354,7 @@ def capture_ingestion_provenance(
     import socket
     import getpass
     import subprocess
-    from datetime import datetime
-    
+
     def get_file_checksum(file_path: str) -> str | None:
         """Compute SHA-256 checksum of a file. Returns None on I/O error."""
         try:
@@ -610,7 +614,8 @@ def validate_pre_generation(
     if not manifest_path:
         errors.append("Seed missing artifacts.artifact_manifest_path")
     else:
-        full_path = (project_root / manifest_path).resolve()
+        path_obj = Path(manifest_path)
+        full_path = path_obj.resolve() if path_obj.is_absolute() else (project_root / manifest_path).resolve()
         if not full_path.exists():
             errors.append(f"Artifact manifest not found: {full_path}")
         else:
@@ -628,7 +633,8 @@ def validate_pre_generation(
     if not context_path:
         errors.append("Seed missing artifacts.project_context_path")
     else:
-        full_path = (project_root / context_path).resolve()
+        path_obj = Path(context_path)
+        full_path = path_obj.resolve() if path_obj.is_absolute() else (project_root / context_path).resolve()
         if not full_path.exists():
             errors.append(f"Project context not found: {full_path}")
         else:
@@ -689,8 +695,6 @@ def add_provenance_ref_to_seed(
 
 
 def main():
-    from datetime import datetime
-    
     args = parse_args()
     start_time = datetime.now()
 
