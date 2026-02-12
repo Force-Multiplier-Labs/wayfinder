@@ -11,6 +11,7 @@ Usage:
 
 Options:
     --dry-run           Preview without running (validate only)
+    --yes, -y           Skip cost confirmation (required to run)
     --force-route       Force route: 'prime' or 'artisan' (default: auto)
     --review-rounds N   Number of architectural review rounds (default: 2)
     --max-cost N        Maximum cost in USD (default: 5.00)
@@ -161,6 +162,9 @@ CONTEXT_FILES = [
 # Onboarding metadata (added when present; includes artifact_types, checksums, schema)
 ONBOARDING_METADATA_PATH = WAYFINDER_ROOT / "out" / "contextcore-export" / "onboarding-metadata.json"
 
+# Artifact manifest path (validated before enrichment when present)
+ARTIFACT_MANIFEST_PATH = WAYFINDER_ROOT / "out" / "contextcore-export" / "wayfinder-artifact-manifest.yaml"
+
 # Default output directory
 DEFAULT_OUTPUT_DIR = WAYFINDER_ROOT / "out" / "manifest-generate-ingestion"
 
@@ -238,12 +242,68 @@ def parse_args():
         action="store_true",
         help="Skip writing provenance.json",
     )
+    parser.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        help="Skip cost estimate confirmation (proceed without prompting)",
+    )
     return parser.parse_args()
 
 
 def on_progress(current: int, total: int, msg: str) -> None:
     """Progress callback for workflow steps."""
     print(f"  [{current}/{total}] {msg}")
+
+
+def validate_artifact_manifest_schema(manifest_path: Path) -> tuple[bool, list[str]]:
+    """
+    Validate artifact manifest matches expected schema before enrichment.
+
+    Required: apiVersion, kind, metadata (with projectId), artifacts (list).
+
+    Returns (is_valid, errors).
+    """
+    import yaml
+
+    errors: list[str] = []
+    if not manifest_path.exists():
+        return False, [f"Artifact manifest not found: {manifest_path}"]
+
+    try:
+        data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        return False, [f"Failed to load artifact manifest: {e}"]
+
+    if not isinstance(data, dict):
+        return False, ["Artifact manifest must be a YAML object"]
+
+    required_top = ["apiVersion", "kind", "metadata", "artifacts"]
+    for key in required_top:
+        if key not in data:
+            errors.append(f"Missing required field: {key}")
+
+    if "metadata" in data and isinstance(data["metadata"], dict):
+        if "projectId" not in data["metadata"]:
+            errors.append("metadata.projectId is required")
+    elif "metadata" in data:
+        errors.append("metadata must be an object")
+
+    if "artifacts" in data and not isinstance(data["artifacts"], list):
+        errors.append("artifacts must be a list")
+
+    return len(errors) == 0, errors
+
+
+def estimate_ingestion_cost(plan_path: Path, review_rounds: int) -> float:
+    """
+    Estimate ingestion cost in USD from plan size and review rounds.
+
+    Heuristic based on typical LLM usage: parse + assess + transform + refine.
+    """
+    plan_chars = len(plan_path.read_text(encoding="utf-8")) if plan_path.exists() else 0
+    # ~$0.02 per 1k plan chars (parse/assess/transform) + ~$0.10 per review round
+    return 0.02 * (plan_chars / 1000) + 0.10 * review_rounds
 
 
 def capture_ingestion_provenance(
@@ -491,6 +551,53 @@ def write_provenance(provenance: dict, output_dir: Path) -> str:
     return str(provenance_path)
 
 
+def add_provenance_ref_to_seed(
+    seed_path: str,
+    provenance_path: str,
+    wayfinder_root: Path,
+) -> bool:
+    """
+    Add ingestion_provenance_ref and ingestion_provenance_checksum to seed.
+
+    Enables traceability from seed back to ingestion run.
+    Returns True if updated.
+    """
+    import hashlib
+    import json
+
+    try:
+        seed_data = json.loads(Path(seed_path).read_text(encoding="utf-8"))
+        provenance_file = Path(provenance_path)
+        if not provenance_file.exists():
+            return False
+
+        # Checksum for verification
+        hasher = hashlib.sha256()
+        with open(provenance_file, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                hasher.update(chunk)
+        checksum = hasher.hexdigest()
+
+        # Relative path from wayfinder root for portability
+        try:
+            rel = provenance_file.resolve().relative_to(wayfinder_root.resolve())
+            ref = str(rel)
+        except ValueError:
+            ref = str(provenance_file)
+
+        if "ingestion_provenance" not in seed_data:
+            seed_data["ingestion_provenance"] = {}
+        seed_data["ingestion_provenance"]["ref"] = ref
+        seed_data["ingestion_provenance"]["checksum"] = checksum
+
+        Path(seed_path).write_text(
+            json.dumps(seed_data, indent=2, default=str), encoding="utf-8"
+        )
+        return True
+    except Exception:
+        return False
+
+
 def main():
     from datetime import datetime
     
@@ -593,6 +700,22 @@ def main():
         print("\nTo run for real, remove --dry-run flag.")
         sys.exit(0)
 
+    # Validate artifact manifest schema before enrichment (item 4)
+    if not args.no_context and ARTIFACT_MANIFEST_PATH.exists():
+        valid, errors = validate_artifact_manifest_schema(ARTIFACT_MANIFEST_PATH)
+        if not valid:
+            print(f"Error: Artifact manifest schema validation failed: {ARTIFACT_MANIFEST_PATH}")
+            for err in errors:
+                print(f"  - {err}")
+            sys.exit(1)
+
+    # Cost estimate and confirmation (item 6)
+    estimated_cost = estimate_ingestion_cost(PLAN_FILE, args.review_rounds)
+    print(f"Estimated cost: ~${estimated_cost:.2f} USD")
+    if not args.yes:
+        print("Run with --yes to proceed without confirmation.")
+        sys.exit(0)
+
     # Create output directory
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -634,6 +757,14 @@ def main():
         )
         provenance_path = write_provenance(provenance, args.output_dir)
         print(f"\n  Provenance: {provenance_path}")
+
+    # Add ingestion provenance ref to seed for traceability (item 5)
+    if result.success and result.output and provenance_path:
+        context_seed = result.output.get("context_seed_path")
+        if context_seed and add_provenance_ref_to_seed(
+            context_seed, provenance_path, WAYFINDER_ROOT
+        ):
+            print(f"  Added ingestion_provenance ref to seed")
 
     if result.success and result.output:
         print(f"\nOutputs:")
