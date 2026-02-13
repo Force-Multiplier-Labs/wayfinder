@@ -1,12 +1,16 @@
-"""contextcore generator infrastructure.
+"""ContextCore generator infrastructure and artifact generation orchestration.
 
-Provides the core generator skeleton: data models, registry, Jinja2 environment
-setup, path resolution, atomic file writes, and orchestration functions.
+This module provides the core generator infrastructure for contextcore:
 
-This module is the coordination surface between the CLI
-(``contextcore manifest generate``) and the individual generators in
-``artifact_generators.py``.  It owns the contract; generators are plugged in
-via registration.
+- **GeneratedFile** / **GenerationResult** dataclasses for uniform output representation
+- **Generator registry** — dict-based pluggable lookup keyed by artifact type string
+- **Jinja2 environment** — configured singleton for template rendering
+- **Orchestration** — generate_artifact() and generate_all() with dry-run, force-overwrite,
+  type-filtering, atomic-write, and per-artifact error containment
+- **Path resolution** — centralized output path computation
+
+This module is the coordination surface between the CLI (``contextcore manifest generate``)
+and the individual generators in ``artifact_generators.py``.
 """
 from __future__ import annotations
 
@@ -17,7 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
+import jinja2
 
 try:
     from typing import TypedDict
@@ -26,26 +30,21 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
 # Input Contracts (TypedDict definitions)
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
 
 
 class ArtifactSpec(TypedDict, total=False):
     """Expected shape of an artifact spec dict from the manifest.
 
-    Required keys (in practice):
+    Required keys:
         type: One of SUPPORTED_ARTIFACT_TYPES (e.g., "ServiceMonitor").
         service: Service name this artifact targets (e.g., "cartservice").
 
     Optional keys:
         metadata: Type-specific configuration consumed by templates.
         output_filename: Override for the generated filename (without directory).
-
-    ``total=False`` is used for gradual adoption — callers may provide
-    partial dicts and the orchestration layer defaults missing keys to
-    ``"unknown"``.
     """
 
     type: str
@@ -54,14 +53,23 @@ class ArtifactSpec(TypedDict, total=False):
     output_filename: str
 
 
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
 # Data Models
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
 
 
 @dataclass
 class GeneratedFile:
-    """Represents a single file produced by a generator."""
+    """Represents a single file produced by a generator.
+
+    Attributes:
+        path: Resolved output path (computed by orchestrator via resolve_output_path).
+        content: Rendered file content (from Jinja2 template).
+        artifact_type: One of the 7 supported artifact types.
+        service_name: Service this artifact belongs to (e.g., "cartservice").
+        derivation_rules: Maps output config values back to manifest fields for traceability.
+        overwritten: Set to True when an existing file was overwritten with --force.
+    """
 
     path: Path
     content: str
@@ -73,7 +81,17 @@ class GeneratedFile:
 
 @dataclass
 class GenerationResult:
-    """Per-artifact outcome — success or failure with context."""
+    """Per-artifact outcome — success or failure with context.
+
+    Attributes:
+        artifact_type: Artifact type attempted.
+        service_name: Target service name.
+        success: Whether generation succeeded.
+        file: The generated file (if successful).
+        error: Error message (if failed).
+        skipped: Whether generation was skipped (filtered/exists).
+        skip_reason: Reason for skip.
+    """
 
     artifact_type: str
     service_name: str
@@ -84,19 +102,20 @@ class GenerationResult:
     skip_reason: Optional[str] = None
 
 
-# ──────────────────────────────────────────────────────────────────
-# Type Aliases
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
+# Generator Registry
+# ──────────────────────────────────────────────
 
+# Type alias for generator functions.
 # Generators receive the artifact spec, the full context manifest,
-# and the resolved output path.  They return a GenerationResult
-# containing the rendered content.  The orchestrator handles file I/O.
+# and the resolved output path. They return a GenerationResult
+# containing the rendered content. The orchestrator handles file I/O.
 GeneratorFn = Callable[[ArtifactSpec, dict, Path], GenerationResult]
 
+# Registry: artifact_type_string -> generator function
+_GENERATOR_REGISTRY: dict[str, GeneratorFn] = {}
 
-# ──────────────────────────────────────────────────────────────────
-# Generator Registry
-# ──────────────────────────────────────────────────────────────────
+_generators_loaded: bool = False
 
 SUPPORTED_ARTIFACT_TYPES = (
     "ServiceMonitor",
@@ -108,22 +127,16 @@ SUPPORTED_ARTIFACT_TYPES = (
     "Dashboard",
 )
 
-# Registry: artifact_type_string -> generator function
-_GENERATOR_REGISTRY: dict[str, GeneratorFn] = {}
-
-_generators_loaded: bool = False
-
 
 def register_generator(artifact_type: str, fn: GeneratorFn) -> None:
     """Register a generator function for an artifact type.
 
     Args:
-        artifact_type: One of ``SUPPORTED_ARTIFACT_TYPES``.
-        fn: Generator function with signature
-            ``(spec, context_manifest, output_path) -> GenerationResult``.
+        artifact_type: Must be one of SUPPORTED_ARTIFACT_TYPES.
+        fn: Callable following the GeneratorFn signature.
 
     Raises:
-        ValueError: If *artifact_type* is not in ``SUPPORTED_ARTIFACT_TYPES``.
+        ValueError: If artifact_type is not in SUPPORTED_ARTIFACT_TYPES.
     """
     if artifact_type not in SUPPORTED_ARTIFACT_TYPES:
         raise ValueError(
@@ -135,7 +148,14 @@ def register_generator(artifact_type: str, fn: GeneratorFn) -> None:
 
 
 def get_generator(artifact_type: str) -> Optional[GeneratorFn]:
-    """Look up a registered generator.  Returns ``None`` if not registered."""
+    """Look up a registered generator.
+
+    Args:
+        artifact_type: The artifact type to look up.
+
+    Returns:
+        The registered GeneratorFn, or None if not registered.
+    """
     return _GENERATOR_REGISTRY.get(artifact_type)
 
 
@@ -145,14 +165,13 @@ def registered_types() -> list[str]:
 
 
 def load_generators() -> None:
-    """Explicitly import ``artifact_generators`` to populate the registry.
+    """Explicitly import artifact_generators to populate the registry.
 
     This function is idempotent — subsequent calls are no-ops.
-    It **must** be called before ``generate_all()`` or
-    ``generate_artifact()`` are expected to find registered generators.
-    ``generate_all()`` calls this automatically as a safety net, but
-    callers (e.g., the CLI entrypoint) should call it explicitly during
-    setup for clarity and faster failure.
+    It MUST be called before generate_all() or generate_artifact()
+    are expected to find registered generators. generate_all() calls
+    this automatically as a safety net, but callers (e.g., the CLI
+    entrypoint) should call it explicitly during setup for clarity.
     """
     global _generators_loaded
     if _generators_loaded:
@@ -165,37 +184,46 @@ def load_generators() -> None:
     logger.info("Generators loaded. Registered types: %s", registered_types())
 
 
-# ──────────────────────────────────────────────────────────────────
-# Jinja2 Environment (Lazy Singleton)
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
+# Jinja2 Environment
+# ──────────────────────────────────────────────
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 
-# Module-level singleton — lazy init.
-# Known limitation: not thread-safe (no lock around lazy init).
-# Acceptable for single-threaded CLI usage.
-_jinja_env: Optional[Environment] = None
 
-
-def create_jinja_env(templates_dir: Optional[Path] = None) -> Environment:
+def create_jinja_env(templates_dir: Optional[Path] = None) -> jinja2.Environment:
     """Create a configured Jinja2 environment.
 
     Args:
-        templates_dir: Directory containing ``.j2`` templates.
-            Defaults to ``src/contextcore/generators/templates/``.
+        templates_dir: Path to templates directory. Defaults to the package's
+                       ``templates/`` subdirectory.
+
+    Returns:
+        A Jinja2 Environment with StrictUndefined, newline preservation,
+        and block trimming enabled.
     """
     target_dir = templates_dir or _TEMPLATES_DIR
-    return Environment(
-        loader=FileSystemLoader(str(target_dir)),
-        undefined=StrictUndefined,  # fail loudly on missing vars
+    return jinja2.Environment(
+        loader=jinja2.FileSystemLoader(str(target_dir)),
+        undefined=jinja2.StrictUndefined,  # fail loudly on missing vars
         keep_trailing_newline=True,
         trim_blocks=True,
         lstrip_blocks=True,
     )
 
 
-def get_jinja_env() -> Environment:
-    """Return the module-level Jinja2 environment (lazy singleton)."""
+# Module-level singleton — lazy init.
+# Known limitation: not thread-safe (no lock around lazy init).
+# Acceptable for single-threaded CLI usage.
+_jinja_env: Optional[jinja2.Environment] = None
+
+
+def get_jinja_env() -> jinja2.Environment:
+    """Return the module-level Jinja2 environment (lazy singleton).
+
+    First call initializes the environment; subsequent calls return the
+    same instance.
+    """
     global _jinja_env
     if _jinja_env is None:
         _jinja_env = create_jinja_env()
@@ -205,10 +233,14 @@ def get_jinja_env() -> Environment:
 def reset_jinja_env(templates_dir: Optional[Path] = None) -> None:
     """Reset the Jinja2 singleton, optionally with a new templates directory.
 
-    Primarily intended for testing scenarios where *templates_dir* needs
-    to change between tests.  If *templates_dir* is provided, the singleton
+    Primarily intended for testing scenarios where templates_dir needs
+    to change between tests. If *templates_dir* is provided, the singleton
     is immediately re-created with that directory; otherwise it is set to
-    ``None`` and will be lazily re-created on next access.
+    None and will be lazily re-created on next access.
+
+    Args:
+        templates_dir: If provided, create a new environment pointing here.
+                       If None, clear the singleton for lazy re-creation.
     """
     global _jinja_env
     if templates_dir is not None:
@@ -217,9 +249,9 @@ def reset_jinja_env(templates_dir: Optional[Path] = None) -> None:
         _jinja_env = None
 
 
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
 # Path Resolution
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
 
 # Default filename patterns per artifact type
 _FILENAME_PATTERNS: dict[str, str] = {
@@ -239,13 +271,20 @@ def resolve_output_path(
 ) -> Path:
     """Resolve the output file path for an artifact spec.
 
-    The orchestrator calls this **before** invoking the generator, ensuring
-    path computation is centralised and consistent.
+    The orchestrator calls this before invoking the generator, ensuring
+    path computation is centralized and consistent.
 
     Resolution order:
-        1. If *artifact_spec* contains ``output_filename``, use it directly.
+        1. If artifact_spec contains ``output_filename``, use it directly.
         2. Otherwise, use the default pattern from ``_FILENAME_PATTERNS``.
         3. Falls back to ``{service}_{type}.yaml`` if no pattern is defined.
+
+    Args:
+        artifact_spec: The artifact specification dict.
+        output_dir: The output directory in which to place the file.
+
+    Returns:
+        The resolved output file path.
     """
     artifact_type = artifact_spec.get("type", "unknown")
     service_name = artifact_spec.get("service", "unknown")
@@ -258,17 +297,24 @@ def resolve_output_path(
     return output_dir / filename
 
 
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
 # Atomic File Write
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
 
 
 def _atomic_write(path: Path, content: str) -> None:
-    """Write *content* to *path* atomically via temp-file-then-rename.
+    """Write content to path atomically via temp-file-then-rename.
 
     This avoids partial/corrupted files on failure (disk full, permission
-    errors mid-write, etc.).  The temp file is created in the same directory
+    errors mid-write, etc.). The temp file is created in the same directory
     as the target to ensure the rename is atomic (same filesystem).
+
+    Args:
+        path: Target file path.
+        content: String content to write.
+
+    Raises:
+        OSError: On file system errors (propagated to caller for handling).
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_path_str = tempfile.mkstemp(
@@ -278,18 +324,19 @@ def _atomic_write(path: Path, content: str) -> None:
     )
     tmp_path = Path(tmp_path_str)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
+        with os.fdopen(fd, "w") as f:
             f.write(content)
         tmp_path.replace(path)  # atomic on POSIX; best-effort on Windows
     except BaseException:
-        # Clean up temp file on any failure
+        # Clean up temp file on any failure, including KeyboardInterrupt.
+        # This ensures we never leak temp files on disk.
         tmp_path.unlink(missing_ok=True)
         raise
 
 
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
 # Orchestration
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
 
 
 def generate_artifact(
@@ -300,25 +347,29 @@ def generate_artifact(
     dry_run: bool = False,
     force: bool = False,
 ) -> GenerationResult:
-    """Generate a single artifact.
+    """Generate a single artifact with error containment and atomic writes.
 
-    Wraps the registered generator with pre-invocation file-existence
-    checks, dry-run support, atomic writes, and error containment.
+    Wraps the registered generator with pre-invocation file-existence checks,
+    dry-run support, atomic writes, and error containment. Path resolution
+    happens here (not in the generator) so that file-existence can be checked
+    BEFORE invoking the generator, generators don't duplicate path logic,
+    and the orchestrator has full control over I/O.
 
-    Path resolution happens here (not in the generator) so that:
-    - File-existence can be checked **before** invoking the generator
-    - Generators don't duplicate path logic
-    - The orchestrator has full control over I/O
+    Args:
+        artifact_spec: The artifact specification.
+        context_manifest: The full context manifest dict (passed to generator).
+        output_dir: Output directory for the generated file.
+        dry_run: If True, compute results but do not write files to disk.
+        force: If True, overwrite existing files.
 
-    Error containment: any ``Exception`` is caught and returned as a
-    ``GenerationResult(success=False)``.  ``BaseException`` subclasses
-    that are **not** ``Exception`` (``KeyboardInterrupt``, ``SystemExit``,
-    ``GeneratorExit``) are **not** caught and propagate normally.
+    Returns:
+        GenerationResult with success/failure status and file/error details.
+        Never raises Exception — all generator/IO errors are caught and
+        wrapped in a failure result.
     """
     artifact_type = artifact_spec.get("type", "unknown")
     service_name = artifact_spec.get("service", "unknown")
 
-    # Look up generator — fast path for unregistered types
     generator = get_generator(artifact_type)
     if generator is None:
         logger.warning(
@@ -340,11 +391,9 @@ def generate_artifact(
         # Pre-invocation file-existence check — skip expensive rendering
         # if the file already exists and --force is not set.
         # NOTE: There is an inherent TOCTOU race between this check and
-        # the eventual write.  For CLI usage with ~77 artifacts this is
+        # the eventual write. For CLI usage with ~77 artifacts this is
         # negligible risk, but callers should be aware in concurrent contexts.
-        file_exists_before = output_path.exists()
-
-        if file_exists_before and not force:
+        if output_path.exists() and not force:
             logger.info(
                 "Skipping %s/%s — file exists: %s (use --force to overwrite)",
                 artifact_type,
@@ -363,7 +412,7 @@ def generate_artifact(
         result = generator(artifact_spec, context_manifest, output_path)
 
         # Tag overwrite if file existed and --force was used
-        if result.success and result.file and file_exists_before:
+        if result.success and result.file and output_path.exists():
             result.file.overwritten = True
 
         # Dry-run: don't write, just return the result
@@ -394,17 +443,17 @@ def generate_artifact(
 
         return result
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         # [blocking] Per-artifact failure — never abort the run.
         #
-        # Catches all Exception subclasses, including:
-        # - jinja2.TemplateNotFound, jinja2.TemplateSyntaxError
-        # - jinja2.UndefinedError (from StrictUndefined)
+        # This catches all Exception subclasses, including:
+        # - jinja2.TemplateNotFound, jinja2.TemplateSyntaxError (compile-time)
+        # - jinja2.UndefinedError (render-time, from StrictUndefined)
         # - PermissionError, OSError (file I/O)
         # - RuntimeError, ValueError (generator bugs)
         # - MemoryError (inherits from Exception in Python 3)
         #
-        # NOT caught (BaseException only):
+        # NOT caught (inherits from BaseException, not Exception):
         # - KeyboardInterrupt, SystemExit, GeneratorExit
         logger.error(
             "Exception in generator for %s/%s: %s: %s",
@@ -433,17 +482,21 @@ def generate_all(
 ) -> list[GenerationResult]:
     """Orchestrate generation across all artifact specs.
 
+    Ensures generators are loaded, applies type filtering, delegates to
+    generate_artifact() for each spec, and logs a summary.
+
     Args:
         artifact_specs: List of artifact spec dicts from the manifest.
         context_manifest: The full context manifest dict.
         output_dir: Root output directory.
         dry_run: If True, compute results but don't write files.
         force: If True, overwrite existing files.
-        type_filter: If provided, only generate artifacts of these types.
+        type_filter: If provided, only generate artifacts whose type is in
+                     this set. If None or empty set, generate all types.
 
     Returns:
-        List of ``GenerationResult`` — one per artifact spec, regardless
-        of success/failure.
+        List of GenerationResult — one per artifact spec, regardless of
+        success/failure.
     """
     # Ensure generators are loaded before consulting the registry.
     # This is a safety net — callers should call load_generators()
@@ -477,20 +530,33 @@ def generate_all(
         )
         results.append(result)
 
+    # Summary logging
+    succeeded = sum(1 for r in results if r.success and not r.skipped)
+    failed = sum(1 for r in results if not r.success)
+    skipped = sum(1 for r in results if r.skipped)
     logger.info(
         "Generation complete: %d succeeded, %d failed, %d skipped out of %d total",
-        sum(1 for r in results if r.success and not r.skipped),
-        sum(1 for r in results if not r.success),
-        sum(1 for r in results if r.skipped),
+        succeeded,
+        failed,
+        skipped,
         len(results),
     )
 
     return results
 
 
-# ──────────────────────────────────────────────────────────────────
-# Public API
-# ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
+# Backward-compatible re-exports from existing submodules
+# ──────────────────────────────────────────────
+
+from contextcore.generators.runbook import generate_runbook  # noqa: E402
+from contextcore.generators.slo_tests import (  # noqa: E402
+    GeneratedTest,
+    SLOTestGenerator,
+    TestType,
+    parse_duration,
+    parse_throughput,
+)
 
 __all__ = [
     # Data models
@@ -514,4 +580,11 @@ __all__ = [
     "generate_all",
     # Path resolution
     "resolve_output_path",
+    # Backward-compatible re-exports
+    "generate_runbook",
+    "TestType",
+    "GeneratedTest",
+    "SLOTestGenerator",
+    "parse_duration",
+    "parse_throughput",
 ]
