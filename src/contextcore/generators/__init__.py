@@ -1,12 +1,18 @@
 """contextcore generator infrastructure.
 
-This module provides the core generator framework including:
-- GeneratedFile / GenerationResult data models
-- A dict-based generator registry keyed by artifact type string
-- Jinja2 environment setup for template rendering
-- Orchestration functions (generate_artifact, generate_all) with
-  dry-run, force-overwrite, type-filtering, and atomic-write support
-- Centralized output path resolution
+This module provides the complete orchestration surface for artifact generation:
+
+- Data models: ArtifactSpec (TypedDict), GeneratedFile, GenerationResult
+- Generator registry: dict-based pluggable lookup keyed by artifact type string
+- Jinja2 environment: singleton configured to load from ./templates/
+- Path resolution: centralized output path computation
+- Atomic writes: temp-file-then-rename to prevent partial/corrupt files
+- Orchestration: generate_artifact() and generate_all() with dry-run,
+  force-overwrite, type-filtering, and per-artifact error containment
+
+Known limitations (acceptable for single-threaded CLI usage):
+- Jinja2 singleton lazy init is not thread-safe (no lock).
+- TOCTOU race between file-existence check and atomic write.
 """
 from __future__ import annotations
 
@@ -17,12 +23,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 
-import jinja2
-
 try:
     from typing import TypedDict
 except ImportError:
     from typing_extensions import TypedDict
+
+import jinja2
 
 logger = logging.getLogger(__name__)
 
@@ -169,12 +175,13 @@ def create_jinja_env(templates_dir: Optional[Path] = None) -> jinja2.Environment
     """Create a configured Jinja2 environment.
 
     Args:
-        templates_dir: Directory containing Jinja2 templates.
-                       Defaults to the ``templates/`` subdirectory next to
-                       this module.
+        templates_dir: Directory to load templates from.
+            Defaults to the ``templates/`` subdirectory next to this module.
 
     Returns:
-        A ``jinja2.Environment`` configured with ``StrictUndefined``.
+        A jinja2.Environment configured with StrictUndefined,
+        FileSystemLoader, keep_trailing_newline, trim_blocks,
+        and lstrip_blocks.
     """
     target_dir = templates_dir or _TEMPLATES_DIR
     return jinja2.Environment(
@@ -201,6 +208,10 @@ def reset_jinja_env(templates_dir: Optional[Path] = None) -> None:
     to change between tests. If templates_dir is provided, the singleton
     is immediately re-created with that directory; otherwise it is set to
     None and will be lazily re-created on next access.
+
+    Args:
+        templates_dir: If provided, immediately create a new environment
+            pointing to this directory. If None, clear the singleton.
     """
     global _jinja_env
     if templates_dir is not None:
@@ -235,16 +246,16 @@ def resolve_output_path(
     path computation is centralized and consistent.
 
     Resolution order:
-    1. If artifact_spec contains "output_filename", use it directly.
-    2. Otherwise, use the default pattern from _FILENAME_PATTERNS.
-    3. Falls back to "{service}_{type}.yaml" if no pattern is defined.
+        1. If artifact_spec contains ``output_filename``, use it directly.
+        2. Otherwise, use the default pattern from ``_FILENAME_PATTERNS``.
+        3. Falls back to ``{service}_{type}.yaml`` if no pattern is defined.
 
     Args:
-        artifact_spec: The artifact specification dict.
-        output_dir: Root output directory.
+        artifact_spec: Artifact specification dict.
+        output_dir: Base output directory.
 
     Returns:
-        Resolved ``Path`` for the output file.
+        Resolved output file path.
     """
     artifact_type = artifact_spec.get("type", "unknown")
     service_name = artifact_spec.get("service", "unknown")
@@ -265,13 +276,16 @@ def resolve_output_path(
 def _atomic_write(path: Path, content: str) -> None:
     """Write content to path atomically via temp-file-then-rename.
 
-    This avoids partial/corrupted files on failure (e.g., disk full, permission
+    This avoids partial/corrupted files on failure (disk full, permission
     errors mid-write, etc.). The temp file is created in the same directory
     as the target to ensure the rename is atomic (same filesystem).
 
     Args:
-        path: Target file path.
+        path: Target file path. Parent directories are created as needed.
         content: String content to write.
+
+    Raises:
+        OSError: On write or rename failure (temp file is cleaned up first).
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_path_str = tempfile.mkstemp(
@@ -305,10 +319,11 @@ def generate_artifact(
 ) -> GenerationResult:
     """Generate a single artifact.
 
-    Wraps the registered generator with pre-invocation file-existence checks,
-    dry-run support, atomic writes, and error containment.
+    Wraps the registered generator with pre-invocation file-existence
+    checks, dry-run support, atomic writes, and error containment.
 
     Path resolution happens here (not in the generator) so that:
+
     - File-existence can be checked BEFORE invoking the generator
     - Generators don't duplicate path logic
     - The orchestrator has full control over I/O
@@ -321,7 +336,9 @@ def generate_artifact(
         force: If True, overwrite existing files.
 
     Returns:
-        GenerationResult — always returned, never raises (except BaseException).
+        GenerationResult — always returned, never raises Exception.
+        BaseException subclasses (KeyboardInterrupt, SystemExit,
+        GeneratorExit) are NOT caught and will propagate.
     """
     artifact_type = artifact_spec.get("type", "unknown")
     service_name = artifact_spec.get("service", "unknown")
@@ -404,7 +421,8 @@ def generate_artifact(
         #
         # Note: MemoryError inherits from Exception in Python 3, so it
         # IS caught here. This is intentional — we prefer recording the
-        # failure over aborting the entire run.
+        # failure over aborting the entire run, though in extreme
+        # memory-pressure scenarios behavior is unpredictable regardless.
         logger.error(
             "Exception in generator for %s/%s: %s: %s",
             artifact_type, service_name, type(exc).__name__, exc,
@@ -478,6 +496,10 @@ def generate_all(
 
     return results
 
+
+# ──────────────────────────────────────────────
+# Public API
+# ──────────────────────────────────────────────
 
 __all__ = [
     # Data models
