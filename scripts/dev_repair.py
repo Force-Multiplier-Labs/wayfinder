@@ -159,6 +159,59 @@ SKIP_PATTERNS: List[tuple] = [
         r"|llm.?(?:call|request).?timed?.?out)",
         re.IGNORECASE,
     )),
+    # Missing API key — config/environment issue, not code
+    ("api_key_missing", re.compile(
+        r"(api\s*key\s+not\s+found"
+        r"|missing\s+api\s*key"
+        r"|(?:api_key|api-key|apikey)\s+(?:is\s+)?(?:required|missing|not\s+set)"
+        r"|no\s+api\s*key\s+(?:provided|configured)"
+        r"|failed\s+to\s+resolve\s+agents.*api\s*key"
+        r"|(?:ANTHROPIC|OPENAI|AZURE|GOOGLE)_API_KEY\s+(?:is\s+)?(?:not\s+set|missing|required))",
+        re.IGNORECASE,
+    )),
+    # Missing dependency — needs pip install, not code fix
+    ("dependency_missing", re.compile(
+        r"((?:package|module|library)\s+not\s+installed"
+        r"|run:\s*pip3?\s+install"
+        r"|ModuleNotFoundError"
+        r"|ImportError:\s*No\s+module\s+named"
+        r"|cannot\s+import\s+name\b.*from)",
+        re.IGNORECASE,
+    )),
+    # Handler/workflow config — needs workflow setup change, not code fix
+    ("handler_config", re.compile(
+        r"(feature_serial.*requires\s+handlers"
+        r"|unsupported\s+handlers?:"
+        r"|handler.*not\s+(?:configured|registered|found)"
+        r"|(?:default|base)phasehandler.*feature_serial"
+        r"|no\s+(?:handler|stage)\s+registered\s+for)",
+        re.IGNORECASE,
+    )),
+    # Schema/checksum drift — needs re-export, not code fix
+    ("schema_drift", re.compile(
+        r"(source_checksum\s+mismatch"
+        r"|has\s+changed\s+since.*export"
+        r"|re-?run.*export\s+to\s+refresh"
+        r"|checksum\s+(?:mismatch|validation\s+failed)"
+        r"|schema.*(?:drift|out\s+of\s+sync|stale))",
+        re.IGNORECASE,
+    )),
+    # LLM output validation — prompt/schema design issue, not code bug
+    ("validation_review", re.compile(
+        r"(invalid\s+snippet\s+after\s+retry"
+        r"|invalid\s+area\s+'[^']+'\s+\(allowed:"
+        r"|table\s+header\s+mismatch"
+        r"|missing\s+columns?:\s*\[)",
+        re.IGNORECASE,
+    )),
+    # Coyote self-referencing — recursion guard, never fix the fixer
+    ("coyote_self", re.compile(
+        r"(source[\"']?\s*:\s*[\"']?(?:dev_repair|coyote|howl)"
+        r"|coyote.?(?:pipeline|repair|incident).?(?:failed|error)"
+        r"|howl.?(?:pipeline|repair).?(?:failed|error)"
+        r"|contextcore.?coyote\.)",
+        re.IGNORECASE,
+    )),
 ]
 
 
