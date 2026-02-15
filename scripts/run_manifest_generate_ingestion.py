@@ -11,7 +11,6 @@ Usage:
 
 Options:
     --dry-run           Preview without running (validate only)
-    --yes, -y           Skip cost confirmation (required to run)
     --force-route       Force route: 'prime' or 'artisan' (default: auto)
     --review-rounds N   Number of architectural review rounds (default: 2)
     --max-cost N        Maximum cost in USD (default: 5.00)
@@ -33,9 +32,7 @@ import argparse
 import os
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 
 def setup_virtual_environment():
@@ -161,19 +158,8 @@ CONTEXT_FILES = [
     WAYFINDER_ROOT / ".contextcore.yaml",
 ]
 
-# Onboarding metadata (added when present; includes artifact_types, checksums, schema)
-ONBOARDING_METADATA_PATH = WAYFINDER_ROOT / "out" / "contextcore-export" / "onboarding-metadata.json"
-
-# Artifact manifest path (validated before enrichment when present)
-ARTIFACT_MANIFEST_PATH = WAYFINDER_ROOT / "out" / "contextcore-export" / "wayfinder-artifact-manifest.yaml"
-
 # Default output directory
 DEFAULT_OUTPUT_DIR = WAYFINDER_ROOT / "out" / "manifest-generate-ingestion"
-
-# Cost estimation constants (heuristic: parse + assess + transform + refine)
-COST_PER_1K_CHARS = 0.02  # per 1k plan chars
-COST_PER_REVIEW_ROUND = 0.10  # per architectural review round
-MAX_PLAN_SIZE_BYTES = 500_000  # cap for sanity (very large plans)
 
 
 def parse_args():
@@ -249,23 +235,6 @@ def parse_args():
         action="store_true",
         help="Skip writing provenance.json",
     )
-    parser.add_argument(
-        "--yes",
-        "-y",
-        action="store_true",
-        help="Skip cost estimate confirmation (proceed without prompting)",
-    )
-    parser.add_argument(
-        "--validate-pre-generation",
-        action="store_true",
-        help="Validate seed: artifact manifest and project context exist and match checksums (item 13)",
-    )
-    parser.add_argument(
-        "--project-root",
-        type=Path,
-        default=None,
-        help="Project root for --validate-pre-generation (default: wayfinder repo root)",
-    )
     return parser.parse_args()
 
 
@@ -274,93 +243,34 @@ def on_progress(current: int, total: int, msg: str) -> None:
     print(f"  [{current}/{total}] {msg}")
 
 
-def _file_checksum(path: Path) -> str:
-    """Compute SHA-256 checksum of a file."""
-    import hashlib
-
-    hasher = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(8192), b""):
-            hasher.update(chunk)
-    return hasher.hexdigest()
-
-
-def validate_artifact_manifest_schema(manifest_path: Path) -> tuple[bool, list[str]]:
-    """
-    Validate artifact manifest matches expected schema before enrichment.
-
-    Required: apiVersion, kind, metadata (with projectId), artifacts (list).
-
-    Returns (is_valid, errors).
-    """
-    import yaml
-
-    errors: list[str] = []
-    if not manifest_path.exists():
-        return False, [f"Artifact manifest not found: {manifest_path}"]
-
-    try:
-        data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
-    except Exception as e:
-        return False, [f"Failed to load artifact manifest: {e}"]
-
-    if not isinstance(data, dict):
-        return False, ["Artifact manifest must be a YAML object"]
-
-    required_top = ["apiVersion", "kind", "metadata", "artifacts"]
-    for key in required_top:
-        if key not in data:
-            errors.append(f"Missing required field: {key}")
-
-    if "metadata" in data and isinstance(data["metadata"], dict):
-        if "projectId" not in data["metadata"]:
-            errors.append("metadata.projectId is required")
-    elif "metadata" in data:
-        errors.append("metadata must be an object")
-
-    if "artifacts" in data and not isinstance(data["artifacts"], list):
-        errors.append("artifacts must be a list")
-
-    return len(errors) == 0, errors
-
-
-def estimate_ingestion_cost(plan_path: Path, review_rounds: int) -> float:
-    """
-    Estimate ingestion cost in USD from plan size and review rounds.
-
-    Heuristic based on typical LLM usage: parse + assess + transform + refine.
-    Uses file size (bytes) as a proxy for character count.
-    Plan size is capped at MAX_PLAN_SIZE_BYTES for sanity.
-    Actual cost may differ from this estimate depending on model pricing and
-    response length.
-    """
-    plan_size = plan_path.stat().st_size if plan_path.exists() else 0
-    plan_size = min(plan_size, MAX_PLAN_SIZE_BYTES)
-    return COST_PER_1K_CHARS * (plan_size / 1000) + COST_PER_REVIEW_ROUND * review_rounds
-
-
 def capture_ingestion_provenance(
-    args: argparse.Namespace,
-    context_files: list[str],
-    config: dict[str, Any],
-    venv_info: dict[str, Any],
-    start_time: datetime | None,
-    result: Any = None,
-) -> dict[str, Any]:
+    args,
+    context_files: list,
+    config: dict,
+    venv_info: dict,
+    start_time,
+    result=None,
+) -> dict:
     """
     Capture comprehensive provenance metadata for the ingestion run.
     
     Returns:
         Dict with provenance metadata suitable for JSON serialization.
     """
+    import hashlib
     import socket
     import getpass
     import subprocess
-
-    def get_file_checksum(file_path: str) -> str | None:
-        """Compute SHA-256 checksum of a file. Returns None on I/O error."""
+    from datetime import datetime
+    
+    def get_file_checksum(file_path: str) -> str:
+        """Compute SHA-256 checksum of a file."""
         try:
-            return _file_checksum(Path(file_path))
+            hasher = hashlib.sha256()
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(8192), b""):
+                    hasher.update(chunk)
+            return hasher.hexdigest()
         except Exception:
             return None
     
@@ -469,108 +379,6 @@ def capture_ingestion_provenance(
     return provenance
 
 
-def merge_onboarding_into_seed(
-    seed_path: str,
-    onboarding_path: Path,
-    export_dir: Path,
-    wayfinder_root: Path,
-) -> bool:
-    """
-    Merge onboarding-metadata.json into artisan-context-seed.json.
-
-    Adds artifact_manifest_path, project_context_path, checksums to artifacts,
-    and onboarding section with artifact_types, output_path_conventions,
-    semantic_conventions for downstream generators.
-
-    Uses paths relative to wayfinder root for portability.
-
-    Returns True if merge was performed.
-    """
-    import json
-
-    if not onboarding_path.exists():
-        return False
-
-    try:
-        seed_data = json.loads(Path(seed_path).read_text(encoding="utf-8"))
-        onboarding_data = json.loads(onboarding_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as e:
-        print(f"  Warning: Could not merge onboarding: {e}")
-        return False
-
-    # Paths relative to wayfinder root for portability
-    artifact_manifest_path = onboarding_data.get("artifact_manifest_path", "")
-    project_context_path = onboarding_data.get("project_context_path", "")
-    try:
-        rel_export = export_dir.resolve().relative_to(wayfinder_root.resolve())
-        artifact_manifest_rel = str(rel_export / artifact_manifest_path)
-        project_context_rel = str(rel_export / project_context_path)
-    except ValueError:
-        artifact_manifest_rel = str(export_dir / artifact_manifest_path)
-        project_context_rel = str(export_dir / project_context_path)
-
-    # Extend artifacts section
-    if "artifacts" not in seed_data:
-        seed_data["artifacts"] = {}
-    seed_data["artifacts"]["artifact_manifest_path"] = artifact_manifest_rel
-    seed_data["artifacts"]["project_context_path"] = project_context_rel
-    # Context file checksums for drift detection
-    if "artifact_manifest_checksum" in onboarding_data:
-        seed_data["artifacts"]["artifact_manifest_checksum"] = onboarding_data[
-            "artifact_manifest_checksum"
-        ]
-    if "project_context_checksum" in onboarding_data:
-        seed_data["artifacts"]["project_context_checksum"] = onboarding_data[
-            "project_context_checksum"
-        ]
-
-    # Plan vs context note when artifact counts differ (item 3)
-    plan_vs_context_note = None
-    coverage = onboarding_data.get("coverage", {})
-    manifest_artifact_count = coverage.get("totalRequired", 0) or len(
-        coverage.get("gaps", [])
-    )
-    if manifest_artifact_count > 0:
-        # Heuristic: plan often mentions "77" or "7 × 11" for Online Boutique
-        plan_text = json.dumps(seed_data.get("plan", {}))
-        if "77" in plan_text or "7 × 11" in plan_text:
-            plan_vs_context_note = (
-                f"Plan describes generic Online Boutique (77 artifacts). "
-                f"Context has {manifest_artifact_count} artifacts for this project. "
-                f"Use artifact_manifest_path and onboarding.artifact_types for actual count."
-            )
-    if plan_vs_context_note:
-        seed_data["plan_vs_context_note"] = plan_vs_context_note
-
-    # Add onboarding section for generators (item 12: default_output_dir from conventions)
-    output_conventions = onboarding_data.get("output_path_conventions", {})
-    # Derive default output dir: out/generated contains grafana/, prometheus/, k8s/, etc.
-    default_output_dir = "out/generated" if output_conventions else None
-
-    seed_data["onboarding"] = {
-        "artifact_types": onboarding_data.get("artifact_types", {}),
-        "output_path_conventions": output_conventions,
-        "parameter_schema": onboarding_data.get("parameter_schema", {}),
-        "semantic_conventions": onboarding_data.get(
-            "semantic_conventions"
-        ),
-        "source_checksum": onboarding_data.get("source_checksum"),
-        "artifact_manifest_checksum": onboarding_data.get(
-            "artifact_manifest_checksum"
-        ),
-        "project_context_checksum": onboarding_data.get(
-            "project_context_checksum"
-        ),
-    }
-    if default_output_dir:
-        seed_data["onboarding"]["default_output_dir"] = default_output_dir
-
-    Path(seed_path).write_text(
-        json.dumps(seed_data, indent=2, default=str), encoding="utf-8"
-    )
-    return True
-
-
 def write_provenance(provenance: dict, output_dir: Path) -> str:
     """Write provenance to JSON file."""
     import json
@@ -582,121 +390,9 @@ def write_provenance(provenance: dict, output_dir: Path) -> str:
     return str(provenance_path)
 
 
-def validate_pre_generation(
-    seed_path: Path,
-    project_root: Path,
-) -> tuple[bool, list[str], list[str]]:
-    """
-    Validate artifact manifest and project context exist and match checksums (item 13).
-
-    Before running manifest generate, ensures:
-    - artifact_manifest_path exists
-    - project_context_path exists
-    - If checksums in seed, they match the files
-
-    Returns (is_valid, errors, summary_lines). summary_lines describes what was checked.
-    """
-    import json
-
-    errors: list[str] = []
-    summary_lines: list[str] = []
-
-    if not seed_path.exists():
-        return False, [f"Seed not found: {seed_path}"], []
-
-    try:
-        seed_data = json.loads(seed_path.read_text(encoding="utf-8"))
-    except Exception as e:
-        return False, [f"Failed to load seed: {e}"], []
-
-    artifacts = seed_data.get("artifacts") or {}
-    manifest_path = artifacts.get("artifact_manifest_path")
-    context_path = artifacts.get("project_context_path")
-
-    if not manifest_path:
-        errors.append("Seed missing artifacts.artifact_manifest_path")
-    else:
-        path_obj = Path(manifest_path)
-        full_path = path_obj.resolve() if path_obj.is_absolute() else (project_root / manifest_path).resolve()
-        if not full_path.exists():
-            errors.append(f"Artifact manifest not found: {full_path}")
-        else:
-            expected = artifacts.get("artifact_manifest_checksum")
-            if expected:
-                if _file_checksum(full_path) != expected:
-                    errors.append(
-                        f"Artifact manifest checksum mismatch: {manifest_path}"
-                    )
-                else:
-                    summary_lines.append("Artifact manifest: exists, checksum OK")
-            else:
-                summary_lines.append("Artifact manifest: exists (no checksum in seed)")
-
-    if not context_path:
-        errors.append("Seed missing artifacts.project_context_path")
-    else:
-        path_obj = Path(context_path)
-        full_path = path_obj.resolve() if path_obj.is_absolute() else (project_root / context_path).resolve()
-        if not full_path.exists():
-            errors.append(f"Project context not found: {full_path}")
-        else:
-            expected = artifacts.get("project_context_checksum")
-            if expected:
-                if _file_checksum(full_path) != expected:
-                    errors.append(
-                        f"Project context checksum mismatch: {context_path}"
-                    )
-                else:
-                    summary_lines.append("Project context: exists, checksum OK")
-            else:
-                summary_lines.append("Project context: exists (no checksum in seed)")
-
-    return len(errors) == 0, errors, summary_lines
-
-
-def add_provenance_ref_to_seed(
-    seed_path: str,
-    provenance_path: str,
-    wayfinder_root: Path,
-) -> bool:
-    """
-    Add ingestion_provenance_ref and ingestion_provenance_checksum to seed.
-
-    Enables traceability from seed back to ingestion run.
-    Returns True if updated.
-    """
-    import json
-
-    try:
-        seed_data = json.loads(Path(seed_path).read_text(encoding="utf-8"))
-        provenance_file = Path(provenance_path)
-        if not provenance_file.exists():
-            return False
-
-        checksum = _file_checksum(provenance_file)
-
-        # Relative path from wayfinder root for portability
-        try:
-            rel = provenance_file.resolve().relative_to(wayfinder_root.resolve())
-            ref = str(rel)
-        except ValueError:
-            ref = str(provenance_file)
-
-        if "ingestion_provenance" not in seed_data:
-            seed_data["ingestion_provenance"] = {}
-        seed_data["ingestion_provenance"]["ref"] = ref
-        seed_data["ingestion_provenance"]["checksum"] = checksum
-
-        Path(seed_path).write_text(
-            json.dumps(seed_data, indent=2, default=str), encoding="utf-8"
-        )
-        return True
-    except Exception as e:
-        print(f"  Warning: Could not add provenance ref to seed: {e}", file=sys.stderr)
-        return False
-
-
 def main():
+    from datetime import datetime
+    
     args = parse_args()
     start_time = datetime.now()
 
@@ -705,22 +401,7 @@ def main():
         print(f"Error: Plan file not found: {PLAN_FILE}")
         sys.exit(1)
 
-    # Pre-generation validation (item 13)
-    if args.validate_pre_generation:
-        seed_path = args.output_dir / "artisan-context-seed.json"
-        project_root = args.project_root or WAYFINDER_ROOT
-        valid, errors, summary_lines = validate_pre_generation(seed_path, project_root)
-        if valid:
-            print(f"Pre-generation validation passed: {seed_path}")
-            for line in summary_lines:
-                print(f"  {line}")
-            sys.exit(0)
-        print(f"Pre-generation validation failed: {seed_path}")
-        for err in errors:
-            print(f"  - {err}")
-        sys.exit(1)
-
-    # Collect existing context files (include onboarding-metadata.json when present)
+    # Collect existing context files
     context_files = []
     if not args.no_context:
         for cf in CONTEXT_FILES:
@@ -728,14 +409,6 @@ def main():
                 context_files.append(str(cf))
             else:
                 print(f"  Warning: Context file not found: {cf}")
-        if ONBOARDING_METADATA_PATH.exists():
-            context_files.append(str(ONBOARDING_METADATA_PATH))
-        elif context_files:
-            print(
-                f"  Hint: Run contextcore manifest export (from ContextCore repo) with "
-                f"-p wayfinder/.contextcore.yaml -o wayfinder/out/contextcore-export to generate "
-                f"onboarding-metadata.json for seed enrichment"
-            )
 
     # Build config
     config = {
@@ -811,22 +484,6 @@ def main():
         print("\nTo run for real, remove --dry-run flag.")
         sys.exit(0)
 
-    # Validate artifact manifest schema before enrichment (item 4)
-    if not args.no_context and ARTIFACT_MANIFEST_PATH.exists():
-        valid, errors = validate_artifact_manifest_schema(ARTIFACT_MANIFEST_PATH)
-        if not valid:
-            print(f"Error: Artifact manifest schema validation failed: {ARTIFACT_MANIFEST_PATH}")
-            for err in errors:
-                print(f"  - {err}")
-            sys.exit(1)
-
-    # Cost estimate and confirmation (item 6)
-    estimated_cost = estimate_ingestion_cost(PLAN_FILE, args.review_rounds)
-    print(f"Estimated cost: ~${estimated_cost:.2f} USD")
-    if not args.yes:
-        print("Run with --yes to proceed without confirmation.")
-        sys.exit(0)
-
     # Create output directory
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -869,32 +526,12 @@ def main():
         provenance_path = write_provenance(provenance, args.output_dir)
         print(f"\n  Provenance: {provenance_path}")
 
-    # Add ingestion provenance ref to seed for traceability (item 5)
-    if result.success and result.output and provenance_path:
-        context_seed = result.output.get("context_seed_path")
-        if context_seed and add_provenance_ref_to_seed(
-            context_seed, provenance_path, WAYFINDER_ROOT
-        ):
-            print(f"  Added ingestion_provenance ref to seed")
-
     if result.success and result.output:
         print(f"\nOutputs:")
         for key, value in result.output.items():
             if isinstance(value, str) and len(value) > 80:
                 value = value[:77] + "..."
             print(f"  {key}: {value}")
-
-        # Merge onboarding metadata into seed when present
-        context_seed = result.output.get("context_seed_path")
-        export_dir = WAYFINDER_ROOT / "out" / "contextcore-export"
-        if context_seed and ONBOARDING_METADATA_PATH.exists():
-            if merge_onboarding_into_seed(
-                context_seed,
-                ONBOARDING_METADATA_PATH,
-                export_dir,
-                WAYFINDER_ROOT,
-            ):
-                print(f"\n  Merged onboarding metadata into seed")
 
         # Print next steps
         print("\n" + "=" * 60)

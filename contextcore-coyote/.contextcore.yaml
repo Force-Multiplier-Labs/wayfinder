@@ -1,0 +1,220 @@
+apiVersion: contextcore.io/v1alpha2
+kind: ContextManifest
+metadata:
+  name: contextcore-coyote
+  owners:
+  - team: platform-team
+    slack: "#coyote-incidents"
+    email: platform@example.com
+    oncall: coyote-oncall
+  changelog:
+  - version: "2.0"
+    date: "2026-02-13"
+    author: neilyashinsky
+    summary: "Initial v2.0 manifest populated from MODULAR_PIPELINE_DESIGN.md"
+    changes:
+    - "Initial v2.0 manifest for contextcore-coyote"
+    - "Populated from MODULAR_PIPELINE_DESIGN.md"
+  links:
+    repo: https://github.com/neil-the-nowledgeable/contextcore-coyote
+    design: docs/MODULAR_PIPELINE_DESIGN.md
+
+spec:
+  project:
+    id: contextcore-coyote
+    name: "ContextCore Coyote — Multi-Agent Incident Resolution"
+    description: |
+      Multi-agent incident resolution pipeline (expansion pack: Coyote / Wiisagi-ma'iingan).
+      Dual architecture: HOWL pipeline (legacy, 5-stage sequential) and ModularPipeline
+      (new, gate-validated with typed outputs). Stages: Investigate → Design → Implement →
+      Test → Knowledge. Defense-in-depth principles applied at every stage boundary.
+
+  business:
+    criticality: high
+    owner: platform-team
+    costCenter: CC-INCIDENT
+    value: enabler
+
+  requirements:
+    availability: "99.9"
+    latencyP99: "5000ms"
+    latencyP50: "2000ms"
+    throughput: "50rps"
+    errorBudget: "0.1"
+
+  risks:
+  - type: availability
+    description: "LLM output format drift breaks regex parsing in HOWL stages"
+    priority: P1
+    mitigation: "TypedStage with structured JSON output + SchemaGate validation (Step 4)"
+  - type: availability
+    description: "Context token limits exceeded in long pipelines (5+ stages)"
+    priority: P2
+    mitigation: "Context summarization strategy (Q3 — pending decision)"
+  - type: availability
+    description: "Gate false positives halt pipeline on valid edge-case outputs"
+    priority: P3
+    mitigation: "QualityGate warning mode + on_gate_failed callback override"
+
+  targets:
+  - kind: Deployment
+    name: coyote-pipeline
+    namespace: incident-resolution
+
+  observability:
+    traceSampling: 1.0
+    metricsInterval: "30s"
+    alertChannels:
+    - "#coyote-incidents"
+    - platform-oncall
+    logLevel: info
+    dashboardPlacement: standard
+
+strategy:
+  objectives:
+  - id: OBJ-TYPE-SAFETY
+    description: "Eliminate silent failures from untyped stage outputs and regex parsing"
+    keyResults:
+    - metricKey: typed_stage_coverage
+      unit: "%"
+      target: 100
+      targetOperator: gte
+      window: "90d"
+    - metricKey: regex_parse_failures
+      unit: count
+      target: 0
+      targetOperator: eq
+      window: "30d"
+
+  - id: OBJ-ZERO-REGRESSION
+    description: "Maintain zero regressions against HOWL during incremental migration"
+    keyResults:
+    - metricKey: howl_test_pass_rate
+      unit: "%"
+      target: 100
+      targetOperator: gte
+      window: "7d"
+    - metricKey: total_test_count
+      unit: count
+      target: 294
+      targetOperator: gte
+      baseline: 294
+
+  - id: OBJ-PIPELINE-RELIABILITY
+    description: "Gate-validated pipeline catches defects at boundaries, not at the end"
+    keyResults:
+    - metricKey: gate_catch_rate
+      unit: "%"
+      target: 95
+      targetOperator: gte
+      window: "30d"
+      dataSource: "promql:coyote_gate_violations_caught / coyote_gate_violations_total"
+
+  tactics:
+  - id: TAC-CONTRACTS
+    description: "Step 1: Typed stage contracts (Pydantic v2 outputs, Gate protocol)"
+    status: done
+    linkedObjectives: [OBJ-TYPE-SAFETY, OBJ-ZERO-REGRESSION]
+    completedDate: "2026-02-13T00:00:00"
+    progress: 100
+
+  - id: TAC-GATES
+    description: "Step 2: Gate implementations (Schema, Completeness, Integrity, Quality, Composite)"
+    status: done
+    linkedObjectives: [OBJ-PIPELINE-RELIABILITY, OBJ-ZERO-REGRESSION]
+    completedDate: "2026-02-13T00:00:00"
+    progress: 100
+
+  - id: TAC-MODULAR
+    description: "Step 3: ModularPipeline runner with gate validation at every boundary"
+    status: done
+    linkedObjectives: [OBJ-PIPELINE-RELIABILITY, OBJ-ZERO-REGRESSION]
+    completedDate: "2026-02-13T00:00:00"
+    progress: 100
+
+  - id: TAC-TYPED-AGENTS
+    description: "Step 4: TypedInvestigator and TypedDesigner — structured LLM output parsing replaces regex"
+    status: planned
+    owner: platform-team
+    linkedObjectives: [OBJ-TYPE-SAFETY]
+
+  - id: TAC-FINGERPRINT
+    description: "Step 5: Full context fingerprinting chain — hash incident at start, carry through all stages"
+    status: planned
+    owner: platform-team
+    linkedObjectives: [OBJ-PIPELINE-RELIABILITY]
+
+  - id: TAC-ROUTING
+    description: "Step 6: Complexity routing + diagnostic protocol (Three Questions formalization)"
+    status: planned
+    owner: platform-team
+    linkedObjectives: [OBJ-PIPELINE-RELIABILITY, OBJ-TYPE-SAFETY]
+
+guidance:
+  focus:
+    areas:
+    - type-safety
+    - boundary-validation
+    reason: "Steps 1-3 established foundation; Step 4 (typed agents) is highest-value next step"
+
+  constraints:
+  - id: C-HOWL-INTACT
+    rule: "HOWL pipeline must remain unchanged — all new work is additive via ModularPipeline"
+    severity: blocking
+    rationale: "Core design rule: additive, not destructive. Migration via LegacyStageAdapter."
+    appliesTo:
+    - "src/contextcore_coyote/pipeline/core.py"
+    - "src/contextcore_coyote/pipeline/stage.py"
+    - "src/contextcore_coyote/agents/"
+
+  - id: C-PYDANTIC-V2
+    rule: "All typed outputs must use Pydantic BaseModel with validation (min_length, ge/le, custom validators)"
+    severity: blocking
+    rationale: "D1 decision: Pydantic v2 for typed outputs — validation, serialization, schema generation"
+
+  - id: C-GATE-ALL-RUN
+    rule: "CompositeGate must run ALL gates even when one fails — no short-circuit"
+    severity: blocking
+    rationale: "D3 decision: Defense in Depth P4 — give all diagnostic information in one pass"
+
+  preferences:
+  - id: P-PROTOCOL-NOT-ABC
+    description: "Use Protocol (runtime_checkable) over ABC for extensibility"
+    example: "Gate is a Protocol with name + validate(); TypedStage is a Protocol with output_type + execute()"
+
+  - id: P-TYPED-SUBDIR
+    description: "Place typed agent stages in agents/typed/ subdirectory (D9 decision)"
+    example: "agents/typed/investigator.py → TypedInvestigator"
+
+  questions:
+  - id: Q-JSON-MODE
+    question: "Should typed stages use JSON mode for LLM output? Options: (a) JSON mode with schema, (b) Markdown with structured extraction, (c) Hybrid — try JSON, fall back to markdown"
+    status: open
+    priority: high
+
+  - id: Q-CONTEXT-SUMMARIZATION
+    question: "How should context summarization work for long pipelines to stay within token limits? Options: (a) Each stage summarizes for downstream, (b) Pipeline-level summarizer, (c) Sliding window of last N outputs"
+    status: open
+    priority: medium
+
+insights:
+- id: INS-REGEX-FRAGILITY
+  type: risk
+  summary: "HOWL's regex-based output parsing (_extract_section, _extract_files) is the biggest source of silent failures"
+  confidence: 0.95
+  source: "design-review:modular-pipeline"
+  severity: high
+  impact: "Garbage cascades from Investigation to Design when regex fails to extract root_cause"
+  recommendedActions:
+  - "Implement TypedInvestigator with JSON mode output (Step 4)"
+  - "Add SchemaGate after Investigation stage"
+
+- id: INS-GOD-OBJECT
+  type: pattern
+  summary: "StageResult god-object (15+ optional fields) eliminates type safety at stage boundaries"
+  confidence: 0.9
+  source: "design-review:modular-pipeline"
+  severity: medium
+  impact: "Any stage can set any field; no compile-time or runtime enforcement of what each stage should produce"
+  recommendedActions:
+  - "Use typed StageOutput subclasses with required fields and min_length constraints"
