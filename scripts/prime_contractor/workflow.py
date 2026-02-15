@@ -126,8 +126,8 @@ class PrimeContractorWorkflow:
         self.insight_emitter = InsightEmitter()
 
         # Size limits for proactive truncation prevention
-        self.max_lines_per_feature = 150  # Safe limit for most LLMs
-        self.max_tokens_per_feature = 500
+        self.max_lines_per_feature = 300  # Safe limit for most LLMs
+        self.max_tokens_per_feature = 2000
 
         # Cost tracking (BLC-009)
         self.total_cost_usd: float = 0.0

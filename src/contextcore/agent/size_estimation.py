@@ -74,8 +74,8 @@ class SizeEstimator:
         "high": 1.4,
     }
 
-    # Tokens per line (rough average for Python)
-    TOKENS_PER_LINE = 3
+    # Tokens per line (rough average for Python with docstrings/type hints)
+    TOKENS_PER_LINE = 4
 
     # Keywords that indicate larger output
     HIGH_COMPLEXITY_KEYWORDS = [

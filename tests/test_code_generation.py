@@ -101,14 +101,14 @@ class TestSizeEstimator:
         assert estimate_crud.lines > estimate_no_crud.lines + 30
 
     def test_tokens_calculated_from_lines(self):
-        """Tokens should be approximately 3x lines."""
+        """Tokens should be approximately 4x lines."""
         estimator = SizeEstimator()
         estimate = estimator.estimate(
             task="Implement a simple function",
             inputs={},
         )
 
-        assert estimate.tokens == estimate.lines * 3
+        assert estimate.tokens == estimate.lines * 4
 
     def test_reasoning_includes_complexity(self):
         """Reasoning should mention complexity."""
@@ -164,8 +164,8 @@ class TestCodeGenerationSpec:
             description="Implement FooBar",
         )
 
-        assert spec.max_lines == 150
-        assert spec.max_tokens == 500
+        assert spec.max_lines == 300
+        assert spec.max_tokens == 2000
         assert spec.allows_decomposition is True
         assert spec.must_have_docstring is True
         assert spec.context_files == []

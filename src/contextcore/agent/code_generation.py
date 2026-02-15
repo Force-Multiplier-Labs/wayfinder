@@ -97,8 +97,8 @@ class CodeGenerationSpec:
     context_files: list[str] = field(default_factory=list)
 
     # Size constraints
-    max_lines: int = 150
-    max_tokens: int = 500
+    max_lines: int = 300
+    max_tokens: int = 2000
 
     # Completeness requirements
     required_exports: Optional[list[str]] = None
@@ -405,8 +405,8 @@ class CodeGenerationCapability:
     """
 
     # Safe limits for most LLMs
-    SAFE_LINE_LIMIT = 150
-    SAFE_TOKEN_LIMIT = 500
+    SAFE_LINE_LIMIT = 300
+    SAFE_TOKEN_LIMIT = 2000
 
     def __init__(
         self,
