@@ -292,6 +292,21 @@ def _error_key(err: Dict[str, Any]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Test workflow filter
+# ---------------------------------------------------------------------------
+
+# Workflow IDs that are clearly from test runs, not production.
+# Prefixes are matched case-insensitively.
+_TEST_WORKFLOW_PREFIXES = ("test-", "test_", "pytest-", "unittest-")
+
+
+def _is_test_workflow(err: Dict[str, Any]) -> bool:
+    """Return True if the error comes from a test workflow."""
+    wf_id = err.get("workflow_id", "")
+    return any(wf_id.lower().startswith(p) for p in _TEST_WORKFLOW_PREFIXES)
+
+
+# ---------------------------------------------------------------------------
 # HOWL Banner
 # ---------------------------------------------------------------------------
 
@@ -461,6 +476,14 @@ def scan_once(
         if key in seen:
             continue
         seen.add(key)
+
+        # Skip errors from test workflows (e.g. pytest-generated workflow runs)
+        if _is_test_workflow(err):
+            logger.debug(
+                "Skipping test workflow error [%s/%s]: %.80s",
+                err.get("source"), err.get("workflow_id"), err["error"],
+            )
+            continue
 
         logger.info(
             "New error detected [%s/%s]: %.120s",
