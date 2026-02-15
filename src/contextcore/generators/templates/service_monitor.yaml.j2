@@ -1,0 +1,632 @@
+# File: tests/generators/test_service_monitor.py
+"""Comprehensive test suite for ServiceMonitor generator (F-005)."""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+import pytest
+import yaml
+
+from contextcore.generators.service_monitor import (
+    ArtifactSpecError,
+    _build_template_context,
+    _validate_artifact_spec,
+    _yaml_bool,
+    _yaml_list,
+    _yaml_quote,
+    generate_service_monitor,
+)
+
+
+# ── Fixtures ────────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def minimal_spec() -> dict[str, Any]:
+    return {"artifact_type": "ServiceMonitor", "service_name": "cartservice"}
+
+
+@pytest.fixture
+def full_spec() -> dict[str, Any]:
+    return {
+        "artifact_type": "ServiceMonitor",
+        "service_name": "cartservice",
+        "spec": {
+            "name": "cart-mon",
+            "namespace": "boutique",
+            "selector_labels": {"app.kubernetes.io/name": "cartservice"},
+            "endpoints": [
+                {
+                    "port": "grpc",
+                    "interval": "15s",
+                    "path": "/metrics",
+                    "scrape_timeout": "10s",
+                },
+                {"port": "http", "interval": "60s"},
+            ],
+            "additional_labels": {"team": "platform"},
+        },
+    }
+
+
+@pytest.fixture
+def context_manifest() -> dict[str, Any]:
+    return {"namespace": "online-boutique", "source_file": "manifest.yaml"}
+
+
+# ── Custom filter tests ─────────────────────────────────────────────
+
+
+class TestYamlBoolFilter:
+    def test_true(self):
+        assert _yaml_bool(True) == "true"
+
+    def test_false(self):
+        assert _yaml_bool(False) == "false"
+
+    def test_rejects_int(self):
+        with pytest.raises(TypeError, match="yaml_bool filter requires bool"):
+            _yaml_bool(1)
+
+    def test_rejects_string(self):
+        with pytest.raises(TypeError, match="yaml_bool filter requires bool"):
+            _yaml_bool("true")
+
+    def test_rejects_none(self):
+        with pytest.raises(TypeError, match="yaml_bool filter requires bool"):
+            _yaml_bool(None)
+
+
+class TestYamlQuoteFilter:
+    def test_simple_string_unquoted(self):
+        assert _yaml_quote("simple") == "simple"
+
+    def test_hyphenated_unquoted(self):
+        assert _yaml_quote("my-service") == "my-service"
+
+    def test_colon_quoted(self):
+        assert _yaml_quote("has: colon") == '"has: colon"'
+
+    def test_hash_quoted(self):
+        assert _yaml_quote("version #2") == '"version #2"'
+
+    def test_newline_quoted(self):
+        result = _yaml_quote("line1\nline2")
+        assert result == '"line1\\nline2"'
+
+    def test_leading_space_quoted(self):
+        result = _yaml_quote("  leading")
+        assert result.startswith('"')
+
+    def test_trailing_space_quoted(self):
+        result = _yaml_quote("trailing  ")
+        assert result.endswith('"')
+
+    def test_coerces_int_to_string(self):
+        assert _yaml_quote(123) == "123"
+
+    @pytest.mark.parametrize("char", [":", "#", "\\", "\n", "{", "}", "[", "]",
+                                       ",", "&", "*", "!", "|", ">", "%", "@", "`"])
+    def test_special_char_quoted(self, char):
+        result = _yaml_quote(f"has{char}char")
+        assert result.startswith('"') and result.endswith('"')
+
+
+class TestYamlListFilter:
+    def test_single_item(self):
+        assert _yaml_list(["__name__"]) == '["__name__"]'
+
+    def test_multiple_items(self):
+        assert _yaml_list(["__name__", "job"]) == '["__name__", "job"]'
+
+    def test_empty_list(self):
+        assert _yaml_list([]) == "[]"
+
+    def test_rejects_string(self):
+        with pytest.raises(TypeError, match="yaml_list filter requires list"):
+            _yaml_list("not a list")
+
+    def test_rejects_dict(self):
+        with pytest.raises(TypeError, match="yaml_list filter requires list"):
+            _yaml_list({"key": "value"})
+
+
+# ── Input validation tests ──────────────────────────────────────────
+
+
+class TestValidateArtifactSpec:
+    def test_valid_minimal_returns_name(self):
+        assert _validate_artifact_spec({"service_name": "foo"}) == "foo"
+
+    def test_missing_service_name(self):
+        with pytest.raises(ArtifactSpecError, match="service_name must be a string"):
+            _validate_artifact_spec({})
+
+    def test_non_string_service_name(self):
+        with pytest.raises(ArtifactSpecError, match="service_name must be a string"):
+            _validate_artifact_spec({"service_name": 123})
+
+    def test_empty_service_name(self):
+        with pytest.raises(ArtifactSpecError, match="non-empty string"):
+            _validate_artifact_spec({"service_name": ""})
+
+    def test_whitespace_only_service_name(self):
+        with pytest.raises(ArtifactSpecError, match="non-empty string"):
+            _validate_artifact_spec({"service_name": "   "})
+
+    def test_spec_not_dict(self):
+        with pytest.raises(ArtifactSpecError, match="spec must be a dict"):
+            _validate_artifact_spec({"service_name": "x", "spec": "bad"})
+
+    def test_namespace_selector_none_valid(self):
+        spec = {"service_name": "x", "spec": {"namespace_selector": None}}
+        assert _validate_artifact_spec(spec) == "x"
+
+    def test_namespace_selector_any_valid(self):
+        spec = {"service_name": "x", "spec": {"namespace_selector": "any"}}
+        assert _validate_artifact_spec(spec) == "x"
+
+    def test_namespace_selector_list_valid(self):
+        spec = {"service_name": "x", "spec": {"namespace_selector": ["a"]}}
+        assert _validate_artifact_spec(spec) == "x"
+
+    def test_namespace_selector_empty_list_valid(self):
+        spec = {"service_name": "x", "spec": {"namespace_selector": []}}
+        assert _validate_artifact_spec(spec) == "x"
+
+    def test_namespace_selector_invalid_string(self):
+        spec = {"service_name": "x", "spec": {"namespace_selector": "bad"}}
+        with pytest.raises(ArtifactSpecError, match="namespace_selector"):
+            _validate_artifact_spec(spec)
+
+    def test_namespace_selector_invalid_int(self):
+        spec = {"service_name": "x", "spec": {"namespace_selector": 42}}
+        with pytest.raises(ArtifactSpecError, match="namespace_selector"):
+            _validate_artifact_spec(spec)
+
+    def test_endpoints_not_list(self):
+        spec = {"service_name": "x", "spec": {"endpoints": "bad"}}
+        with pytest.raises(ArtifactSpecError, match="endpoints must be a list"):
+            _validate_artifact_spec(spec)
+
+    def test_endpoint_not_dict(self):
+        spec = {"service_name": "x", "spec": {"endpoints": ["bad"]}}
+        with pytest.raises(ArtifactSpecError, match=r"endpoints\[0\] must be a dict"):
+            _validate_artifact_spec(spec)
+
+    def test_endpoint_missing_port(self):
+        spec = {"service_name": "x", "spec": {"endpoints": [{"interval": "30s"}]}}
+        with pytest.raises(ArtifactSpecError, match="missing required field 'port'"):
+            _validate_artifact_spec(spec)
+
+    def test_endpoint_valid_port(self):
+        spec = {"service_name": "x", "spec": {"endpoints": [{"port": "http"}]}}
+        assert _validate_artifact_spec(spec) == "x"
+
+    def test_metric_relabelings_not_list(self):
+        spec = {
+            "service_name": "x",
+            "spec": {"endpoints": [{"port": "p", "metric_relabelings": "bad"}]},
+        }
+        with pytest.raises(ArtifactSpecError, match="metric_relabelings must be a list"):
+            _validate_artifact_spec(spec)
+
+    def test_metric_relabeling_not_dict(self):
+        spec = {
+            "service_name": "x",
+            "spec": {"endpoints": [{"port": "p", "metric_relabelings": ["bad"]}]},
+        }
+        with pytest.raises(ArtifactSpecError, match=r"metric_relabelings\[0\] must be a dict"):
+            _validate_artifact_spec(spec)
+
+    def test_source_labels_missing(self):
+        spec = {
+            "service_name": "x",
+            "spec": {"endpoints": [{"port": "p", "metric_relabelings": [{"action": "keep"}]}]},
+        }
+        with pytest.raises(ArtifactSpecError, match="missing required field 'source_labels'"):
+            _validate_artifact_spec(spec)
+
+    def test_source_labels_not_list(self):
+        spec = {
+            "service_name": "x",
+            "spec": {
+                "endpoints": [{
+                    "port": "p",
+                    "metric_relabelings": [{"source_labels": "__name__"}],
+                }],
+            },
+        }
+        with pytest.raises(ArtifactSpecError, match="source_labels must be a list"):
+            _validate_artifact_spec(spec)
+
+
+# ── Template context builder tests ──────────────────────────────────
+
+
+class TestBuildTemplateContext:
+    def test_minimal_defaults(self, context_manifest):
+        ctx = _build_template_context(
+            {"service_name": "cart"}, context_manifest
+        )
+        assert ctx["name"] == "cart-monitor"
+        assert ctx["namespace"] == "online-boutique"
+        assert ctx["service_name"] == "cart"
+        assert ctx["selector_labels"] == {"app": "cart"}
+        assert ctx["source_file"] == "manifest.yaml"
+        assert len(ctx["endpoints"]) == 1
+        assert ctx["endpoints"][0]["port"] == "metrics"
+        assert ctx["additional_labels"] == {}
+        assert ctx["additional_annotations"] == {}
+        assert isinstance(ctx["derivation"], dict)
+
+    def test_custom_overrides(self, context_manifest):
+        ctx = _build_template_context(
+            {
+                "service_name": "cart",
+                "spec": {
+                    "name": "custom",
+                    "namespace": "ns",
+                    "selector_labels": {"k": "v"},
+                    "endpoints": [{"port": "grpc"}],
+                    "additional_labels": {"a": "b"},
+                    "additional_annotations": {"c": "d"},
+                    "namespace_selector": "any",
+                },
+            },
+            context_manifest,
+        )
+        assert ctx["name"] == "custom"
+        assert ctx["namespace"] == "ns"
+        assert ctx["selector_labels"] == {"k": "v"}
+        assert ctx["endpoints"] == [{"port": "grpc"}]
+        assert ctx["additional_labels"] == {"a": "b"}
+        assert ctx["additional_annotations"] == {"c": "d"}
+        assert ctx["namespace_selector"] == "any"
+
+    def test_namespace_falls_back_to_default(self):
+        ctx = _build_template_context(
+            {"service_name": "x"}, {}
+        )
+        assert ctx["namespace"] == "default"
+
+    def test_derivation_keys(self, context_manifest):
+        ctx = _build_template_context(
+            {"service_name": "x"}, context_manifest
+        )
+        expected_keys = {
+            "name_source", "namespace_source", "selector_source",
+            "port_source", "interval_source", "path_source",
+        }
+        assert set(ctx["derivation"].keys()) == expected_keys
+
+
+# ── Generator integration tests ─────────────────────────────────────
+
+
+class TestGenerateServiceMonitor:
+    def test_minimal_success(self, minimal_spec, context_manifest, tmp_path):
+        result = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        assert result.success is True
+        assert result.artifact_type == "ServiceMonitor"
+        assert result.service_name == "cartservice"
+        assert result.error is None
+        assert result.output_path.exists()
+
+    def test_output_filename(self, minimal_spec, context_manifest, tmp_path):
+        result = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        assert result.output_path.name == "cartservice-service-monitor.yaml"
+
+    def test_valid_yaml_structure(self, minimal_spec, context_manifest, tmp_path):
+        result = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["apiVersion"] == "monitoring.coreos.com/v1"
+        assert doc["kind"] == "ServiceMonitor"
+        assert doc["metadata"]["name"] == "cartservice-monitor"
+        assert doc["metadata"]["namespace"] == "online-boutique"
+
+    def test_full_spec_overrides(self, full_spec, context_manifest, tmp_path):
+        result = generate_service_monitor(full_spec, context_manifest, tmp_path)
+        assert result.success is True
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["metadata"]["name"] == "cart-mon"
+        assert doc["metadata"]["namespace"] == "boutique"
+        assert len(doc["spec"]["endpoints"]) == 2
+        assert doc["spec"]["endpoints"][0]["scrapeTimeout"] == "10s"
+        assert doc["metadata"]["labels"]["team"] == "platform"
+
+    def test_default_endpoint_values(self, minimal_spec, context_manifest, tmp_path):
+        result = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        ep = doc["spec"]["endpoints"][0]
+        assert ep["interval"] == "30s"
+        assert ep["path"] == "/metrics"
+        assert ep["scheme"] == "http"
+
+    def test_default_selector_labels(self, minimal_spec, context_manifest, tmp_path):
+        result = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["spec"]["selector"]["matchLabels"] == {"app": "cartservice"}
+
+    def test_standard_labels_present(self, minimal_spec, context_manifest, tmp_path):
+        result = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        labels = doc["metadata"]["labels"]
+        assert labels["app.kubernetes.io/name"] == "cartservice"
+        assert labels["app.kubernetes.io/component"] == "monitoring"
+        assert labels["app.kubernetes.io/managed-by"] == "contextcore"
+        assert labels["contextcore/artifact-type"] == "ServiceMonitor"
+        assert labels["contextcore/service"] == "cartservice"
+
+    def test_annotations_present(self, minimal_spec, context_manifest, tmp_path):
+        result = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        ann = doc["metadata"]["annotations"]
+        assert ann["contextcore/generated-from"] == "manifest.yaml"
+        assert ann["contextcore/feature-id"] == "F-005"
+
+    def test_derivation_comments_present(self, minimal_spec, context_manifest, tmp_path):
+        result = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        content = result.output_path.read_text()
+        assert "Derivation rules:" in content
+        assert "manifest.yaml" in content
+
+
+class TestErrorHandling:
+    def test_missing_service_name_returns_failure(self, context_manifest, tmp_path):
+        result = generate_service_monitor(
+            {"artifact_type": "ServiceMonitor"}, context_manifest, tmp_path
+        )
+        assert result.success is False
+        assert "service_name" in result.error.lower()
+        assert result.service_name == "unknown"
+
+    def test_error_uses_artifact_spec_error(self, context_manifest, tmp_path):
+        result = generate_service_monitor(
+            {"artifact_type": "ServiceMonitor"}, context_manifest, tmp_path
+        )
+        assert "ArtifactSpecError" in result.error
+
+    def test_never_raises_with_empty_dict(self, tmp_path):
+        result = generate_service_monitor({}, {}, tmp_path)
+        assert isinstance(result.success, bool)
+        assert result.success is False
+
+    def test_never_raises_with_non_dict(self, tmp_path):
+        result = generate_service_monitor("bad input", {}, tmp_path)
+        assert result.success is False
+        assert result.service_name == "unknown"
+
+    def test_never_raises_with_none(self, tmp_path):
+        result = generate_service_monitor(None, {}, tmp_path)
+        assert result.success is False
+
+
+class TestFileOverwriteProtection:
+    def test_no_overwrite_without_force(self, minimal_spec, context_manifest, tmp_path):
+        r1 = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        assert r1.success is True
+
+        r2 = generate_service_monitor(
+            minimal_spec, context_manifest, tmp_path, force=False
+        )
+        assert r2.success is False
+        assert "already exists" in r2.error
+
+    def test_overwrite_with_force(self, minimal_spec, context_manifest, tmp_path):
+        r1 = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        assert r1.success is True
+
+        r2 = generate_service_monitor(
+            minimal_spec, context_manifest, tmp_path, force=True
+        )
+        assert r2.success is True
+
+
+class TestNamespaceSelector:
+    def test_any(self, context_manifest, tmp_path):
+        spec = {"service_name": "svc", "spec": {"namespace_selector": "any"}}
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["spec"]["namespaceSelector"]["any"] is True
+
+    def test_list(self, context_manifest, tmp_path):
+        spec = {"service_name": "svc", "spec": {"namespace_selector": ["a", "b"]}}
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["spec"]["namespaceSelector"]["matchNames"] == ["a", "b"]
+
+    def test_empty_list(self, context_manifest, tmp_path):
+        spec = {"service_name": "svc", "spec": {"namespace_selector": []}}
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert "namespaceSelector" in doc["spec"]
+        assert doc["spec"]["namespaceSelector"]["matchNames"] == []
+
+    def test_none_omits_block(self, minimal_spec, context_manifest, tmp_path):
+        result = generate_service_monitor(minimal_spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert "namespaceSelector" not in doc["spec"]
+
+
+class TestMetricRelabelings:
+    def test_basic_relabeling(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {
+                "endpoints": [{
+                    "port": "http",
+                    "metric_relabelings": [{
+                        "source_labels": ["__name__"],
+                        "action": "keep",
+                        "regex": "http_requests_total",
+                    }],
+                }],
+            },
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        assert result.success is True
+        doc = yaml.safe_load(result.output_path.read_text())
+        rel = doc["spec"]["endpoints"][0]["metricRelabelings"][0]
+        assert rel["sourceLabels"] == ["__name__"]
+        assert rel["action"] == "keep"
+        assert rel["regex"] == "http_requests_total"
+
+    def test_multiple_source_labels(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {
+                "endpoints": [{
+                    "port": "http",
+                    "metric_relabelings": [{
+                        "source_labels": ["__name__", "job"],
+                        "action": "replace",
+                        "target_label": "combined",
+                        "replacement": "$1_$2",
+                    }],
+                }],
+            },
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        rel = doc["spec"]["endpoints"][0]["metricRelabelings"][0]
+        assert rel["sourceLabels"] == ["__name__", "job"]
+        assert rel["targetLabel"] == "combined"
+
+    def test_no_python_list_syntax_in_raw_yaml(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {
+                "endpoints": [{
+                    "port": "http",
+                    "metric_relabelings": [{
+                        "source_labels": ["__name__"],
+                        "action": "keep",
+                    }],
+                }],
+            },
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        raw = result.output_path.read_text()
+        assert "['__name__']" not in raw  # Python list repr must not appear
+
+
+class TestTlsConfig:
+    def test_insecure_skip_verify_true(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {
+                "endpoints": [{
+                    "port": "https",
+                    "scheme": "https",
+                    "tls_config": {"insecure_skip_verify": True},
+                }],
+            },
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["spec"]["endpoints"][0]["tlsConfig"]["insecureSkipVerify"] is True
+
+    def test_insecure_skip_verify_false(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {
+                "endpoints": [{
+                    "port": "https",
+                    "tls_config": {"insecure_skip_verify": False},
+                }],
+            },
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["spec"]["endpoints"][0]["tlsConfig"]["insecureSkipVerify"] is False
+
+    def test_insecure_skip_verify_defaults_false(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {"endpoints": [{"port": "https", "tls_config": {}}]},
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["spec"]["endpoints"][0]["tlsConfig"]["insecureSkipVerify"] is False
+
+
+class TestHonorLabels:
+    def test_true(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {"endpoints": [{"port": "http", "honor_labels": True}]},
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["spec"]["endpoints"][0]["honorLabels"] is True
+
+    def test_false(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {"endpoints": [{"port": "http", "honor_labels": False}]},
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["spec"]["endpoints"][0]["honorLabels"] is False
+
+    def test_rendered_as_yaml_bool_not_python(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {"endpoints": [{"port": "http", "honor_labels": True}]},
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        raw = result.output_path.read_text()
+        assert "honorLabels: true" in raw
+        # Python's str(True) == "True" must not appear in YAML context
+        assert "honorLabels: True" not in raw
+
+
+class TestYamlSafety:
+    def test_label_value_with_colon(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {"additional_labels": {"desc": "svc: main"}},
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["metadata"]["labels"]["desc"] == "svc: main"
+
+    def test_annotation_with_hash(self, context_manifest, tmp_path):
+        spec = {
+            "service_name": "svc",
+            "spec": {"additional_annotations": {"note": "version #2"}},
+        }
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["metadata"]["annotations"]["note"] == "version #2"
+
+
+class TestAllOnlineBoutiqueServices:
+    """Parametric tests across all 11 Online Boutique services."""
+
+    SERVICES = [
+        "adservice", "cartservice", "checkoutservice", "currencyservice",
+        "emailservice", "frontend", "loadgenerator", "paymentservice",
+        "productcatalogservice", "recommendationservice", "shippingservice",
+    ]
+
+    @pytest.mark.parametrize("svc", SERVICES)
+    def test_generates(self, svc, context_manifest, tmp_path):
+        spec = {"artifact_type": "ServiceMonitor", "service_name": svc}
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        assert result.success is True
+        assert result.output_path.exists()
+        doc = yaml.safe_load(result.output_path.read_text())
+        assert doc["metadata"]["labels"]["contextcore/service"] == svc
+
+    @pytest.mark.parametrize("svc", SERVICES)
+    def test_yaml_round_trip(self, svc, context_manifest, tmp_path):
+        spec = {"artifact_type": "ServiceMonitor", "service_name": svc}
+        result = generate_service_monitor(spec, context_manifest, tmp_path)
+        raw = result.output_path.read_text()
+        doc1 = yaml.safe_load(raw)
+        doc2 = yaml.safe_load(yaml.safe_dump(doc1))
+        assert doc1 == doc2
