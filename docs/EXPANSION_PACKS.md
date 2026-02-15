@@ -212,9 +212,15 @@ Each stage is handled by a specialized agent:
 **Key Features**:
 - Pipeline orchestration with optional human checkpoints
 - Pre-built agent personalities with customizable prompts
-- O11y integration (Prometheus, Loki, Tempo)
+- **Defense in Depth**: 5 validation gates (Schema, Completeness, Integrity, Quality, Composite) between every stage
+- **Typed Stage Contracts**: Pydantic models replace the god-object StageResult (InvestigationOutput, DesignOutput, etc.)
+- **Modular Pipeline**: Gate-validated runner supporting both typed stages and legacy HOWL stages
+- **HOWL Watcher**: File-based error monitoring with observe mode for filter tuning
+- **Error Evaluation**: Dual-filter system (28-category skip blocklist + 4-category positive allowlist)
+- O11y integration (Prometheus, Loki, Tempo, Pyroscope)
 - Knowledge base for lessons learned
 - Wayfinder telemetry integration
+- **Pup CLI**: Quick-start companion (`pup check`, `pup hello`) for stack diagnostics
 
 **Installation**:
 ```bash
