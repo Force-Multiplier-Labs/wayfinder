@@ -226,8 +226,7 @@ def check_skip_filter(error_message: str) -> Optional[str]:
         match = pattern.search(error_message)
         if match:
             return (
-                f"Skipped ({category}): \"{match.group(0)}\" suggests this is not a code bug. "
-                f"Use --force to override."
+                f"Skipped ({category}): \"{match.group(0)}\" — not a code bug"
             )
     return None
 
