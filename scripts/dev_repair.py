@@ -212,6 +212,80 @@ SKIP_PATTERNS: List[tuple] = [
         r"|contextcore.?coyote\.)",
         re.IGNORECASE,
     )),
+    # Truncation — output hit max_tokens, needs config change or task decomposition
+    ("truncation", re.compile(
+        r"(draft\s+was\s+truncated"
+        r"|truncation\s+detected"
+        r"|finish_reason\s*=\s*(?:max_tokens|length)"
+        r"|stop_reason\s*=\s*max_tokens"
+        r"|response.*was\s+truncated.*(?:max_tokens|stop_reason))",
+        re.IGNORECASE,
+    )),
+    # Content safety / policy block — provider-side filter, not code bug
+    ("safety_filter", re.compile(
+        r"(finish_reason\s*[:=]\s*(?:SAFETY|BLOCKED)"
+        r"|GeminiSafetyFilterError"
+        r"|content.?safety.?filter"
+        r"|content.?policy.*(?:blocked|violation)"
+        r"|refused\s+to\s+generate.*(?:safety|content))",
+        re.IGNORECASE,
+    )),
+    # Model not found / deprecated — API access or config issue
+    ("model_unavailable", re.compile(
+        r"(model.?not\s+(?:found|available)"
+        r"|deprecated.*model"
+        r"|model.*(?:no\s+longer|been)\s+(?:available|supported|retired)"
+        r"|access.?denied.*model"
+        r"|unknown\s+model\b)",
+        re.IGNORECASE,
+    )),
+    # Circuit breaker open — resilience pattern firing, not a bug
+    ("circuit_breaker", re.compile(
+        r"(blocked\s+by\s+circuit\s*breaker"
+        r"|circuit\s*(?:breaker)?\s+(?:is\s+)?open"
+        r"|circuit\s*breaker\s+tripped)",
+        re.IGNORECASE,
+    )),
+    # Retry exhaustion — persistent transient failure
+    ("max_retries", re.compile(
+        r"(max\s+retries?\s+(?:exhausted|exceeded|reached)"
+        r"|all\s+(?:retry\s+)?attempts?\s+failed"
+        r"|retry\s+limit\s+reached"
+        r"|retries?\s+exhausted\s+for)",
+        re.IGNORECASE,
+    )),
+    # Environment blocked — missing tools or setup, not code bug
+    ("env_blocked", re.compile(
+        r"(env_blocked"
+        r"|environment\s+blocked"
+        r"|blocked.?dependencies.*env"
+        r"|task\s+skipped.*environment"
+        r"|dep_blocked_env)",
+        re.IGNORECASE,
+    )),
+    # Context window exceeded — input too large for model
+    ("context_window", re.compile(
+        r"(context\s+window\s+(?:exceeded|limit)"
+        r"|input.?tokens?\s+(?:exceeded|over)\s+(?:limit|maximum|context)"
+        r"|prompt\s+(?:too\s+(?:long|large)|exceeds?\s+(?:context|limit))"
+        r"|token\s+limit\s+exceeded)",
+        re.IGNORECASE,
+    )),
+    # Multi-file output incomplete — LLM output cut off mid-file
+    ("multifile_incomplete", re.compile(
+        r"(multi-?file\s+split\s+incomplete"
+        r"|output\s+may\s+be\s+truncated\s+or\s+incomplete"
+        r"|matched\s+.+\s+but\s+not\s+.+marker)",
+        re.IGNORECASE,
+    )),
+    # LOC mismatch — size estimation wrong, needs recalibration not code fix
+    ("loc_mismatch", re.compile(
+        r"(LOC\s+mismatch"
+        r"|size\s+estimate.*(?:wrong|mismatch|inaccurate)"
+        r"|depth_tier.*mismatch"
+        r"|design\s+implies\s+~?\d+\s+LOC.*seed\s+estimates)",
+        re.IGNORECASE,
+    )),
 ]
 
 
