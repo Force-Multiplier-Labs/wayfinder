@@ -225,8 +225,10 @@ class LessonOutput(StageOutput):
 class ViolationSeverity(str, Enum):
     """How severe a contract violation is."""
 
+    CRITICAL = "critical"  # Integrity violation — pipeline must stop
     ERROR = "error"  # Hard stop — cannot proceed
     WARNING = "warning"  # Proceed with caution
+    INFO = "info"  # Passed — informational only
 
 
 class Evidence(BaseModel):
@@ -267,13 +269,20 @@ class GateResult(BaseModel):
 
     passed: bool
     gate_name: str
+    blocking: bool = False
+    severity: ViolationSeverity = ViolationSeverity.INFO
     violations: list[ContractViolation] = Field(default_factory=list)
     warnings: list[ContractViolation] = Field(default_factory=list)
+    evidence: list[Evidence] = Field(default_factory=list)
+    next_action: str | None = None
 
     @property
     def has_errors(self) -> bool:
-        """Whether there are any ERROR-severity violations."""
-        return any(v.severity == ViolationSeverity.ERROR for v in self.violations)
+        """Whether there are any ERROR- or CRITICAL-severity violations."""
+        return any(
+            v.severity in (ViolationSeverity.ERROR, ViolationSeverity.CRITICAL)
+            for v in self.violations
+        )
 
     @property
     def has_warnings(self) -> bool:
@@ -287,7 +296,7 @@ class GateResult(BaseModel):
             if warning_count:
                 return f"Gate '{self.gate_name}' PASSED with {warning_count} warning(s)"
             return f"Gate '{self.gate_name}' PASSED"
-        error_count = len([v for v in self.violations if v.severity == ViolationSeverity.ERROR])
+        error_count = len([v for v in self.violations if v.severity in (ViolationSeverity.ERROR, ViolationSeverity.CRITICAL)])
         return f"Gate '{self.gate_name}' FAILED with {error_count} error(s)"
 
 

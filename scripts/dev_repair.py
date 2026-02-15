@@ -84,8 +84,8 @@ SKIP_PATTERNS: List[tuple] = [
     )),
     # Infrastructure / connectivity — not a code bug
     ("infrastructure", re.compile(
-        r"(connection.?refused|connection.?timed?\s*out|ECONNREFUSED"
-        r"|ETIMEDOUT|dns.?resolution|name.?resolution"
+        r"(connection.?refused|connection.?timed?\s*out|connection.?error"
+        r"|ECONNREFUSED|ETIMEDOUT|dns.?resolution|name.?resolution"
         r"|no.?route.?to.?host|network.?unreachable"
         r"|502\b|503\b|504\b|service.?unavailable|bad.?gateway)",
         re.IGNORECASE,
