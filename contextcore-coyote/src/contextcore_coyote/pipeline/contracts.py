@@ -229,6 +229,18 @@ class ViolationSeverity(str, Enum):
     WARNING = "warning"  # Proceed with caution
 
 
+class Evidence(BaseModel):
+    """Supporting evidence attached to a gate result.
+
+    Provides diagnostic proof (e.g. expected type, fingerprint value)
+    so failures are actionable without re-running the pipeline.
+    """
+
+    type: str = Field(description="Category of evidence (e.g. 'schema', 'fingerprint', 'quality')")
+    ref: str = Field(description="Reference value (e.g. class name, hash, field path)")
+    description: str = Field(default="", description="Human-readable explanation")
+
+
 class ContractViolation(BaseModel):
     """A specific contract violation found by a gate.
 
