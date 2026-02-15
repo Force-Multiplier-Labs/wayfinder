@@ -233,6 +233,98 @@ def check_skip_filter(error_message: str) -> Optional[str]:
 
 
 # ---------------------------------------------------------------------------
+# Positive filter — errors that ARE likely code bugs worth fixing
+# ---------------------------------------------------------------------------
+# When observe mode is active, only errors matching a positive pattern are
+# candidates for HOWL.  This inverts the default (blocklist → allowlist)
+# so we can tune precision before enabling the pipeline.
+
+POSITIVE_PATTERNS: List[tuple] = [
+    # Python runtime errors — classic code bugs
+    ("runtime_error", re.compile(
+        r"(UnboundLocalError"
+        r"|NameError:\s*name"
+        r"|AttributeError:\s*(?:type\s+object|'[^']+'\s+object\s+has\s+no\s+attribute)"
+        r"|TypeError:\s*(?:expected|got\s+an?\s+unexpected|missing\s+\d+\s+required|cannot\s+unpack)"
+        r"|KeyError:\s*'[^']+'"
+        r"|IndexError:\s*(?:list|tuple|string)\s+index\s+out\s+of\s+range)",
+        re.IGNORECASE,
+    )),
+    # Assertion failures in production code (not tests)
+    ("assertion", re.compile(
+        r"(AssertionError(?!.*test))",
+        re.IGNORECASE,
+    )),
+    # Traceback pointing to project source files
+    ("traceback_src", re.compile(
+        r"(File\s+\"[^\"]*(?:src/|lib/)[^\"]+\.py\",\s*line\s+\d+"
+        r".*(?:Error|Exception))",
+        re.IGNORECASE,
+    )),
+    # Explicit code-level exceptions with traceback
+    ("exception_chain", re.compile(
+        r"(Traceback\s+\(most\s+recent\s+call\s+last\))"
+        r".*(?:UnboundLocalError|NameError|AttributeError|TypeError|KeyError|IndexError"
+        r"|RuntimeError|NotImplementedError|RecursionError|StopIteration"
+        r"|ZeroDivisionError|OverflowError)",
+        re.IGNORECASE | re.DOTALL,
+    )),
+]
+
+
+def check_positive_filter(error_message: str) -> Optional[str]:
+    """
+    Check if an error positively matches as a code bug worth fixing.
+
+    Returns:
+        Category string if the error looks like a code bug, None otherwise.
+    """
+    for category, pattern in POSITIVE_PATTERNS:
+        if pattern.search(error_message):
+            return category
+    return None
+
+
+def evaluate_error(error_message: str) -> Dict[str, Any]:
+    """
+    Evaluate an error against both skip and positive filters.
+
+    Returns a verdict dict for logging/observation:
+        {
+            "allow": bool,          # Would HOWL process this?
+            "positive_match": str | None,  # Positive category matched
+            "skip_match": str | None,      # Skip category matched
+            "reason": str,          # Human-readable explanation
+        }
+    """
+    skip_reason = check_skip_filter(error_message)
+    positive_cat = check_positive_filter(error_message)
+
+    if skip_reason:
+        return {
+            "allow": False,
+            "positive_match": positive_cat,
+            "skip_match": skip_reason,
+            "reason": skip_reason,
+        }
+
+    if positive_cat:
+        return {
+            "allow": True,
+            "positive_match": positive_cat,
+            "skip_match": None,
+            "reason": f"Allowed ({positive_cat}): looks like a code bug",
+        }
+
+    return {
+        "allow": False,
+        "positive_match": None,
+        "skip_match": None,
+        "reason": "No positive match — error does not look like a code bug",
+    }
+
+
+# ---------------------------------------------------------------------------
 # Codebase context helpers
 # ---------------------------------------------------------------------------
 

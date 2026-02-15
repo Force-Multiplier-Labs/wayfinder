@@ -446,6 +446,7 @@ def scan_once(
     severity: str = "HIGH",
     project_root: Optional[Path] = None,
     howl_pause: float = HOWL_BANNER_PAUSE,
+    observe: bool = False,
 ) -> List[Dict[str, Any]]:
     """
     Scan all error sources once.  Dispatch repairs for new errors.
@@ -458,6 +459,7 @@ def scan_once(
         severity: Incident severity level.
         project_root: Root directory of the codebase to fix.
         howl_pause: Seconds to pause after showing HOWL banner (0 to skip).
+        observe: If True, log filter verdicts but never dispatch pipeline.
 
     Returns list of repair results for newly-dispatched errors.
     """
@@ -483,6 +485,22 @@ def scan_once(
                 "Skipping test workflow error [%s/%s]: %.80s",
                 err.get("source"), err.get("workflow_id"), err["error"],
             )
+            continue
+
+        # ── Observe mode: evaluate and log, never dispatch ──
+        if observe:
+            dev_repair = _load_dev_repair()
+            verdict = dev_repair.evaluate_error(err["error"])
+            tag = "ALLOW" if verdict["allow"] else "DENY"
+            logger.info(
+                "[OBSERVE] %s [%s/%s]: %s | %.120s",
+                tag,
+                err.get("source", "?"),
+                err.get("phase", "?"),
+                verdict["reason"],
+                err["error"],
+            )
+            results.append({"_error": err, "observe": True, **verdict})
             continue
 
         logger.info(
@@ -529,6 +547,7 @@ def watch_loop(
     severity: str = "HIGH",
     project_root: Optional[Path] = None,
     howl_pause: float = HOWL_BANNER_PAUSE,
+    observe: bool = False,
 ) -> None:
     """
     Poll for errors until interrupted or the workflow completes.
@@ -541,16 +560,20 @@ def watch_loop(
         severity: Incident severity level.
         project_root: Root directory of the codebase to fix.
         howl_pause: Seconds to pause after showing HOWL banner (0 to skip).
+        observe: If True, log filter verdicts but never dispatch pipeline.
     """
     seen: Set[str] = set()
     total_dispatched = 0
     total_succeeded = 0
     total_skipped = 0
+    total_allow = 0
+    total_deny = 0
 
     root = project_root or output_dir.parent
+    mode_label = "OBSERVE mode (logging only, pipeline disabled)" if observe else "ACTIVE mode"
     logger.info(
-        "Watching %s for artisan workflow errors (poll every %ds)...",
-        output_dir, poll_interval,
+        "Watching %s for artisan workflow errors (poll every %ds) — %s",
+        output_dir, poll_interval, mode_label,
     )
     logger.info("Also watching %s/.startd8/task_errors/ for startd8-sdk errors.", root)
     logger.info("Press Ctrl+C to stop.\n")
@@ -563,14 +586,21 @@ def watch_loop(
             severity=severity,
             project_root=root,
             howl_pause=howl_pause,
+            observe=observe,
         )
 
         for r in results:
-            total_dispatched += 1
-            if r.get("skipped"):
-                total_skipped += 1
-            elif r.get("success"):
-                total_succeeded += 1
+            if r.get("observe"):
+                if r.get("allow"):
+                    total_allow += 1
+                else:
+                    total_deny += 1
+            else:
+                total_dispatched += 1
+                if r.get("skipped"):
+                    total_skipped += 1
+                elif r.get("success"):
+                    total_succeeded += 1
 
         # Check if workflow is complete
         wf_result = output_dir / WORKFLOW_RESULT_FILE
@@ -585,10 +615,16 @@ def watch_loop(
                             "Workflow %s (status=%s). Final scan complete.",
                             data.get("workflow_id", "?"), status,
                         )
-                        logger.info(
-                            "Summary: dispatched=%d succeeded=%d skipped=%d",
-                            total_dispatched, total_succeeded, total_skipped,
-                        )
+                        if observe:
+                            logger.info(
+                                "Summary (observe): allow=%d deny=%d",
+                                total_allow, total_deny,
+                            )
+                        else:
+                            logger.info(
+                                "Summary: dispatched=%d succeeded=%d skipped=%d",
+                                total_dispatched, total_succeeded, total_skipped,
+                            )
                         return
                 except (json.JSONDecodeError, OSError):
                     pass
@@ -658,6 +694,13 @@ def main() -> int:
         default=HOWL_BANNER_PAUSE,
         help=f"Seconds to pause after showing HOWL banner (default: {HOWL_BANNER_PAUSE}, 0 to skip)",
     )
+    parser.add_argument(
+        "--observe",
+        action="store_true",
+        default=False,
+        help="Observe mode: log ALLOW/DENY verdicts for each error but never dispatch the pipeline. "
+             "Use this to tune positive/skip filters before enabling HOWL.",
+    )
 
     args = parser.parse_args()
 
@@ -684,17 +727,29 @@ def main() -> int:
             severity=args.severity,
             project_root=project_root,
             howl_pause=args.howl_pause,
+            observe=args.observe,
         )
         if not results:
             logger.info("No errors found.")
         else:
             for r in results:
                 err = r.get("_error", {})
-                status = "OK" if r.get("success") else ("SKIP" if r.get("skipped") else "FAIL")
-                print(
-                    f"[{status}] {err.get('source', '?')}/{err.get('phase', '?')}: "
-                    f"{err.get('error', '?')[:100]}"
-                )
+                if r.get("observe"):
+                    tag = "ALLOW" if r.get("allow") else "DENY"
+                    print(
+                        f"[{tag}] {err.get('source', '?')}/{err.get('phase', '?')}: "
+                        f"{err.get('error', '?')[:100]}"
+                    )
+                else:
+                    status = "OK" if r.get("success") else ("SKIP" if r.get("skipped") else "FAIL")
+                    print(
+                        f"[{status}] {err.get('source', '?')}/{err.get('phase', '?')}: "
+                        f"{err.get('error', '?')[:100]}"
+                    )
+            if args.observe:
+                allow_count = sum(1 for r in results if r.get("allow"))
+                deny_count = len(results) - allow_count
+                print(f"\nObserve summary: {allow_count} ALLOW, {deny_count} DENY out of {len(results)} errors")
         return 0
 
     # Polling loop (Ctrl+C to stop)
@@ -712,6 +767,7 @@ def main() -> int:
         severity=args.severity,
         project_root=project_root,
         howl_pause=args.howl_pause,
+        observe=args.observe,
     )
     return 0
 

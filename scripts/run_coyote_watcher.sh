@@ -67,6 +67,11 @@ if [ "${FORCE:-0}" = "1" ]; then
     WATCHER_ARGS+=(--force)
 fi
 
+# Observe mode (default ON for tuning — set OBSERVE=0 to enable pipeline)
+if [ "${OBSERVE:-1}" != "0" ]; then
+    WATCHER_ARGS+=(--observe)
+fi
+
 # Optional: custom severity
 if [ -n "${SEVERITY:-}" ]; then
     WATCHER_ARGS+=(--severity "$SEVERITY")
@@ -86,9 +91,15 @@ echo "HOWL pause:     ${HOWL_PAUSE}s (set HOWL_PAUSE=0 to skip banner delay)"
 echo "OTel endpoint:  $COYOTE_OTEL_ENDPOINT"
 echo "LLM model:      $COYOTE_LLM_MODEL"
 echo "Auto-apply:     ${AUTO_APPLY:-0}"
+echo "Observe mode:   ${OBSERVE:-1} (set OBSERVE=0 to enable pipeline)"
 echo ""
+if [ "${OBSERVE:-1}" != "0" ]; then
+echo "OBSERVE MODE: logging ALLOW/DENY verdicts only — pipeline is OFF"
+echo "  Set OBSERVE=0 to enable the HOWL pipeline"
+else
 echo "When errors are detected, Coyote will HOWL:"
 echo "  1. Investigate → 2. Design → 3. Implement → 4. Test → 5. Learn"
+fi
 echo ""
 
 cd "$WAYFINDER_ROOT"
