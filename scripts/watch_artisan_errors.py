@@ -297,7 +297,7 @@ def _error_key(err: Dict[str, Any]) -> str:
 
 # Workflow IDs that are clearly from test runs, not production.
 # Prefixes are matched case-insensitively.
-_TEST_WORKFLOW_PREFIXES = ("test-", "test_", "pytest-", "unittest-")
+_TEST_WORKFLOW_PREFIXES = ("test-", "test_", "pytest-", "unittest-", "dry-run-")
 
 
 def _is_test_workflow(err: Dict[str, Any]) -> bool:

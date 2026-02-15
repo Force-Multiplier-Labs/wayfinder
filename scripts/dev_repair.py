@@ -103,6 +103,62 @@ SKIP_PATTERNS: List[tuple] = [
         r"|too.?many.?open.?files|EMFILE|ENFILE)",
         re.IGNORECASE,
     )),
+    # Cost / budget — needs config change or budget increase, not code
+    ("cost_budget", re.compile(
+        r"(cost.?limit.?exceeded|budget.?exceeded|cost_budget"
+        r"|exceeds?\s+(?:cost|budget|spending).?limit"
+        r"|\$[\d.]+\s*>\s*\$[\d.]+"
+        r"|max.?cost.?reached|spending.?cap)",
+        re.IGNORECASE,
+    )),
+    # LLM response parsing — transient LLM output issue, not a code bug
+    ("llm_parse", re.compile(
+        r"(failed to parse json from (?:llm|model|ai)\b"
+        r"|expecting value:\s*line\s*\d+\s*column\s*\d+"
+        r"|empty.?(?:response|output|json)\s*from\s*(?:llm|model|ai)"
+        r"|json\.?decode\.?error.*(?:llm|model|response)"
+        r"|invalid json.*(?:llm|model|response)"
+        r"|(?:llm|model)\s+returned?\s+empty)",
+        re.IGNORECASE,
+    )),
+    # Quality gate — needs prompt/config tuning, not code fix
+    ("quality_gate", re.compile(
+        r"(requirements_coverage\s*=\s*0\.0%"
+        r"|quality.?gate.?failed"
+        r"|coverage.?(?:below|under|less.?than).?threshold"
+        r"|translation.?quality.?(?:gate|check|validation).?failed"
+        r"|0\.0%\s*coverage)",
+        re.IGNORECASE,
+    )),
+    # Validation / config — misconfigured workflow, not a code bug
+    ("validation_config", re.compile(
+        r"(at least one agent is required"
+        r"|exactly \d+ agents? (?:is|are) required"
+        r"|missing required input"
+        r"|validation failed:\s"
+        r"|required field.+missing"
+        r"|invalid.?(?:config|configuration|workflow).?:"
+        r"|missing required context keys?:)",
+        re.IGNORECASE,
+    )),
+    # Pipeline / review — generic orchestration failure, not a code bug
+    ("pipeline_orchestration", re.compile(
+        r"(all reviews? failed"
+        r"|pipeline failed"
+        r"|did not complete successfully"
+        r"|workflow.?(?:aborted|cancelled|timed?.?out)"
+        r"|phase .+ failed:.+(?:timeout|cancelled))",
+        re.IGNORECASE,
+    )),
+    # Assessment timeout — transient, retry instead of patching code
+    ("timeout", re.compile(
+        r"(assessment.?timed?.?out"
+        r"|evaluation.?timed?.?out"
+        r"|task.?timed?.?out"
+        r"|agent.?timed?.?out"
+        r"|llm.?(?:call|request).?timed?.?out)",
+        re.IGNORECASE,
+    )),
 ]
 
 
